@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package api.system.v1;
+
+import "api/system/v1/system.proto";
+import "google/api/annotations.proto";
+
+option go_package = "kratosx-fashion/api/system/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.system.v1";
+
+// 菜单服务
+// @Auth
+service Menu {
+	rpc CreateMenu (MenuRequest) returns (IDReply){
+		option (google.api.http) = {
+			post: "/"
+			body: "*"
+		};
+	}
+
+	rpc UpdateMenu (MenuRequest) returns (IDReply){
+		option (google.api.http) = {
+			put: "/"
+			body: "*"
+		};
+	}
+
+	rpc UpdateMenuStatus (IDRequest) returns (IDReply){
+		option (google.api.http) = {
+			put: "/status"
+			body: "*"
+		};
+	}
+
+	rpc DeleteMenu (IDRequest) returns (EmptyReply){
+		option (google.api.http) = {
+			delete: "/{id}"
+		};
+	}
+
+	rpc GetMenu (IDRequest) returns (MenuReply){
+		option (google.api.http) = {
+			get: "/{id}"
+		};
+	}
+
+	rpc ListMenu (ListRequest) returns (ListMenuReply){
+		option (google.api.http) = {
+			post: "/list"
+			body: "*"
+		};
+	}
+
+	rpc GetMenuTree (TreeRequest) returns (MenuTreeReply){
+		option (google.api.http) = {
+			get: "/tree"
+		};
+	}
+}

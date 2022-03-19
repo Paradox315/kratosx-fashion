@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package api.system.v1;
+
+import "api/system/v1/system.proto";
+import "google/api/annotations.proto";
+
+option go_package = "kratosx-fashion/api/system/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.system.v1";
+
+// 公共接口
+service Pub {
+	rpc Generate(EmptyRequest) returns (CaptchaReply) {
+		option (google.api.http) = {
+			get: "/captcha"
+		};
+	}
+
+	rpc Register(RegisterRequest) returns (RegisterReply){
+		option (google.api.http) = {
+			post: "/register"
+			body: "*"
+		};
+	}
+
+	rpc Login(LoginRequest) returns (LoginReply){
+		option (google.api.http) = {
+			post: "/login"
+			body: "*"
+		};
+	}
+
+	rpc Logout(EmptyRequest) returns (EmptyReply){
+		option (google.api.http) = {
+			post: "/logout"
+			body: "*"
+		};
+	}
+
+	rpc RetrievePwd(RetrieveRequest) returns (EmptyReply){
+		option (google.api.http) = {
+			post: "/retrieve"
+			body: "*"
+		};
+	}
+}

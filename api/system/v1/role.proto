@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package api.system.v1;
+
+import "api/system/v1/system.proto";
+import "google/api/annotations.proto";
+
+option go_package = "kratosx-fashion/api/system/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.system.v1";
+
+// 角色服务
+// @Auth
+service Role {
+	rpc CreateRole (RoleRequest) returns (IDReply){
+		option (google.api.http) = {
+			post: "/"
+			body: "*"
+		};
+	}
+
+	rpc UpdateRole (RoleRequest) returns (IDReply){
+		option (google.api.http) = {
+			put: "/"
+			body: "*"
+		};
+	}
+
+	rpc UpdateRoleStatus (IDRequest) returns (IDReply){
+		option (google.api.http) = {
+			put: "/status"
+			body: "*"
+		};
+	}
+
+	rpc DeleteRole (IDRequest) returns (EmptyReply){
+		option (google.api.http) = {
+			delete: "/{id}"
+		};
+	}
+
+	rpc GetRole (IDRequest) returns (RoleReply){
+		option (google.api.http) = {
+			get: "/{id}"
+		};
+	}
+
+	rpc ListRole (ListRequest) returns (ListRoleReply){
+		option (google.api.http) = {
+			post: "/list"
+			body: "*"
+		};
+	}
+}

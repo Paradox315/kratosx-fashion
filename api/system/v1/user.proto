@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package api.system.v1;
+
+import "api/system/v1/system.proto";
+import "google/api/annotations.proto";
+
+option go_package = "kratosx-fashion/api/system/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.system.v1";
+
+// 用户服务
+// @Auth
+service User {
+	rpc CreateUser (UserRequest) returns (IDReply){
+		option (google.api.http) = {
+			post: "/"
+			body: "*"
+		};
+	}
+
+	rpc UpdateUser (UserRequest) returns (IDReply){
+		option (google.api.http) = {
+			put: "/"
+			body: "*"
+		};
+	}
+
+	rpc UpdatePassword (PasswordRequest) returns (IDReply){
+		option (google.api.http) = {
+			put: "/password"
+			body: "*"
+		};
+	}
+
+	rpc UpdateUserStatus(IDRequest) returns (IDReply){
+		option (google.api.http) = {
+			put: "/status"
+			body: "*"
+		};
+	}
+
+	rpc DeleteUser (IDRequest) returns (EmptyReply){
+		option (google.api.http) = {
+			delete: "/{id}"
+		};
+	}
+
+	rpc GetUser (IDRequest) returns (UserReply){
+		option (google.api.http) = {
+			get: "/{id}"
+		};
+	}
+
+	rpc ListUser (ListRequest) returns (ListUserReply){
+		option (google.api.http) = {
+			post: "/list"
+			body: "*"
+		};
+	}
+
+}

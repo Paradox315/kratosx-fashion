@@ -1,3 +1,0 @@
-consul:
-  address: 1.15.63.81:8500
-  scheme: http

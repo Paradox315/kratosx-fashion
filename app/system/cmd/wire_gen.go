@@ -11,42 +11,40 @@ import (
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/app/system/internal/conf"
 	"kratosx-fashion/app/system/internal/data"
-	"kratosx-fashion/app/system/internal/data/infra"
-	"kratosx-fashion/app/system/internal/data/repo"
 	"kratosx-fashion/app/system/internal/server"
-	service2 "kratosx-fashion/app/system/internal/service"
+	"kratosx-fashion/app/system/internal/service"
 )
 
 // Injectors from wire.go:
 
 // initApp init kratos application.
 func initApp(confServer *conf.Server, registry *conf.Registry, confData *conf.Data, logger *conf.Logger) (*kratos.App, func(), error) {
-	logLogger := infra.NewLogger(logger)
+	logLogger := data.NewLogger(logger)
 	db := data.NewDB(confData, logLogger)
 	client := data.NewRedis(confData, logLogger)
 	dataData, cleanup, err := data.NewData(confData, logLogger, db, client)
 	if err != nil {
 		return nil, nil, err
 	}
-	userRepo := repo.NewUserRepo(dataData, logLogger)
-	loginLogRepo := repo.NewLoginLogRepo(dataData, logLogger)
+	userRepo := data.NewUserRepo(dataData, logLogger)
+	loginLogRepo := data.NewLoginLogRepo(dataData, logLogger)
 	publicUsecase := biz.NewPublicUsecase(userRepo, loginLogRepo, logLogger)
-	pubService := service2.NewPubService(publicUsecase, logLogger)
-	userRoleRepo := repo.NewUserRoleRepo(dataData, logLogger)
+	pubService := service.NewPubService(publicUsecase, logLogger)
+	userRoleRepo := data.NewUserRoleRepo(dataData, logLogger)
 	userUsecase := biz.NewUserUsecase(userRepo, userRoleRepo, logLogger)
-	userService := service2.NewUserService(userUsecase, logLogger)
-	roleRepo := repo.NewRoleRepo(dataData, logLogger)
-	roleMenuRepo := repo.NewRoleMenuRepo(dataData, logLogger)
+	userService := service.NewUserService(userUsecase, logLogger)
+	roleRepo := data.NewRoleRepo(dataData, logLogger)
+	roleMenuRepo := data.NewRoleMenuRepo(dataData, logLogger)
 	roleUsecase := biz.NewRoleUsecase(roleRepo, roleMenuRepo, logLogger)
-	roleService := service2.NewRoleService(roleUsecase, logLogger)
-	menuRepo := repo.NewMenuRepo(dataData, logLogger)
-	menuActionRepo := repo.NewMenuActionRepo(dataData, logLogger)
-	menuActionResourceRepo := repo.NewMenuActionResourceRepo(dataData, logLogger)
+	roleService := service.NewRoleService(roleUsecase, logLogger)
+	menuRepo := data.NewMenuRepo(dataData, logLogger)
+	menuActionRepo := data.NewMenuActionRepo(dataData, logLogger)
+	menuActionResourceRepo := data.NewMenuActionResourceRepo(dataData, logLogger)
 	menuUsecase := biz.NewMenuUsecase(menuRepo, menuActionRepo, menuActionResourceRepo, logLogger)
-	menuService := service2.NewMenuService(menuUsecase, logLogger)
+	menuService := service.NewMenuService(menuUsecase, logLogger)
 	xhttpServer := server.NewHTTPServer(confServer, pubService, userService, roleService, menuService, logLogger)
 	grpcServer := server.NewGRPCServer(confServer, pubService, userService, roleService, menuService, logLogger)
-	registrar := infra.NewRegistrar(registry)
+	registrar := data.NewRegistrar(registry)
 	app := newApp(logLogger, xhttpServer, grpcServer, registrar)
 	return app, func() {
 		cleanup()

@@ -10,6 +10,7 @@ import (
 	xhttp "github.com/go-kratos/kratos/v2/transport/xhttp"
 	apistate "github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
 	binding "github.com/go-kratos/kratos/v2/transport/xhttp/binding"
+	"github.com/gofiber/fiber/v2"
 )
 
 // This is a compile-time assertion to ensure that this generated file

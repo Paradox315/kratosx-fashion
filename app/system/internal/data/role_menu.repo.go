@@ -1,19 +1,18 @@
-package repo
+package data
 
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
 	"kratosx-fashion/app/system/internal/biz"
-	"kratosx-fashion/app/system/internal/data"
 	"kratosx-fashion/app/system/internal/data/model"
 )
 
 type RoleMenuRepo struct {
-	dao *data.Data
+	dao *Data
 	log *log.Helper
 }
 
-func NewRoleMenuRepo(data *data.Data, logger log.Logger) biz.RoleMenuRepo {
+func NewRoleMenuRepo(data *Data, logger log.Logger) biz.RoleMenuRepo {
 	return &RoleMenuRepo{
 		dao: data,
 		log: log.NewHelper(logger),

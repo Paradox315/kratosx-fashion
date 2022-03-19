@@ -1,20 +1,19 @@
-package repo
+package data
 
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
 	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/biz"
-	"kratosx-fashion/app/system/internal/data"
 	"kratosx-fashion/app/system/internal/data/model"
 )
 
 type userRepo struct {
-	dao *data.Data
+	dao *Data
 	log *log.Helper
 }
 
-func NewUserRepo(data *data.Data, logger log.Logger) biz.UserRepo {
+func NewUserRepo(data *Data, logger log.Logger) biz.UserRepo {
 	return &userRepo{
 		dao: data,
 		log: log.NewHelper(logger),

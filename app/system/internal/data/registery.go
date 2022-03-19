@@ -1,4 +1,4 @@
-package infra
+package data
 
 import (
 	"github.com/go-kratos/kratos/contrib/registry/consul/v2"

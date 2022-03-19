@@ -2,9 +2,7 @@ package data
 
 import (
 	"kratosx-fashion/app/system/internal/conf"
-	"kratosx-fashion/app/system/internal/data/infra"
 	"kratosx-fashion/app/system/internal/data/model"
-	"kratosx-fashion/app/system/internal/data/repo"
 	"kratosx-fashion/pkg/logutil"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -24,19 +22,19 @@ var ProviderSet = wire.NewSet(
 	NewDB,
 	NewRedis,
 
-	infra.NewDiscovery,
-	infra.NewRegistrar,
-	infra.NewLogger,
-	infra.NewStorage,
+	NewDiscovery,
+	NewRegistrar,
+	NewLogger,
+	NewStorage,
 
-	repo.NewLoginLogRepo,
-	repo.NewUserRepo,
-	repo.NewUserRoleRepo,
-	repo.NewRoleRepo,
-	repo.NewRoleMenuRepo,
-	repo.NewMenuRepo,
-	repo.NewMenuActionRepo,
-	repo.NewMenuActionResourceRepo,
+	NewLoginLogRepo,
+	NewUserRepo,
+	NewUserRoleRepo,
+	NewRoleRepo,
+	NewRoleMenuRepo,
+	NewMenuRepo,
+	NewMenuActionRepo,
+	NewMenuActionResourceRepo,
 )
 
 // Data .

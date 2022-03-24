@@ -2,9 +2,12 @@ package biz
 
 import (
 	"context"
-	"github.com/google/wire"
-	pb "kratosx-fashion/api/system/v1"
+
 	"kratosx-fashion/app/system/internal/data/model"
+
+	"github.com/google/wire"
+
+	pb "kratosx-fashion/api/system/v1"
 )
 
 // ProviderSet is biz providers.
@@ -16,26 +19,28 @@ var ProviderSet = wire.NewSet(
 )
 
 type UserRepo interface {
-	SelectByID(context.Context, uint64) (*model.User, error)
+	Select(context.Context, uint) (*model.User, error)
 	SelectByUsername(context.Context, string) (*model.User, error)
-	SelectPasswordByID(context.Context, uint64) (string, error)
-	List(context.Context, *pb.ListUserReply, ...*pb.QueryOption) ([]*model.User, uint64, error)
+	SelectPasswordByName(context.Context, string) (string, error)
+	List(context.Context, *pb.ListRequest, ...*pb.QueryOption) ([]*model.User, int64, error)
 	Insert(context.Context, *model.User) error
 	Update(context.Context, *model.User) error
-	Delete(context.Context, uint64) error
-	DeleteByIDs(context.Context, []uint64) error
-	ExistByUserName(context.Context, string) (bool, error)
+	UpdateStatus(context.Context, uint, uint8) error
+	Delete(context.Context, uint) error
+	DeleteByIDs(context.Context, []uint) error
+	ExistByUserName(context.Context, string) bool
+	ExistByEmail(context.Context, string) bool
+	ExistByMobile(context.Context, string) bool
 }
 
 type UserRoleRepo interface {
-	Select(context.Context, uint64) (*model.UserRole, error)
+	Select(context.Context, uint) (*model.UserRole, error)
 	SelectAll(context.Context) ([]*model.UserRole, error)
 	SelectAllByUserID(context.Context, uint64) ([]*model.UserRole, error)
 	SelectRoleIDByUserID(context.Context, uint64) ([]uint64, error)
 	Insert(context.Context, *model.UserRole) error
 	Update(context.Context, *model.UserRole) error
-	UpdateStatus(context.Context, uint64, uint8) error
-	Delete(context.Context, uint64) error
+	Delete(context.Context, uint) error
 	DeleteByUserID(context.Context, uint64) error
 	DeleteByUserIDs(context.Context, []uint64) error
 	DeleteByRoleID(context.Context, uint64) error
@@ -44,10 +49,10 @@ type UserRoleRepo interface {
 }
 
 type LoginLogRepo interface {
-	Select(context.Context, uint64) (*model.LoginLog, error)
-	ListByUserID(context.Context, uint64, *pb.ListRequest, ...*pb.QueryOption) ([]*model.LoginLog, error)
+	Select(context.Context, uint) (*model.LoginLog, error)
+	ListByUserID(context.Context, uint64, *pb.ListRequest, ...*pb.QueryOption) ([]*model.LoginLog, int64, error)
 	Insert(context.Context, *model.LoginLog) error
-	Delete(context.Context, uint64) error
+	Delete(context.Context, uint) error
 	DeleteByUserID(context.Context, uint64) error
 	DeleteByUserIDs(context.Context, []uint64) error
 }
@@ -106,4 +111,9 @@ type MenuActionResourceRepo interface {
 	DeleteByIDs(context.Context, []uint64) error
 	DeleteByActionID(context.Context, uint64) error
 	DeleteByActionIDs(context.Context, []uint64) error
+}
+
+type CaptchaRepo interface {
+	Create(context.Context) (string, string, error)
+	Verify(context.Context, string, string) bool
 }

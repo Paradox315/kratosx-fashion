@@ -36,7 +36,7 @@ type MenuXHTTPServer interface {
 
 func RegisterMenuXHTTPServer(s *xhttp.Server, srv MenuXHTTPServer) {
 	s.Route(func(r fiber.Router) {
-		api := r.Group("api/api/system/v1/menu")
+		api := r.Group("api/system/v1/menu")
 		// Register all service annotation
 		{
 			api.Use(middleware.Authenticator(), middleware.Authorizer())

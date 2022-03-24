@@ -35,12 +35,13 @@ var ProviderSet = wire.NewSet(
 	NewMenuRepo,
 	NewMenuActionRepo,
 	NewMenuActionResourceRepo,
+	NewCaptchaRepo,
 )
 
 // Data .
 type Data struct {
-	db  *gorm.DB
-	rdb *redis.Client
+	DB  *gorm.DB
+	RDB *redis.Client
 }
 
 // NewData .
@@ -52,8 +53,8 @@ func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client) (*
 		log.NewHelper(logger).Info("closing the data resources")
 	}
 	return &Data{
-		db:  db,
-		rdb: rdb,
+		DB:  db,
+		RDB: rdb,
 	}, cleanup, nil
 }
 
@@ -76,6 +77,7 @@ func NewDB(c *conf.Data, logger log.Logger) *gorm.DB {
 	sqlDb.SetMaxOpenConns(int(c.Database.MaxOpenConns))
 	if c.Database.AutoMigrate {
 		if err = db.AutoMigrate(
+			&model.LoginLog{},
 			&model.User{},
 			&model.UserRole{},
 			&model.Role{},

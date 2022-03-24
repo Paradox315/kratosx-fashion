@@ -32,8 +32,9 @@ func newUser(db *gorm.DB) user {
 	_user.UserName = field.NewString(tableName, "user_name")
 	_user.NickName = field.NewString(tableName, "nick_name")
 	_user.Password = field.NewString(tableName, "password")
+	_user.Avatar = field.NewString(tableName, "avatar")
 	_user.Email = field.NewString(tableName, "email")
-	_user.Phone = field.NewString(tableName, "phone")
+	_user.Mobile = field.NewString(tableName, "mobile")
 	_user.Status = field.NewUint8(tableName, "status")
 	_user.CreatorID = field.NewUint64(tableName, "creator_id")
 	_user.Extras = field.NewString(tableName, "extras")
@@ -89,8 +90,9 @@ type user struct {
 	UserName  field.String
 	NickName  field.String
 	Password  field.String
+	Avatar    field.String
 	Email     field.String
-	Phone     field.String
+	Mobile    field.String
 	Status    field.Uint8
 	CreatorID field.Uint64
 	Extras    field.String
@@ -120,8 +122,9 @@ func (u *user) updateTableName(table string) *user {
 	u.UserName = field.NewString(table, "user_name")
 	u.NickName = field.NewString(table, "nick_name")
 	u.Password = field.NewString(table, "password")
+	u.Avatar = field.NewString(table, "avatar")
 	u.Email = field.NewString(table, "email")
-	u.Phone = field.NewString(table, "phone")
+	u.Mobile = field.NewString(table, "mobile")
 	u.Status = field.NewUint8(table, "status")
 	u.CreatorID = field.NewUint64(table, "creator_id")
 	u.Extras = field.NewString(table, "extras")
@@ -145,7 +148,7 @@ func (u *user) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (u *user) fillFieldMap() {
-	u.fieldMap = make(map[string]field.Expr, 14)
+	u.fieldMap = make(map[string]field.Expr, 15)
 	u.fieldMap["id"] = u.ID
 	u.fieldMap["created_at"] = u.CreatedAt
 	u.fieldMap["updated_at"] = u.UpdatedAt
@@ -153,8 +156,9 @@ func (u *user) fillFieldMap() {
 	u.fieldMap["user_name"] = u.UserName
 	u.fieldMap["nick_name"] = u.NickName
 	u.fieldMap["password"] = u.Password
+	u.fieldMap["avatar"] = u.Avatar
 	u.fieldMap["email"] = u.Email
-	u.fieldMap["phone"] = u.Phone
+	u.fieldMap["mobile"] = u.Mobile
 	u.fieldMap["status"] = u.Status
 	u.fieldMap["creator_id"] = u.CreatorID
 	u.fieldMap["extras"] = u.Extras

@@ -9,6 +9,9 @@ data:
   database:
     driver: mysql
     source: root:123456@tcp(127.0.0.1:3306)/violet
+    max_idle_conns: 10
+    max_open_conns: 100
+    auto_migrate: true
   redis:
     addr: 127.0.0.1:6379
     read_timeout: 0.2s
@@ -22,3 +25,7 @@ logger:
   stacktrace_key: stacktrace
   show_line: false
   log_in_console: true
+jwt:
+  secret: MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC7VJTUt9Us8cKj
+  issuer: paradox
+  ttl: 86400s

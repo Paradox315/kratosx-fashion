@@ -36,7 +36,7 @@ type UserXHTTPServer interface {
 
 func RegisterUserXHTTPServer(s *xhttp.Server, srv UserXHTTPServer) {
 	s.Route(func(r fiber.Router) {
-		api := r.Group("api/api/system/v1/user")
+		api := r.Group("api/system/v1/user")
 		// Register all service annotation
 		{
 			api.Use(middleware.Authenticator(), middleware.Authorizer())

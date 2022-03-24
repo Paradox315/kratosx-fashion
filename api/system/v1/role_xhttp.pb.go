@@ -35,7 +35,7 @@ type RoleXHTTPServer interface {
 
 func RegisterRoleXHTTPServer(s *xhttp.Server, srv RoleXHTTPServer) {
 	s.Route(func(r fiber.Router) {
-		api := r.Group("api/api/system/v1/role")
+		api := r.Group("api/system/v1/role")
 		// Register all service annotation
 		{
 			api.Use(middleware.Authenticator(), middleware.Authorizer())

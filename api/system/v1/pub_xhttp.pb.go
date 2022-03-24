@@ -34,7 +34,7 @@ type PubXHTTPServer interface {
 
 func RegisterPubXHTTPServer(s *xhttp.Server, srv PubXHTTPServer) {
 	s.Route(func(r fiber.Router) {
-		api := r.Group("api/api/system/v1/pub")
+		api := r.Group("api/system/v1/pub")
 		// Register all service annotation
 		{
 		}

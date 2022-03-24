@@ -11,6 +11,7 @@ import (
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/app/system/internal/conf"
 	"kratosx-fashion/app/system/internal/data"
+	"kratosx-fashion/app/system/internal/middleware"
 	"kratosx-fashion/app/system/internal/server"
 	"kratosx-fashion/app/system/internal/service"
 )
@@ -18,7 +19,7 @@ import (
 // Injectors from wire.go:
 
 // initApp init kratos application.
-func initApp(confServer *conf.Server, registry *conf.Registry, confData *conf.Data, logger *conf.Logger) (*kratos.App, func(), error) {
+func initApp(confServer *conf.Server, registry *conf.Registry, confData *conf.Data, jwt *conf.JWT, logger *conf.Logger) (*kratos.App, func(), error) {
 	logLogger := data.NewLogger(logger)
 	db := data.NewDB(confData, logLogger)
 	client := data.NewRedis(confData, logLogger)
@@ -28,7 +29,9 @@ func initApp(confServer *conf.Server, registry *conf.Registry, confData *conf.Da
 	}
 	userRepo := data.NewUserRepo(dataData, logLogger)
 	loginLogRepo := data.NewLoginLogRepo(dataData, logLogger)
-	publicUsecase := biz.NewPublicUsecase(userRepo, loginLogRepo, logLogger)
+	captchaRepo := data.NewCaptchaRepo(logLogger)
+	fiberMiddleware := middleware.NewJwtService(jwt, client, logLogger)
+	publicUsecase := biz.NewPublicUsecase(userRepo, loginLogRepo, captchaRepo, fiberMiddleware, logLogger)
 	pubService := service.NewPubService(publicUsecase, logLogger)
 	userRoleRepo := data.NewUserRoleRepo(dataData, logLogger)
 	userUsecase := biz.NewUserUsecase(userRepo, userRoleRepo, logLogger)

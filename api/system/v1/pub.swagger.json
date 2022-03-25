@@ -165,6 +165,38 @@
           "Pub"
         ]
       }
+    },
+    "/upload": {
+      "post": {
+        "operationId": "Pub_UploadFile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UploadReply"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1EmptyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Pub"
+        ]
+      }
     }
   },
   "definitions": {
@@ -246,9 +278,6 @@
     "v1RegisterReply": {
       "type": "object",
       "properties": {
-        "token": {
-          "$ref": "#/definitions/v1TokenData"
-        },
         "userId": {
           "type": "string"
         },
@@ -269,7 +298,7 @@
         "email": {
           "type": "string"
         },
-        "phone": {
+        "mobile": {
           "type": "string"
         },
         "captcha": {
@@ -300,11 +329,19 @@
         "accessToken": {
           "type": "string"
         },
-        "expiresIn": {
+        "expiresAt": {
           "type": "string",
           "format": "int64"
         },
         "tokenType": {
+          "type": "string"
+        }
+      }
+    },
+    "v1UploadReply": {
+      "type": "object",
+      "properties": {
+        "url": {
           "type": "string"
         }
       }

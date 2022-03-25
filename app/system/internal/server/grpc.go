@@ -4,17 +4,19 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
-	v1 "kratosx-fashion/api/system/v1"
+
 	"kratosx-fashion/app/system/internal/conf"
-	service2 "kratosx-fashion/app/system/internal/service"
+	"kratosx-fashion/app/system/internal/service"
+
+	v1 "kratosx-fashion/api/system/v1"
 )
 
 // NewGRPCServer new a gRPC server.
 func NewGRPCServer(c *conf.Server,
-	publicSrv *service2.PubService,
-	userSrv *service2.UserService,
-	roleSrv *service2.RoleService,
-	menuSrv *service2.MenuService,
+	publicSrv *service.PubService,
+	userSrv *service.UserService,
+	roleSrv *service.RoleService,
+	menuSrv *service.MenuService,
 	logger log.Logger) *grpc.Server {
 	var opts = []grpc.ServerOption{
 		grpc.Middleware(

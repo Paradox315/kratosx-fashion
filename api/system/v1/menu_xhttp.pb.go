@@ -7,11 +7,13 @@ package v1
 import (
 	context "context"
 	middleware "github.com/go-kratos/kratos/v2/middleware"
+	transport "github.com/go-kratos/kratos/v2/transport"
 	xhttp "github.com/go-kratos/kratos/v2/transport/xhttp"
 	apistate "github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
 	binding "github.com/go-kratos/kratos/v2/transport/xhttp/binding"
-	"github.com/gofiber/fiber/v2"
 )
+
+import fiber "github.com/gofiber/fiber/v2"
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the kratos package it is being compiled against.
@@ -20,6 +22,7 @@ var _ = binding.BindBody
 
 const _ = xhttp.SupportPackageIsVersion1
 const _ = middleware.SupportPackageIsVersion1
+const _ = transport.KindXHTTP
 
 var _ = new(apistate.Resp)
 
@@ -53,105 +56,112 @@ func RegisterMenuXHTTPServer(s *xhttp.Server, srv MenuXHTTPServer) {
 
 //
 func _Menu_CreateMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in MenuRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.CreateMenu(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.CreateMenu(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Menu_UpdateMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in MenuRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.UpdateMenu(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.UpdateMenu(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Menu_UpdateMenuStatus0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in IDRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.UpdateMenuStatus(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.UpdateMenuStatus(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Menu_DeleteMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in IDRequest
-		if err := binding.BindParams(ctx, &in); err != nil {
-			return err
+		if err := binding.BindParams(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.DeleteMenu(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.DeleteMenu(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Menu_GetMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in IDRequest
-		if err := binding.BindParams(ctx, &in); err != nil {
-			return err
+		if err := binding.BindParams(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.GetMenu(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.GetMenu(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Menu_ListMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in ListRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.ListMenu(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.ListMenu(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Menu_GetMenuTree0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in TreeRequest
-		if err := binding.BindQuery(ctx, &in); err != nil {
-			return err
+		if err := binding.BindQuery(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.GetMenuTree(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.GetMenuTree(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }

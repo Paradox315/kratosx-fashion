@@ -29,8 +29,8 @@ func newUser(db *gorm.DB) user {
 	_user.CreatedAt = field.NewTime(tableName, "created_at")
 	_user.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_user.DeletedAt = field.NewField(tableName, "deleted_at")
-	_user.UserName = field.NewString(tableName, "user_name")
-	_user.NickName = field.NewString(tableName, "nick_name")
+	_user.Username = field.NewString(tableName, "username")
+	_user.Nickname = field.NewString(tableName, "nickname")
 	_user.Password = field.NewString(tableName, "password")
 	_user.Avatar = field.NewString(tableName, "avatar")
 	_user.Email = field.NewString(tableName, "email")
@@ -87,8 +87,8 @@ type user struct {
 	CreatedAt field.Time
 	UpdatedAt field.Time
 	DeletedAt field.Field
-	UserName  field.String
-	NickName  field.String
+	Username  field.String
+	Nickname  field.String
 	Password  field.String
 	Avatar    field.String
 	Email     field.String
@@ -119,8 +119,8 @@ func (u *user) updateTableName(table string) *user {
 	u.CreatedAt = field.NewTime(table, "created_at")
 	u.UpdatedAt = field.NewTime(table, "updated_at")
 	u.DeletedAt = field.NewField(table, "deleted_at")
-	u.UserName = field.NewString(table, "user_name")
-	u.NickName = field.NewString(table, "nick_name")
+	u.Username = field.NewString(table, "username")
+	u.Nickname = field.NewString(table, "nickname")
 	u.Password = field.NewString(table, "password")
 	u.Avatar = field.NewString(table, "avatar")
 	u.Email = field.NewString(table, "email")
@@ -153,8 +153,8 @@ func (u *user) fillFieldMap() {
 	u.fieldMap["created_at"] = u.CreatedAt
 	u.fieldMap["updated_at"] = u.UpdatedAt
 	u.fieldMap["deleted_at"] = u.DeletedAt
-	u.fieldMap["user_name"] = u.UserName
-	u.fieldMap["nick_name"] = u.NickName
+	u.fieldMap["username"] = u.Username
+	u.fieldMap["nickname"] = u.Nickname
 	u.fieldMap["password"] = u.Password
 	u.fieldMap["avatar"] = u.Avatar
 	u.fieldMap["email"] = u.Email

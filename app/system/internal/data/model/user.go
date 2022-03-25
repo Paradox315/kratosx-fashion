@@ -10,9 +10,9 @@ var _ middleware.JwtUser = (*User)(nil)
 
 type User struct {
 	gorm.Model
-	UserName  string     `gorm:"size:64;uniqueIndex;default:'unknown';not null;comment:用户名"`                                                     // 用户名
-	NickName  string     `gorm:"size:64;index;default:'';not null;comment:昵称"`                                                                   // 昵称
-	Password  string     `gorm:"size:40;default:'';not null;comment:密码"`                                                                         // 密码
+	Username  string     `gorm:"size:64;uniqueIndex;default:'unknown';not null;comment:用户名"`                                                     // 用户名
+	Nickname  string     `gorm:"size:64;default:'';not null;comment:昵称"`                                                                         // 昵称
+	Password  string     `gorm:"size:255;default:'';not null;comment:密码"`                                                                        // 密码
 	Avatar    string     `gorm:"size:255;default:'https://paradox-hyw.oss-cn-shanghai.aliyuncs.com/img/default-avatar.png';not null;comment:头像"` // 头像
 	Email     string     `gorm:"size:255;uniqueIndex;default:'';not null;comment:邮箱"`                                                            // 邮箱
 	Mobile    string     `gorm:"size:20;uniqueIndex;default:'';not null;comment:手机号"`                                                            // 手机号

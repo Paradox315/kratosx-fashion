@@ -13,7 +13,7 @@ func BcryptMake(pwd string) string {
 	return string(hash)
 }
 
-func BcryptMakeCheck(pwd string, hashedPwd string) bool {
+func BcryptCheck(pwd string, hashedPwd string) bool {
 	byteHash := []byte(hashedPwd)
 	err := bcrypt.CompareHashAndPassword(byteHash, []byte(pwd))
 	if err != nil {

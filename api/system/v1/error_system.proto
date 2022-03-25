@@ -12,15 +12,18 @@ enum ErrorReason {
   option (errors.default_code) = 500;
 
   USER_ALREADY_EXISTS = 0 [(errors.code) = 409];
-  EMAIL_INVALID = 1 [(errors.code) = 400];
-  EMAIL_ALREADY_EXISTS = 2 [(errors.code) = 409];
-  MOBILE_INVALID = 3 [(errors.code) = 400];
-  MOBILE_ALREADY_EXISTS = 4 [(errors.code) = 409];
-  BIND_FAIL = 5 [(errors.code) = 500];
-  PASSWORD_INVALID = 6 [(errors.code) = 400];
-  CAPTCHA_INVALID = 7 [(errors.code) = 400];
-  ROLE_ALREADY_EXISTS = 8 [(errors.code) = 409];
-  ROLE_NOT_EXISTS = 9 [(errors.code) = 400];
-  MENU_ALREADY_EXISTS = 10 [(errors.code) = 409];
-  MENU_NOT_EXISTS = 11 [(errors.code) = 400];
+  USER_INVALID= 1 [(errors.code) = 400];
+  EMAIL_INVALID = 2 [(errors.code) = 400];
+  EMAIL_ALREADY_EXISTS = 3 [(errors.code) = 409];
+  MOBILE_INVALID = 4 [(errors.code) = 400];
+  MOBILE_ALREADY_EXISTS = 5 [(errors.code) = 409];
+  BIND_FAIL = 6 [(errors.code) = 500];
+  PASSWORD_INVALID = 7 [(errors.code) = 400];
+  CAPTCHA_INVALID = 8 [(errors.code) = 400];
+  ROLE_ALREADY_EXISTS = 9 [(errors.code) = 409];
+  ROLE_NOT_EXISTS = 10 [(errors.code) = 400];
+  MENU_ALREADY_EXISTS = 11 [(errors.code) = 409];
+  MENU_NOT_EXISTS = 12 [(errors.code) = 400];
+  FILE_UPLOAD_FAIL = 13 [(errors.code) = 500];
+  FILE_OPEN_FAIL = 14 [(errors.code) = 500];
 }

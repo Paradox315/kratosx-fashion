@@ -19,7 +19,7 @@ import (
 // Injectors from wire.go:
 
 // initApp init kratos application.
-func initApp(confServer *conf.Server, registry *conf.Registry, confData *conf.Data, jwt *conf.JWT, logger *conf.Logger) (*kratos.App, func(), error) {
+func initApp(confServer *conf.Server, registry *conf.Registry, storage *conf.Storage, confData *conf.Data, jwt *conf.JWT, logger *conf.Logger) (*kratos.App, func(), error) {
 	logLogger := data.NewLogger(logger)
 	db := data.NewDB(confData, logLogger)
 	client := data.NewRedis(confData, logLogger)
@@ -30,8 +30,9 @@ func initApp(confServer *conf.Server, registry *conf.Registry, confData *conf.Da
 	userRepo := data.NewUserRepo(dataData, logLogger)
 	loginLogRepo := data.NewLoginLogRepo(dataData, logLogger)
 	captchaRepo := data.NewCaptchaRepo(logLogger)
-	fiberMiddleware := middleware.NewJwtService(jwt, client, logLogger)
-	publicUsecase := biz.NewPublicUsecase(userRepo, loginLogRepo, captchaRepo, fiberMiddleware, logLogger)
+	jwtService := middleware.NewJwtService(jwt, client, logLogger)
+	storageStorage := data.NewStorage(storage)
+	publicUsecase := biz.NewPublicUsecase(userRepo, loginLogRepo, captchaRepo, jwtService, storageStorage, logLogger)
 	pubService := service.NewPubService(publicUsecase, logLogger)
 	userRoleRepo := data.NewUserRoleRepo(dataData, logLogger)
 	userUsecase := biz.NewUserUsecase(userRepo, userRoleRepo, logLogger)

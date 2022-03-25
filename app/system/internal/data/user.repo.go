@@ -37,16 +37,18 @@ func (u userRepo) Select(ctx context.Context, id uint) (*model.User, error) {
 
 func (u userRepo) SelectByUsername(ctx context.Context, username string) (*model.User, error) {
 	ur := u.baseRepo.User
-	return ur.WithContext(ctx).Where(ur.UserName.Eq(username)).First()
+	return ur.WithContext(ctx).Where(ur.Username.Eq(username)).First()
 }
 
-func (u userRepo) SelectPasswordByName(ctx context.Context, username string) (string, error) {
+func (u userRepo) SelectPasswordByName(ctx context.Context, username string) (uid uint, pwd string, err error) {
 	ur := u.baseRepo.User
-	user, err := ur.WithContext(ctx).Where(ur.UserName.Eq(username)).Select(ur.Password).First()
+	user, err := ur.WithContext(ctx).Where(ur.Username.Eq(username)).Select(ur.Password, ur.ID).First()
 	if err != nil {
-		return "", err
+		return
 	}
-	return user.Password, err
+	uid = user.ID
+	pwd = user.Password
+	return
 }
 
 func (u userRepo) List(ctx context.Context, req *pb.ListRequest, opts ...*pb.QueryOption) (users []*model.User, total int64, err error) {
@@ -94,27 +96,27 @@ func (u userRepo) DeleteByIDs(ctx context.Context, ids []uint) error {
 
 func (u *userRepo) ExistByUserName(ctx context.Context, username string) bool {
 	ur := u.baseRepo.User
-	_, err := ur.WithContext(ctx).Where(ur.UserName.Eq(username)).First()
+	_, err := ur.WithContext(ctx).Where(ur.Username.Eq(username)).First()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
 func (u *userRepo) ExistByEmail(ctx context.Context, email string) bool {
 	ur := u.baseRepo.User
 	_, err := ur.WithContext(ctx).Where(ur.Email.Eq(email)).First()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
 func (u *userRepo) ExistByMobile(ctx context.Context, mobile string) bool {
 	ur := u.baseRepo.User
 	_, err := ur.WithContext(ctx).Where(ur.Mobile.Eq(mobile)).First()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return true
+		return false
 	}
-	return false
+	return true
 }

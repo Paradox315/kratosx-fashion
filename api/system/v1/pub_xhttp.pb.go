@@ -7,11 +7,13 @@ package v1
 import (
 	context "context"
 	middleware "github.com/go-kratos/kratos/v2/middleware"
+	transport "github.com/go-kratos/kratos/v2/transport"
 	xhttp "github.com/go-kratos/kratos/v2/transport/xhttp"
 	apistate "github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
 	binding "github.com/go-kratos/kratos/v2/transport/xhttp/binding"
-	"github.com/gofiber/fiber/v2"
 )
+
+import fiber "github.com/gofiber/fiber/v2"
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the kratos package it is being compiled against.
@@ -20,6 +22,7 @@ var _ = binding.BindBody
 
 const _ = xhttp.SupportPackageIsVersion1
 const _ = middleware.SupportPackageIsVersion1
+const _ = transport.KindXHTTP
 
 var _ = new(apistate.Resp)
 
@@ -30,6 +33,7 @@ type PubXHTTPServer interface {
 	Logout(context.Context, *EmptyRequest) (*EmptyReply, error)
 	Register(context.Context, *RegisterRequest) (*RegisterReply, error)
 	RetrievePwd(context.Context, *RetrieveRequest) (*EmptyReply, error)
+	UploadFile(context.Context, *EmptyRequest) (*UploadReply, error)
 }
 
 func RegisterPubXHTTPServer(s *xhttp.Server, srv PubXHTTPServer) {
@@ -43,80 +47,102 @@ func RegisterPubXHTTPServer(s *xhttp.Server, srv PubXHTTPServer) {
 		api.Post("/login", _Pub_Login0_XHTTP_Handler(srv))
 		api.Post("/logout", _Pub_Logout0_XHTTP_Handler(srv))
 		api.Post("/retrieve", _Pub_RetrievePwd0_XHTTP_Handler(srv))
+		api.Post("/upload", _Pub_UploadFile0_XHTTP_Handler(srv))
 	})
 }
 
 //
 func _Pub_Generate0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in EmptyRequest
-		if err := binding.BindQuery(ctx, &in); err != nil {
-			return err
+		if err := binding.BindQuery(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.Generate(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.Generate(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Pub_Register0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in RegisterRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.Register(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.Register(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Pub_Login0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in LoginRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.Login(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.Login(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Pub_Logout0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in EmptyRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.Logout(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.Logout(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Pub_RetrievePwd0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in RetrieveRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.RetrievePwd(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.RetrievePwd(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
+	}
+}
+
+//
+func _Pub_UploadFile0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var in EmptyRequest
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
+		}
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.UploadFile(ctx, &in)
+		if err != nil {
+			return apistate.Error().WithError(err).Send(c)
+		}
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }

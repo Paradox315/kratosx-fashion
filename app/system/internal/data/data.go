@@ -68,7 +68,6 @@ func NewDB(c *conf.Data, logger log.Logger) *gorm.DB {
 		},
 		PrepareStmt: true,
 	})
-
 	if err != nil {
 		log.NewHelper(logger).Fatal("failed to connect database", zap.Error(err))
 	}

@@ -48,6 +48,12 @@ type JwtUser interface {
 	GetUid() string
 }
 
+type TokenOut struct {
+	Token     string `json:"token"`
+	ExpireAt  int64  `json:"expire_at"`
+	TokenType string `json:"token_type"`
+}
+
 type JWTService struct {
 	secret string
 	ttl    int64
@@ -58,7 +64,7 @@ type JWTService struct {
 	log  *log.Helper
 }
 
-func NewJwtService(jc *conf.JWT, rdb *redis.Client, logger log.Logger) kmw.FiberMiddleware {
+func NewJwtService(jc *conf.JWT, rdb *redis.Client, logger log.Logger) *JWTService {
 	j := &JWTService{
 		secret: jc.Secret,
 		ttl:    jc.Ttl.Seconds,
@@ -108,8 +114,7 @@ func (j *JWTService) MiddlewareFunc() fiber.Handler {
 			} else if claims.Issuer != j.issuer {
 				return ErrTokenInvalid
 			}
-			c.Set("token", jwtToken)
-			c.Locals("claims", tokenInfo.Claims)
+			c.Locals("token", tokenInfo)
 			return nil
 		}
 		if err := errCatch(c.Context()); err != nil {
@@ -125,10 +130,10 @@ func (j *JWTService) Name() string {
 }
 
 // CreateToken 生成 Token
-func (j *JWTService) CreateToken(ctx context.Context, user JwtUser) (tokenStr string, err error, token *jwt.Token) {
+func (j *JWTService) CreateToken(ctx context.Context, user JwtUser) (tokenData TokenOut, err error) {
 	jti, _ := uuid.NewUUID()
 	exp := time.Now().Unix() + j.ttl
-	token = jwt.NewWithClaims(
+	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
 		jwt.StandardClaims{
 			ExpiresAt: exp,
@@ -140,12 +145,16 @@ func (j *JWTService) CreateToken(ctx context.Context, user JwtUser) (tokenStr st
 		},
 	)
 
-	tokenStr, err = token.SignedString([]byte(j.secret))
+	tokenStr, err := token.SignedString([]byte(j.secret))
 	if err != nil {
 		j.log.WithContext(ctx).Error("Failed to sign token: %s", err.Error())
 		return
 	}
-
+	tokenData = TokenOut{
+		Token:     tokenStr,
+		ExpireAt:  exp,
+		TokenType: bearerWord,
+	}
 	return
 }
 

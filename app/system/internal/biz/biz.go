@@ -21,7 +21,7 @@ var ProviderSet = wire.NewSet(
 type UserRepo interface {
 	Select(context.Context, uint) (*model.User, error)
 	SelectByUsername(context.Context, string) (*model.User, error)
-	SelectPasswordByName(context.Context, string) (string, error)
+	SelectPasswordByName(context.Context, string) (uint, string, error)
 	List(context.Context, *pb.ListRequest, ...*pb.QueryOption) ([]*model.User, int64, error)
 	Insert(context.Context, *model.User) error
 	Update(context.Context, *model.User) error

@@ -7,11 +7,13 @@ package v1
 import (
 	context "context"
 	middleware "github.com/go-kratos/kratos/v2/middleware"
+	transport "github.com/go-kratos/kratos/v2/transport"
 	xhttp "github.com/go-kratos/kratos/v2/transport/xhttp"
 	apistate "github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
 	binding "github.com/go-kratos/kratos/v2/transport/xhttp/binding"
-	"github.com/gofiber/fiber/v2"
 )
+
+import fiber "github.com/gofiber/fiber/v2"
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the kratos package it is being compiled against.
@@ -20,6 +22,7 @@ var _ = binding.BindBody
 
 const _ = xhttp.SupportPackageIsVersion1
 const _ = middleware.SupportPackageIsVersion1
+const _ = transport.KindXHTTP
 
 var _ = new(apistate.Resp)
 
@@ -53,105 +56,112 @@ func RegisterUserXHTTPServer(s *xhttp.Server, srv UserXHTTPServer) {
 
 //
 func _User_CreateUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in UserRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.CreateUser(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.CreateUser(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _User_UpdateUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in UserRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.UpdateUser(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.UpdateUser(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _User_UpdatePassword0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in PasswordRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.UpdatePassword(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.UpdatePassword(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _User_UpdateUserStatus0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in IDRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.UpdateUserStatus(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.UpdateUserStatus(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _User_DeleteUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in IDRequest
-		if err := binding.BindParams(ctx, &in); err != nil {
-			return err
+		if err := binding.BindParams(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.DeleteUser(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.DeleteUser(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _User_GetUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in IDRequest
-		if err := binding.BindParams(ctx, &in); err != nil {
-			return err
+		if err := binding.BindParams(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.GetUser(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.GetUser(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _User_ListUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in ListRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.ListUser(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.ListUser(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }

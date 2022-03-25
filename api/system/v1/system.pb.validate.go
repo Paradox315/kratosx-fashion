@@ -190,9 +190,9 @@ func (m *RegisterRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetPhone()) > 11 {
+	if utf8.RuneCountInString(m.GetMobile()) > 11 {
 		err := RegisterRequestValidationError{
-			field:  "Phone",
+			field:  "Mobile",
 			reason: "value length must be at most 11 runes",
 		}
 		if !all {
@@ -201,9 +201,9 @@ func (m *RegisterRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if !_RegisterRequest_Phone_Pattern.MatchString(m.GetPhone()) {
+	if !_RegisterRequest_Mobile_Pattern.MatchString(m.GetMobile()) {
 		err := RegisterRequestValidationError{
-			field:  "Phone",
+			field:  "Mobile",
 			reason: "value does not match regex pattern \"^1(3|4|5|6|7|8|9)\\\\d{9}$\"",
 		}
 		if !all {
@@ -357,7 +357,7 @@ var _RegisterRequest_Username_Pattern = regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_
 
 var _RegisterRequest_Password_Pattern = regexp.MustCompile("^[a-zA-Z]\\w{5,17}$")
 
-var _RegisterRequest_Phone_Pattern = regexp.MustCompile("^1(3|4|5|6|7|8|9)\\d{9}$")
+var _RegisterRequest_Mobile_Pattern = regexp.MustCompile("^1(3|4|5|6|7|8|9)\\d{9}$")
 
 // Validate checks the field values on RetrieveRequest with the rules defined
 // in the proto definition for this message. If any rules are violated, the
@@ -2861,35 +2861,6 @@ func (m *RegisterReply) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetToken()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, RegisterReplyValidationError{
-					field:  "Token",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, RegisterReplyValidationError{
-					field:  "Token",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetToken()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return RegisterReplyValidationError{
-				field:  "Token",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for UserId
 
 	// no validation rules for Username
@@ -3103,6 +3074,107 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = LoginReplyValidationError{}
+
+// Validate checks the field values on UploadReply with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *UploadReply) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UploadReply with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in UploadReplyMultiError, or
+// nil if none found.
+func (m *UploadReply) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UploadReply) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Url
+
+	if len(errors) > 0 {
+		return UploadReplyMultiError(errors)
+	}
+
+	return nil
+}
+
+// UploadReplyMultiError is an error wrapping multiple validation errors
+// returned by UploadReply.ValidateAll() if the designated constraints aren't met.
+type UploadReplyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UploadReplyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UploadReplyMultiError) AllErrors() []error { return m }
+
+// UploadReplyValidationError is the validation error returned by
+// UploadReply.Validate if the designated constraints aren't met.
+type UploadReplyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UploadReplyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UploadReplyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UploadReplyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UploadReplyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UploadReplyValidationError) ErrorName() string { return "UploadReplyValidationError" }
+
+// Error satisfies the builtin error interface
+func (e UploadReplyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUploadReply.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UploadReplyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UploadReplyValidationError{}
 
 // Validate checks the field values on MenuTreeReply with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -3675,7 +3747,7 @@ func (m *TokenData) validate(all bool) error {
 
 	// no validation rules for AccessToken
 
-	// no validation rules for ExpiresIn
+	// no validation rules for ExpiresAt
 
 	// no validation rules for TokenType
 

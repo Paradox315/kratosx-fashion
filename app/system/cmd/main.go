@@ -69,7 +69,12 @@ func main() {
 		panic(err)
 	}
 
-	app, cleanup, err := initApp(bc.Server, &rc, bc.Data, bc.Jwt, bc.Logger)
+	var sc conf.Storage
+	if err := c.Scan(&sc); err != nil {
+		panic(err)
+	}
+
+	app, cleanup, err := initApp(bc.Server, &rc, &sc, bc.Data, bc.Jwt, bc.Logger)
 	if err != nil {
 		panic(err)
 	}

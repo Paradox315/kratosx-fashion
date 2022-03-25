@@ -23,6 +23,18 @@ func ErrorUserAlreadyExists(format string, args ...interface{}) *errors.Error {
 	return errors.New(409, ErrorReason_USER_ALREADY_EXISTS.String(), fmt.Sprintf(format, args...))
 }
 
+func IsUserInvalid(err error) bool {
+	if err == nil {
+		return false
+	}
+	e := errors.FromError(err)
+	return e.Reason == ErrorReason_USER_INVALID.String() && e.Code == 400
+}
+
+func ErrorUserInvalid(format string, args ...interface{}) *errors.Error {
+	return errors.New(400, ErrorReason_USER_INVALID.String(), fmt.Sprintf(format, args...))
+}
+
 func IsEmailInvalid(err error) bool {
 	if err == nil {
 		return false
@@ -153,4 +165,28 @@ func IsMenuNotExists(err error) bool {
 
 func ErrorMenuNotExists(format string, args ...interface{}) *errors.Error {
 	return errors.New(400, ErrorReason_MENU_NOT_EXISTS.String(), fmt.Sprintf(format, args...))
+}
+
+func IsFileUploadFail(err error) bool {
+	if err == nil {
+		return false
+	}
+	e := errors.FromError(err)
+	return e.Reason == ErrorReason_FILE_UPLOAD_FAIL.String() && e.Code == 500
+}
+
+func ErrorFileUploadFail(format string, args ...interface{}) *errors.Error {
+	return errors.New(500, ErrorReason_FILE_UPLOAD_FAIL.String(), fmt.Sprintf(format, args...))
+}
+
+func IsFileOpenFail(err error) bool {
+	if err == nil {
+		return false
+	}
+	e := errors.FromError(err)
+	return e.Reason == ErrorReason_FILE_OPEN_FAIL.String() && e.Code == 500
+}
+
+func ErrorFileOpenFail(format string, args ...interface{}) *errors.Error {
+	return errors.New(500, ErrorReason_FILE_OPEN_FAIL.String(), fmt.Sprintf(format, args...))
 }

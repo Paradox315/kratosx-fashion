@@ -27,6 +27,7 @@ type PubClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginReply, error)
 	Logout(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*EmptyReply, error)
 	RetrievePwd(ctx context.Context, in *RetrieveRequest, opts ...grpc.CallOption) (*EmptyReply, error)
+	UploadFile(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*UploadReply, error)
 }
 
 type pubClient struct {
@@ -82,6 +83,15 @@ func (c *pubClient) RetrievePwd(ctx context.Context, in *RetrieveRequest, opts .
 	return out, nil
 }
 
+func (c *pubClient) UploadFile(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*UploadReply, error) {
+	out := new(UploadReply)
+	err := c.cc.Invoke(ctx, "/api.system.v1.Pub/UploadFile", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PubServer is the server API for Pub service.
 // All implementations must embed UnimplementedPubServer
 // for forward compatibility
@@ -91,6 +101,7 @@ type PubServer interface {
 	Login(context.Context, *LoginRequest) (*LoginReply, error)
 	Logout(context.Context, *EmptyRequest) (*EmptyReply, error)
 	RetrievePwd(context.Context, *RetrieveRequest) (*EmptyReply, error)
+	UploadFile(context.Context, *EmptyRequest) (*UploadReply, error)
 	mustEmbedUnimplementedPubServer()
 }
 
@@ -112,6 +123,9 @@ func (UnimplementedPubServer) Logout(context.Context, *EmptyRequest) (*EmptyRepl
 }
 func (UnimplementedPubServer) RetrievePwd(context.Context, *RetrieveRequest) (*EmptyReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RetrievePwd not implemented")
+}
+func (UnimplementedPubServer) UploadFile(context.Context, *EmptyRequest) (*UploadReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadFile not implemented")
 }
 func (UnimplementedPubServer) mustEmbedUnimplementedPubServer() {}
 
@@ -216,6 +230,24 @@ func _Pub_RetrievePwd_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Pub_UploadFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EmptyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PubServer).UploadFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.system.v1.Pub/UploadFile",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PubServer).UploadFile(ctx, req.(*EmptyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Pub_ServiceDesc is the grpc.ServiceDesc for Pub service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -242,6 +274,10 @@ var Pub_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RetrievePwd",
 			Handler:    _Pub_RetrievePwd_Handler,
+		},
+		{
+			MethodName: "UploadFile",
+			Handler:    _Pub_UploadFile_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

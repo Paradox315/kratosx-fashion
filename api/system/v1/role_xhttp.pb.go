@@ -7,11 +7,13 @@ package v1
 import (
 	context "context"
 	middleware "github.com/go-kratos/kratos/v2/middleware"
+	transport "github.com/go-kratos/kratos/v2/transport"
 	xhttp "github.com/go-kratos/kratos/v2/transport/xhttp"
 	apistate "github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
 	binding "github.com/go-kratos/kratos/v2/transport/xhttp/binding"
-	"github.com/gofiber/fiber/v2"
 )
+
+import fiber "github.com/gofiber/fiber/v2"
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the kratos package it is being compiled against.
@@ -20,6 +22,7 @@ var _ = binding.BindBody
 
 const _ = xhttp.SupportPackageIsVersion1
 const _ = middleware.SupportPackageIsVersion1
+const _ = transport.KindXHTTP
 
 var _ = new(apistate.Resp)
 
@@ -51,90 +54,96 @@ func RegisterRoleXHTTPServer(s *xhttp.Server, srv RoleXHTTPServer) {
 
 //
 func _Role_CreateRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in RoleRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.CreateRole(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.CreateRole(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Role_UpdateRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in RoleRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.UpdateRole(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.UpdateRole(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Role_UpdateRoleStatus0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in IDRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.UpdateRoleStatus(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.UpdateRoleStatus(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Role_DeleteRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in IDRequest
-		if err := binding.BindParams(ctx, &in); err != nil {
-			return err
+		if err := binding.BindParams(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.DeleteRole(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.DeleteRole(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Role_GetRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in IDRequest
-		if err := binding.BindParams(ctx, &in); err != nil {
-			return err
+		if err := binding.BindParams(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.GetRole(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.GetRole(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }
 
 //
 func _Role_ListRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var in ListRequest
-		if err := binding.BindBody(ctx, &in); err != nil {
-			return err
+		if err := binding.BindBody(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
 		}
-		reply, err := srv.ListRole(ctx.Context(), &in)
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.ListRole(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(ctx)
+			return apistate.Error().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(ctx)
+		return apistate.Success().WithData(reply).Send(c)
 	}
 }

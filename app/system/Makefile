@@ -1,24 +1,24 @@
 GOPATH:=$(shell go env GOPATH)
 VERSION=$(shell git describe --tags --always)
 INTERNAL_PROTO_FILES=$(shell find internal -name  *.proto)
-API_PROTO_FILES=$(shell cd ../../ && find api/$(APP_NAME) -name *.proto)
+API_PROTO_FILES=$(shell cd ../../ && find api/$(APP_NAME) -name *.proto | grep -v 'error')
 ERROR_PROTO_FILES=$(shell cd ../../ && find api/$(APP_NAME) -name error*.proto)
 APP_NAME=system
 
 .PHONY: init
 # init env
 init:
-	go get -u google.golang.org/protobuf/cmd/protoc-gen-go
-	go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
-	go get -u github.com/Paradox315/protoc-gen-go-xhttp
-	go get -u github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v2
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	go install github.com/Paradox315/protoc-gen-go-xhttp@latest
+	go install github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v2@latest
 
-	go get -u github.com/gogo/protobuf/proto
-	go get -u github.com/gogo/protobuf/gogoproto
-	go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
+	go install github.com/gogo/protobuf/proto@latest
+	go install github.com/gogo/protobuf/gogoproto@latest
+	go install github.com/gogo/protobuf/protoc-gen-gofast@latest
 
 	go get -u github.com/google/wire/cmd/wire
-	go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
+	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
 	go install github.com/envoyproxy/protoc-gen-validate@latest
 
 

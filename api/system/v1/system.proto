@@ -225,8 +225,9 @@ message MenuMeta{
 }
 
 message QueryOption{
-  // ["EQ", "NEQ", "GT", "GTE", "LT", "LTE", "IN", "SORT","BETWEEN"]
+  // ["EQ", "NEQ", "GT", "GTE", "LT", "LTE", "IN", "SORT", "LIKE", "BETWEEN"]
   string opt = 1;
+  // 根据opt的不同，可能是string，int，bool，或者是一个数组
   string value = 2;
   message Interval{
     string from = 1;

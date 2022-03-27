@@ -28,14 +28,14 @@ service Role {
 
 	rpc UpdateRoleStatus (IDRequest) returns (IDReply){
 		option (google.api.http) = {
-			put: "/status"
+			put: "/status/{id}"
 			body: "*"
 		};
 	}
 
-	rpc DeleteRole (IDRequest) returns (EmptyReply){
+	rpc DeleteRole (IDsRequest) returns (EmptyReply){
 		option (google.api.http) = {
-			delete: "/{id}"
+			delete: "/{ids}"
 		};
 	}
 
@@ -47,8 +47,7 @@ service Role {
 
 	rpc ListRole (ListRequest) returns (ListRoleReply){
 		option (google.api.http) = {
-			post: "/list"
-			body: "*"
+			get: "/list"
 		};
 	}
 }

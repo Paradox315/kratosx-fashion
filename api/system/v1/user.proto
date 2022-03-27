@@ -35,14 +35,14 @@ service User {
 
 	rpc UpdateUserStatus(IDRequest) returns (IDReply){
 		option (google.api.http) = {
-			put: "/status"
+			put: "/status/{id}"
 			body: "*"
 		};
 	}
 
-	rpc DeleteUser (IDRequest) returns (EmptyReply){
+	rpc DeleteUser (IDsRequest) returns (EmptyReply){
 		option (google.api.http) = {
-			delete: "/{id}"
+			delete: "/{ids}"
 		};
 	}
 
@@ -52,7 +52,7 @@ service User {
 		};
 	}
 
-	rpc ListUser (ListRequest) returns (ListUserReply){
+	rpc ListUser (ListSearchRequest) returns (ListUserReply){
 		option (google.api.http) = {
 			post: "/list"
 			body: "*"

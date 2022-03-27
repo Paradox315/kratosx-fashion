@@ -35,6 +35,8 @@ func newLoginLog(db *gorm.DB) loginLog {
 	_loginLog.LoginType = field.NewUint8(tableName, "login_type")
 	_loginLog.Agent = field.NewString(tableName, "agent")
 	_loginLog.OS = field.NewString(tableName, "os")
+	_loginLog.Device = field.NewString(tableName, "device")
+	_loginLog.DeviceType = field.NewUint8(tableName, "device_type")
 
 	_loginLog.fillFieldMap()
 
@@ -44,17 +46,19 @@ func newLoginLog(db *gorm.DB) loginLog {
 type loginLog struct {
 	loginLogDo loginLogDo
 
-	ALL       field.Field
-	ID        field.Uint
-	CreatedAt field.Time
-	UpdatedAt field.Time
-	DeletedAt field.Field
-	UserID    field.Uint64
-	Ip        field.String
-	Location  field.String
-	LoginType field.Uint8
-	Agent     field.String
-	OS        field.String
+	ALL        field.Field
+	ID         field.Uint
+	CreatedAt  field.Time
+	UpdatedAt  field.Time
+	DeletedAt  field.Field
+	UserID     field.Uint64
+	Ip         field.String
+	Location   field.String
+	LoginType  field.Uint8
+	Agent      field.String
+	OS         field.String
+	Device     field.String
+	DeviceType field.Uint8
 
 	fieldMap map[string]field.Expr
 }
@@ -81,6 +85,8 @@ func (l *loginLog) updateTableName(table string) *loginLog {
 	l.LoginType = field.NewUint8(table, "login_type")
 	l.Agent = field.NewString(table, "agent")
 	l.OS = field.NewString(table, "os")
+	l.Device = field.NewString(table, "device")
+	l.DeviceType = field.NewUint8(table, "device_type")
 
 	l.fillFieldMap()
 
@@ -101,7 +107,7 @@ func (l *loginLog) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (l *loginLog) fillFieldMap() {
-	l.fieldMap = make(map[string]field.Expr, 10)
+	l.fieldMap = make(map[string]field.Expr, 12)
 	l.fieldMap["id"] = l.ID
 	l.fieldMap["created_at"] = l.CreatedAt
 	l.fieldMap["updated_at"] = l.UpdatedAt
@@ -112,6 +118,8 @@ func (l *loginLog) fillFieldMap() {
 	l.fieldMap["login_type"] = l.LoginType
 	l.fieldMap["agent"] = l.Agent
 	l.fieldMap["os"] = l.OS
+	l.fieldMap["device"] = l.Device
+	l.fieldMap["device_type"] = l.DeviceType
 }
 
 func (l loginLog) clone(db *gorm.DB) loginLog {

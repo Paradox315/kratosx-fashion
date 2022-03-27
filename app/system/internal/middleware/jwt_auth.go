@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"kratosx-fashion/app/system/internal/conf"
 	"kratosx-fashion/pkg/cypher"
+	"kratosx-fashion/pkg/xsync"
 	"strconv"
 	"strings"
 	"sync"
@@ -32,7 +33,11 @@ const (
 	// reason holds the error reason.
 	reason string = "UNAUTHORIZED"
 
+	// jwtBlacklistKey holds the key used to store the JWT Token in the redis.
 	jwtBlacklistKey = "jwt:blacklist:%s"
+
+	// jwtBlacklistGracePeriod holds the grace period for the JWT Token in the redis.
+	jwtBlacklistGracePeriod = time.Second * 1
 )
 
 var (
@@ -54,6 +59,13 @@ type TokenOut struct {
 	TokenType string `json:"token_type"`
 }
 
+type CustomClaims struct {
+	Username string   `json:"username"`
+	Nickname string   `json:"nickname"`
+	RoleIDs  []string `json:"role_ids"`
+	jwt.StandardClaims
+}
+
 type JWTService struct {
 	secret string
 	ttl    int64
@@ -62,6 +74,7 @@ type JWTService struct {
 	once *sync.Once
 	rdb  *redis.Client
 	log  *log.Helper
+	lock xsync.XMutex
 }
 
 func NewJwtService(jc *conf.JWT, rdb *redis.Client, logger log.Logger) *JWTService {
@@ -72,6 +85,7 @@ func NewJwtService(jc *conf.JWT, rdb *redis.Client, logger log.Logger) *JWTServi
 		rdb:    rdb,
 		once:   new(sync.Once),
 		log:    log.NewHelper(logger),
+		lock:   xsync.Lock("refresh_token_lock", 2000, rdb),
 	}
 	j.once.Do(func() {
 		kmw.RegisterMiddleware(j)
@@ -113,8 +127,24 @@ func (j *JWTService) MiddlewareFunc() fiber.Handler {
 				return ErrParseClaimsFail
 			} else if claims.Issuer != j.issuer {
 				return ErrTokenInvalid
+			} else {
+				if claims.ExpiresAt-time.Now().Unix() < jwtBlacklistGracePeriod.Milliseconds() {
+					if j.lock.Get() {
+						//err, user := services.JwtService.GetUserInfo(GuardName, claims.Id)
+						//if err != nil {
+						//	j.log.WithContext(ctx).Error("get user info error", err)
+						//	j.lock.Release()
+						//} else {
+						//	tokenData, _ := j.CreateToken(ctx, user)
+						//	c.Header("new-token", tokenData.AccessToken)
+						//	c.Header("new-expires-in", strconv.Itoa(tokenData.ExpiresIn))
+						//	_ = j.JoinBlackList(jwtToken)
+						//}
+					}
+				}
 			}
-			c.Locals("token", tokenInfo)
+
+			c.Locals("token", jwtToken)
 			return nil
 		}
 		if err := errCatch(c.Context()); err != nil {
@@ -159,11 +189,14 @@ func (j *JWTService) CreateToken(ctx context.Context, user JwtUser) (tokenData T
 }
 
 // JoinBlackList token 加入黑名单
-func (j *JWTService) JoinBlackList(ctx context.Context, token *jwt.Token) (err error) {
+func (j *JWTService) JoinBlackList(ctx context.Context, token string) (err error) {
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return []byte(j.secret), nil
+	})
 	nowUnix := time.Now().Unix()
-	timer := time.Duration(token.Claims.(*jwt.StandardClaims).ExpiresAt-nowUnix) * time.Second
+	timer := time.Duration(parsedToken.Claims.(*jwt.StandardClaims).ExpiresAt-nowUnix) * time.Second
 	// 将 token 剩余时间设置为缓存有效期，并将当前时间作为缓存 value 值
-	return j.rdb.SetEX(ctx, fmt.Sprintf(jwtBlacklistKey, cypher.MD5(token.Raw)), nowUnix, timer).Err()
+	return j.rdb.SetEX(ctx, fmt.Sprintf(jwtBlacklistKey, cypher.MD5(parsedToken.Raw)), nowUnix, timer).Err()
 }
 
 func (j *JWTService) InBlackList(ctx context.Context, token string) bool {

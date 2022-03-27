@@ -25,7 +25,7 @@ type userRepo struct {
 func NewUserRepo(data *Data, logger log.Logger) biz.UserRepo {
 	return &userRepo{
 		dao:      data,
-		log:      log.NewHelper(logger),
+		log:      log.NewHelper(log.With(logger, "repo", "user")),
 		baseRepo: query.Use(data.DB),
 	}
 }
@@ -40,15 +40,19 @@ func (u userRepo) SelectByUsername(ctx context.Context, username string) (*model
 	return ur.WithContext(ctx).Where(ur.Username.Eq(username)).First()
 }
 
-func (u userRepo) SelectPasswordByName(ctx context.Context, username string) (uid uint, pwd string, err error) {
+func (u *userRepo) SelectPasswordByName(ctx context.Context, username string) (*model.User, error) {
 	ur := u.baseRepo.User
-	user, err := ur.WithContext(ctx).Where(ur.Username.Eq(username)).Select(ur.Password, ur.ID).First()
-	if err != nil {
-		return
-	}
-	uid = user.ID
-	pwd = user.Password
-	return
+	return ur.WithContext(ctx).Where(ur.Username.Eq(username)).Select(ur.Password, ur.ID, ur.Status).First()
+}
+
+func (u *userRepo) SelectPasswordByMobile(ctx context.Context, mobile string) (*model.User, error) {
+	ur := u.baseRepo.User
+	return ur.WithContext(ctx).Where(ur.Mobile.Eq(mobile)).Select(ur.Password, ur.ID, ur.Status).First()
+}
+
+func (u *userRepo) SelectPasswordByEmail(ctx context.Context, email string) (*model.User, error) {
+	ur := u.baseRepo.User
+	return ur.WithContext(ctx).Where(ur.Email.Eq(email)).Select(ur.Password, ur.ID, ur.Status).First()
 }
 
 func (u userRepo) List(ctx context.Context, req *pb.ListRequest, opts ...*pb.QueryOption) (users []*model.User, total int64, err error) {
@@ -99,6 +103,9 @@ func (u *userRepo) ExistByUserName(ctx context.Context, username string) bool {
 	_, err := ur.WithContext(ctx).Where(ur.Username.Eq(username)).First()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false
+	} else if err != nil {
+		u.log.WithContext(ctx).Error("userRepo.ExistByUserName error", err)
+		return false
 	}
 	return true
 }
@@ -108,7 +115,11 @@ func (u *userRepo) ExistByEmail(ctx context.Context, email string) bool {
 	_, err := ur.WithContext(ctx).Where(ur.Email.Eq(email)).First()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false
+	} else if err != nil {
+		u.log.WithContext(ctx).Error("userRepo.ExistByEmail error", err)
+		return false
 	}
+
 	return true
 }
 
@@ -116,6 +127,9 @@ func (u *userRepo) ExistByMobile(ctx context.Context, mobile string) bool {
 	ur := u.baseRepo.User
 	_, err := ur.WithContext(ctx).Where(ur.Mobile.Eq(mobile)).First()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false
+	} else if err != nil {
+		u.log.WithContext(ctx).Error("userRepo.ExistByMobile error", err)
 		return false
 	}
 	return true

@@ -5,7 +5,6 @@ import (
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
-	"github.com/golang-jwt/jwt/v4"
 	"kratosx-fashion/app/system/internal/biz"
 	"strconv"
 
@@ -81,7 +80,7 @@ func (s *PubService) Logout(ctx context.Context, req *pb.EmptyRequest) (*pb.Empt
 	if !ok {
 		return nil, errors.InternalServer("CONTEXT PARSE", "find context error")
 	}
-	err := s.uc.Logout(ctx, c.Locals("token").(*jwt.Token))
+	err := s.uc.Logout(ctx, c.Locals("token").(string))
 	return &pb.EmptyReply{}, err
 }
 func (s *PubService) RetrievePwd(ctx context.Context, req *pb.RetrieveRequest) (*pb.EmptyReply, error) {

@@ -3,11 +3,9 @@ package biz
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/jassue/go-storage/storage"
 	"github.com/jinzhu/copier"
-	"gorm.io/gorm"
 	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/cypher"
 	"path"
@@ -32,7 +30,7 @@ func NewPublicUsecase(userRepo UserRepo, logRepo LoginLogRepo, captchaRepo Captc
 		captchaRepo: captchaRepo,
 		jwtSrv:      jwtSrv,
 		disk:        disk,
-		log:         log.NewHelper(logger),
+		log:         log.NewHelper(log.With(logger, "biz", "public")),
 	}
 }
 
@@ -77,14 +75,16 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 		err = api.ErrorCaptchaInvalid("验证码错误")
 		return
 	}
-	uid, pwd, err := p.userRepo.SelectPasswordByName(ctx, loginSession.Username)
-	if err != nil || !cypher.BcryptCheck(loginSession.Password, pwd) {
+	user, err := p.userRepo.SelectPasswordByName(ctx, loginSession.Username)
+	if err != nil || !cypher.BcryptCheck(loginSession.Password, user.Password) {
 		err = api.ErrorUserInvalid("用户名或密码错误")
 		return
 	}
-	tokenOut, err := p.jwtSrv.CreateToken(ctx, model.User{
-		Model: gorm.Model{ID: uid},
-	})
+	if user.Status != uint8(model.UserStatusForbid) {
+		err = api.ErrorUserInvalid("用户已被禁用")
+		return
+	}
+	tokenOut, err := p.jwtSrv.CreateToken(ctx, user)
 	if err != nil {
 		p.log.WithContext(ctx).Error(err)
 		return
@@ -101,7 +101,7 @@ func (p *PublicUsecase) Generate(ctx context.Context) (id string, b64s string, e
 	return p.captchaRepo.Create(ctx)
 }
 
-func (p *PublicUsecase) Logout(ctx context.Context, token *jwt.Token) (err error) {
+func (p *PublicUsecase) Logout(ctx context.Context, token string) (err error) {
 	return p.jwtSrv.JoinBlackList(ctx, token)
 }
 

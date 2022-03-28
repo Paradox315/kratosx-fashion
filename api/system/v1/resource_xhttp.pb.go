@@ -27,35 +27,33 @@ const _ = transport.KindXHTTP
 var _ = new(apistate.Resp)
 
 // 菜单服务
-type MenuXHTTPServer interface {
+type ResourceXHTTPServer interface {
 	CreateMenu(context.Context, *MenuRequest) (*IDReply, error)
-	DeleteMenu(context.Context, *IDRequest) (*EmptyReply, error)
-	GetMenu(context.Context, *IDRequest) (*MenuReply, error)
-	GetMenuTree(context.Context, *TreeRequest) (*MenuTreeReply, error)
-	ListMenu(context.Context, *ListRequest) (*ListMenuReply, error)
+	DeleteMenu(context.Context, *IDsRequest) (*EmptyReply, error)
+	GetMenuTree(context.Context, *IDRequest) (*MenuReply, error)
+	GetMenuTreeByRole(context.Context, *IDRequest) (*MenuReply, error)
+	GetRouteTree(context.Context, *EmptyRequest) (*RouterReply, error)
 	UpdateMenu(context.Context, *MenuRequest) (*IDReply, error)
-	UpdateMenuStatus(context.Context, *IDRequest) (*IDReply, error)
 }
 
-func RegisterMenuXHTTPServer(s *xhttp.Server, srv MenuXHTTPServer) {
+func RegisterResourceXHTTPServer(s *xhttp.Server, srv ResourceXHTTPServer) {
 	s.Route(func(r fiber.Router) {
-		api := r.Group("api/system/v1/menu")
+		api := r.Group("api/system/v1/resource")
 		// Register all service annotation
 		{
 			api.Use(middleware.Authenticator(), middleware.Authorizer())
 		}
-		api.Post("/", _Menu_CreateMenu0_XHTTP_Handler(srv))
-		api.Put("/", _Menu_UpdateMenu0_XHTTP_Handler(srv))
-		api.Put("/status", _Menu_UpdateMenuStatus0_XHTTP_Handler(srv))
-		api.Delete("/:id", _Menu_DeleteMenu0_XHTTP_Handler(srv))
-		api.Get("/:id", _Menu_GetMenu0_XHTTP_Handler(srv))
-		api.Post("/list", _Menu_ListMenu0_XHTTP_Handler(srv))
-		api.Get("/tree", _Menu_GetMenuTree0_XHTTP_Handler(srv))
+		api.Post("/menu", _Resource_CreateMenu0_XHTTP_Handler(srv))
+		api.Put("/menu", _Resource_UpdateMenu0_XHTTP_Handler(srv))
+		api.Delete("/menus/:ids", _Resource_DeleteMenu0_XHTTP_Handler(srv))
+		api.Get("/menu/tree/:id", _Resource_GetMenuTree0_XHTTP_Handler(srv))
+		api.Get("/menu/tree/role/:id", _Resource_GetMenuTreeByRole0_XHTTP_Handler(srv))
+		api.Get("/router", _Resource_GetRouteTree0_XHTTP_Handler(srv))
 	})
 }
 
 //
-func _Menu_CreateMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
+func _Resource_CreateMenu0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in MenuRequest
 		if err := binding.BindBody(c, &in); err != nil {
@@ -71,7 +69,7 @@ func _Menu_CreateMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
 }
 
 //
-func _Menu_UpdateMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
+func _Resource_UpdateMenu0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in MenuRequest
 		if err := binding.BindBody(c, &in); err != nil {
@@ -87,25 +85,9 @@ func _Menu_UpdateMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
 }
 
 //
-func _Menu_UpdateMenuStatus0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
+func _Resource_DeleteMenu0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var in IDRequest
-		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
-		}
-		ctx := transport.NewFiberContext(context.Background(), c)
-		reply, err := srv.UpdateMenuStatus(ctx, &in)
-		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
-		}
-		return apistate.Success().WithData(reply).Send(c)
-	}
-}
-
-//
-func _Menu_DeleteMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		var in IDRequest
+		var in IDsRequest
 		if err := binding.BindParams(c, &in); err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}
@@ -119,14 +101,14 @@ func _Menu_DeleteMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
 }
 
 //
-func _Menu_GetMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
+func _Resource_GetMenuTree0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDRequest
 		if err := binding.BindParams(c, &in); err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
-		reply, err := srv.GetMenu(ctx, &in)
+		reply, err := srv.GetMenuTree(ctx, &in)
 		if err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}
@@ -135,14 +117,14 @@ func _Menu_GetMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
 }
 
 //
-func _Menu_ListMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
+func _Resource_GetMenuTreeByRole0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var in ListRequest
-		if err := binding.BindBody(c, &in); err != nil {
+		var in IDRequest
+		if err := binding.BindParams(c, &in); err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
-		reply, err := srv.ListMenu(ctx, &in)
+		reply, err := srv.GetMenuTreeByRole(ctx, &in)
 		if err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}
@@ -151,14 +133,14 @@ func _Menu_ListMenu0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
 }
 
 //
-func _Menu_GetMenuTree0_XHTTP_Handler(srv MenuXHTTPServer) fiber.Handler {
+func _Resource_GetRouteTree0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var in TreeRequest
+		var in EmptyRequest
 		if err := binding.BindQuery(c, &in); err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
-		reply, err := srv.GetMenuTree(ctx, &in)
+		reply, err := srv.GetRouteTree(ctx, &in)
 		if err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}

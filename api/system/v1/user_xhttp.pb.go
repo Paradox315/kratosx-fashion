@@ -29,9 +29,9 @@ var _ = new(apistate.Resp)
 // 用户服务
 type UserXHTTPServer interface {
 	CreateUser(context.Context, *UserRequest) (*IDReply, error)
-	DeleteUser(context.Context, *IDRequest) (*EmptyReply, error)
+	DeleteUser(context.Context, *IDsRequest) (*EmptyReply, error)
 	GetUser(context.Context, *IDRequest) (*UserReply, error)
-	ListUser(context.Context, *ListRequest) (*ListUserReply, error)
+	ListUser(context.Context, *ListSearchRequest) (*ListUserReply, error)
 	UpdatePassword(context.Context, *PasswordRequest) (*IDReply, error)
 	UpdateUser(context.Context, *UserRequest) (*IDReply, error)
 	UpdateUserStatus(context.Context, *IDRequest) (*IDReply, error)
@@ -47,8 +47,8 @@ func RegisterUserXHTTPServer(s *xhttp.Server, srv UserXHTTPServer) {
 		api.Post("/", _User_CreateUser0_XHTTP_Handler(srv))
 		api.Put("/", _User_UpdateUser0_XHTTP_Handler(srv))
 		api.Put("/password", _User_UpdatePassword0_XHTTP_Handler(srv))
-		api.Put("/status", _User_UpdateUserStatus0_XHTTP_Handler(srv))
-		api.Delete("/:id", _User_DeleteUser0_XHTTP_Handler(srv))
+		api.Put("/status/:id", _User_UpdateUserStatus0_XHTTP_Handler(srv))
+		api.Delete("/:ids", _User_DeleteUser0_XHTTP_Handler(srv))
 		api.Get("/:id", _User_GetUser0_XHTTP_Handler(srv))
 		api.Post("/list", _User_ListUser0_XHTTP_Handler(srv))
 	})
@@ -109,6 +109,9 @@ func _User_UpdateUserStatus0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 		if err := binding.BindBody(c, &in); err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}
+		if err := binding.BindParams(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
+		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.UpdateUserStatus(ctx, &in)
 		if err != nil {
@@ -121,7 +124,7 @@ func _User_UpdateUserStatus0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 //
 func _User_DeleteUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var in IDRequest
+		var in IDsRequest
 		if err := binding.BindParams(c, &in); err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}
@@ -153,7 +156,7 @@ func _User_GetUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 //
 func _User_ListUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var in ListRequest
+		var in ListSearchRequest
 		if err := binding.BindBody(c, &in); err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}

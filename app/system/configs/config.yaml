@@ -8,7 +8,8 @@ server:
 data:
   database:
     driver: mysql
-    source: root:123456@tcp(127.0.0.1:3306)/violet
+    source: root:123456@tcp(127.0.0.1:3306)/violet?charset=utf8mb4&parseTime=True&loc=Local
+    log_mode: info
     max_idle_conns: 10
     max_open_conns: 100
     auto_migrate: true

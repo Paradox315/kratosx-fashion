@@ -248,7 +248,7 @@
       "type": "object",
       "properties": {
         "token": {
-          "$ref": "#/definitions/v1TokenData"
+          "$ref": "#/definitions/v1Token"
         },
         "userId": {
           "type": "string"
@@ -323,7 +323,7 @@
         }
       }
     },
-    "v1TokenData": {
+    "v1Token": {
       "type": "object",
       "properties": {
         "accessToken": {

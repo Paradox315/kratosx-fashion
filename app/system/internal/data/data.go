@@ -13,7 +13,9 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
-	"moul.io/zapgorm2"
+
+	gormlogger "gorm.io/gorm/logger"
+	zgorm "moul.io/zapgorm2"
 )
 
 // ProviderSet is data providers.
@@ -59,7 +61,19 @@ func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client) (*
 }
 
 func NewDB(c *conf.Data, logger log.Logger) *gorm.DB {
-	zlog := zapgorm2.New(logger.(*logutil.Logger).GetZap())
+	zlog := zgorm.New(logger.(*logutil.Logger).GetZap()).LogMode(gormlogger.Info)
+	switch c.Database.LogMode {
+	case "silent", "Silent":
+		zlog = zlog.LogMode(gormlogger.Silent)
+	case "error", "Error":
+		zlog = zlog.LogMode(gormlogger.Error)
+	case "warn", "Warn":
+		zlog = zlog.LogMode(gormlogger.Warn)
+	case "info", "Info":
+		zlog = zlog.LogMode(gormlogger.Info)
+	default:
+		zlog = zlog.LogMode(gormlogger.Info)
+	}
 	db, err := gorm.Open(mysql.Open(c.Database.Source), &gorm.Config{
 		Logger:                                   zlog,
 		DisableForeignKeyConstraintWhenMigrating: true,
@@ -80,14 +94,14 @@ func NewDB(c *conf.Data, logger log.Logger) *gorm.DB {
 			&model.User{},
 			&model.UserRole{},
 			&model.Role{},
-			&model.RoleMenu{},
-			&model.Menu{},
-			&model.MenuAction{},
-			&model.MenuActionResource{},
+			&model.RoleResource{},
+			&model.ResourceAction{},
+			&model.ResourceMenu{},
 		); err != nil {
 			panic(err)
 		}
 	}
+
 	return db
 }
 

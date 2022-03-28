@@ -13,8 +13,8 @@ init:
 	go install github.com/Paradox315/protoc-gen-go-xhttp@latest
 	go install github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v2@latest
 
-	go install github.com/gogo/protobuf/proto@latest
-	go install github.com/gogo/protobuf/gogoproto@latest
+	go get -u github.com/gogo/protobuf/proto
+	go get -u github.com/gogo/protobuf/gogoproto
 	go install github.com/gogo/protobuf/protoc-gen-gofast@latest
 
 	go get -u github.com/google/wire/cmd/wire

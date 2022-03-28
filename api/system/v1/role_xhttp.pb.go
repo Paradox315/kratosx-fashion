@@ -29,7 +29,7 @@ var _ = new(apistate.Resp)
 // 角色服务
 type RoleXHTTPServer interface {
 	CreateRole(context.Context, *RoleRequest) (*IDReply, error)
-	DeleteRole(context.Context, *IDRequest) (*EmptyReply, error)
+	DeleteRole(context.Context, *IDsRequest) (*EmptyReply, error)
 	GetRole(context.Context, *IDRequest) (*RoleReply, error)
 	ListRole(context.Context, *ListRequest) (*ListRoleReply, error)
 	UpdateRole(context.Context, *RoleRequest) (*IDReply, error)
@@ -45,10 +45,10 @@ func RegisterRoleXHTTPServer(s *xhttp.Server, srv RoleXHTTPServer) {
 		}
 		api.Post("/", _Role_CreateRole0_XHTTP_Handler(srv))
 		api.Put("/", _Role_UpdateRole0_XHTTP_Handler(srv))
-		api.Put("/status", _Role_UpdateRoleStatus0_XHTTP_Handler(srv))
-		api.Delete("/:id", _Role_DeleteRole0_XHTTP_Handler(srv))
+		api.Put("/status/:id", _Role_UpdateRoleStatus0_XHTTP_Handler(srv))
+		api.Delete("/:ids", _Role_DeleteRole0_XHTTP_Handler(srv))
 		api.Get("/:id", _Role_GetRole0_XHTTP_Handler(srv))
-		api.Post("/list", _Role_ListRole0_XHTTP_Handler(srv))
+		api.Get("/list", _Role_ListRole0_XHTTP_Handler(srv))
 	})
 }
 
@@ -91,6 +91,9 @@ func _Role_UpdateRoleStatus0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 		if err := binding.BindBody(c, &in); err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}
+		if err := binding.BindParams(c, &in); err != nil {
+			return apistate.Error().WithError(err).Send(c)
+		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.UpdateRoleStatus(ctx, &in)
 		if err != nil {
@@ -103,7 +106,7 @@ func _Role_UpdateRoleStatus0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 //
 func _Role_DeleteRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var in IDRequest
+		var in IDsRequest
 		if err := binding.BindParams(c, &in); err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}
@@ -136,7 +139,7 @@ func _Role_GetRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 func _Role_ListRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in ListRequest
-		if err := binding.BindBody(c, &in); err != nil {
+		if err := binding.BindQuery(c, &in); err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)

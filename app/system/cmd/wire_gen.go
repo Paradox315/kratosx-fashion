@@ -41,15 +41,10 @@ func initApp(confServer *conf.Server, registry *conf.Registry, storage *conf.Sto
 	roleMenuRepo := data.NewRoleMenuRepo(dataData, logLogger)
 	roleUsecase := biz.NewRoleUsecase(roleRepo, roleMenuRepo, logLogger)
 	roleService := service.NewRoleService(roleUsecase, logLogger)
-	menuRepo := data.NewMenuRepo(dataData, logLogger)
-	menuActionRepo := data.NewMenuActionRepo(dataData, logLogger)
-	menuActionResourceRepo := data.NewMenuActionResourceRepo(dataData, logLogger)
-	menuUsecase := biz.NewMenuUsecase(menuRepo, menuActionRepo, menuActionResourceRepo, logLogger)
-	menuService := service.NewMenuService(menuUsecase, logLogger)
+	menuService := service.NewMenuService()
 	xhttpServer := server.NewHTTPServer(confServer, pubService, userService, roleService, menuService, logLogger)
-	grpcServer := server.NewGRPCServer(confServer, pubService, userService, roleService, menuService, logLogger)
 	registrar := data.NewRegistrar(registry)
-	app := newApp(logLogger, xhttpServer, grpcServer, registrar)
+	app := newApp(logLogger, xhttpServer, registrar)
 	return app, func() {
 		cleanup()
 	}, nil

@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/gofiber/contrib/fiberzap"
 	"kratosx-fashion/app/system/internal/conf"
-	service2 "kratosx-fashion/app/system/internal/service"
+	"kratosx-fashion/app/system/internal/service"
 	"kratosx-fashion/pkg/logutil"
 
 	"github.com/go-kratos/kratos/v2/encoding"
@@ -17,10 +17,10 @@ import (
 
 // NewHTTPServer new a XHTTP server.
 func NewHTTPServer(c *conf.Server,
-	publicSrv *service2.PubService,
-	userSrv *service2.UserService,
-	roleSrv *service2.RoleService,
-	menuSrv *service2.MenuService,
+	publicSrv *service.PubService,
+	userSrv *service.UserService,
+	roleSrv *service.RoleService,
+	resourceSrv *service.ResourceService,
 	logger log.Logger) *xhttp.Server {
 	var opts = []xhttp.ServerOption{
 		xhttp.Middleware(
@@ -48,7 +48,7 @@ func NewHTTPServer(c *conf.Server,
 		v1.RegisterPubXHTTPServer(srv, publicSrv)
 		v1.RegisterUserXHTTPServer(srv, userSrv)
 		v1.RegisterRoleXHTTPServer(srv, roleSrv)
-		v1.RegisterMenuXHTTPServer(srv, menuSrv)
+		v1.RegisterResourceXHTTPServer(srv, resourceSrv)
 	}
 
 	return srv

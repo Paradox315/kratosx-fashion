@@ -101,7 +101,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1ListRequest"
+              "$ref": "#/definitions/v1ListSearchRequest"
             }
           }
         ],
@@ -142,7 +142,7 @@
         ]
       }
     },
-    "/status": {
+    "/status/{id}": {
       "put": {
         "operationId": "User_UpdateUserStatus",
         "responses": {
@@ -161,12 +161,48 @@
         },
         "parameters": [
           {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1IDRequest"
+              "type": "object"
             }
+          }
+        ],
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/{ids}": {
+      "delete": {
+        "operationId": "User_DeleteUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1EmptyReply"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "path",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -202,38 +238,21 @@
         "tags": [
           "User"
         ]
-      },
-      "delete": {
-        "operationId": "User_DeleteUser",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1EmptyReply"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "User"
-        ]
       }
     }
   },
   "definitions": {
+    "QueryOptionInterval": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -272,15 +291,7 @@
         }
       }
     },
-    "v1IDRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        }
-      }
-    },
-    "v1ListRequest": {
+    "v1ListSearchRequest": {
       "type": "object",
       "properties": {
         "pageNum": {
@@ -291,7 +302,7 @@
           "type": "integer",
           "format": "int64"
         },
-        "options": {
+        "query": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1QueryOption"
@@ -331,18 +342,26 @@
     "v1QueryOption": {
       "type": "object",
       "properties": {
-        "keyword": {
+        "opt": {
+          "type": "string",
+          "title": "[\"EQ\", \"NEQ\", \"GT\", \"GTE\", \"LT\", \"LTE\", \"IN\", \"SORT\", \"LIKE\", \"BETWEEN\"]"
+        },
+        "value": {
+          "type": "string",
+          "title": "根据opt的不同，可能是string，int，bool，或者是一个数组"
+        },
+        "interval": {
+          "$ref": "#/definitions/QueryOptionInterval"
+        },
+        "field": {
           "type": "string"
         },
-        "column": {
-          "type": "string"
-        },
-        "sort": {
+        "desc": {
           "type": "boolean"
         }
       }
     },
-    "v1RoleMenu": {
+    "v1RoleResource": {
       "type": "object",
       "properties": {
         "id": {
@@ -351,11 +370,12 @@
         "roleId": {
           "type": "string"
         },
-        "menuId": {
+        "resourceId": {
           "type": "string"
         },
-        "actionId": {
-          "type": "string"
+        "resourceType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -378,6 +398,9 @@
           "type": "string"
         },
         "nickname": {
+          "type": "string"
+        },
+        "gender": {
           "type": "string"
         },
         "status": {
@@ -458,10 +481,10 @@
         "updatedAt": {
           "type": "string"
         },
-        "roleMenus": {
+        "roleResources": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1RoleMenu"
+            "$ref": "#/definitions/v1RoleResource"
           }
         }
       }

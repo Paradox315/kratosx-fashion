@@ -80,7 +80,7 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 		err = api.ErrorUserInvalid("用户名或密码错误")
 		return
 	}
-	if user.Status != uint8(model.UserStatusForbid) {
+	if user.Status != model.UserStatusForbid {
 		err = api.ErrorUserInvalid("用户已被禁用")
 		return
 	}
@@ -91,8 +91,8 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 	}
 	token = Token{
 		AccessToken: tokenOut.Token,
-		TokenType:   token.TokenType,
-		ExpireAt:    token.ExpireAt,
+		TokenType:   tokenOut.TokenType,
+		ExpireAt:    tokenOut.ExpireAt,
 	}
 	return
 }

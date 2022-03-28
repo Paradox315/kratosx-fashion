@@ -35,8 +35,8 @@ func main() {
 	g.ApplyBasic(
 		model.LoginLog{},
 		model.User{}, model.UserRole{},
-		model.Role{}, model.RoleMenu{},
-		model.Menu{}, model.MenuAction{}, model.MenuActionResource{},
+		model.Role{}, model.RoleResource{},
+		model.ResourceMenu{}, model.ResourceAction{},
 	)
 
 	// execute the action of code generation

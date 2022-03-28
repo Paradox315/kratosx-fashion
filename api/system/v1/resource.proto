@@ -11,30 +11,42 @@ option java_package = "api.system.v1";
 
 // 菜单服务
 // @Auth
-service Menu {
+service Resource {
 	rpc CreateMenu (MenuRequest) returns (IDReply){
 		option (google.api.http) = {
-			post: "/"
+			post: "/menu"
 			body: "*"
 		};
 	}
 
 	rpc UpdateMenu (MenuRequest) returns (IDReply){
 		option (google.api.http) = {
-			put: "/"
+			put: "/menu"
 			body: "*"
 		};
 	}
 
 	rpc DeleteMenu (IDsRequest) returns (EmptyReply){
 		option (google.api.http) = {
-			delete: "/{ids}"
+			delete: "/menus/{ids}"
 		};
 	}
 
 	rpc GetMenuTree (IDRequest) returns (MenuReply){
 		option (google.api.http) = {
-			get: "/tree/{id}"
+			get: "/menu/tree/{id}"
+		};
+	}
+
+	rpc GetMenuTreeByRole (IDRequest) returns (MenuReply){
+		option (google.api.http) = {
+			get: "/menu/tree/role/{id}"
+		};
+	}
+
+	rpc GetRouteTree(EmptyRequest) returns (RouterReply){
+		option (google.api.http) = {
+			get: "/router"
 		};
 	}
 }

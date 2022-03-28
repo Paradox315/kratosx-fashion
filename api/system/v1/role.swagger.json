@@ -79,7 +79,7 @@
       }
     },
     "/list": {
-      "post": {
+      "get": {
         "operationId": "Role_ListRole",
         "responses": {
           "200": {
@@ -97,12 +97,18 @@
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1ListRequest"
-            }
+            "name": "pageNum",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -110,7 +116,7 @@
         ]
       }
     },
-    "/status": {
+    "/status/{id}": {
       "put": {
         "operationId": "Role_UpdateRoleStatus",
         "responses": {
@@ -129,12 +135,48 @@
         },
         "parameters": [
           {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1IDRequest"
+              "type": "object"
             }
+          }
+        ],
+        "tags": [
+          "Role"
+        ]
+      }
+    },
+    "/{ids}": {
+      "delete": {
+        "operationId": "Role_DeleteRole",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1EmptyReply"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "path",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -150,34 +192,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1RoleReply"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Role"
-        ]
-      },
-      "delete": {
-        "operationId": "Role_DeleteRole",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1EmptyReply"
             }
           },
           "default": {
@@ -240,37 +254,10 @@
         }
       }
     },
-    "v1IDRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        }
-      }
-    },
-    "v1ListRequest": {
-      "type": "object",
-      "properties": {
-        "pageNum": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "pageSize": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "options": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1QueryOption"
-          }
-        }
-      }
-    },
     "v1ListRoleReply": {
       "type": "object",
       "properties": {
-        "users": {
+        "roles": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1RoleReply"
@@ -279,37 +266,6 @@
         "total": {
           "type": "integer",
           "format": "int64"
-        }
-      }
-    },
-    "v1QueryOption": {
-      "type": "object",
-      "properties": {
-        "keyword": {
-          "type": "string"
-        },
-        "column": {
-          "type": "string"
-        },
-        "sort": {
-          "type": "boolean"
-        }
-      }
-    },
-    "v1RoleMenu": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "roleId": {
-          "type": "string"
-        },
-        "menuId": {
-          "type": "string"
-        },
-        "actionId": {
-          "type": "string"
         }
       }
     },
@@ -322,16 +278,11 @@
         "name": {
           "type": "string"
         },
-        "sort": {
-          "type": "string"
-        },
         "status": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "description": {
-          "type": "string"
-        },
-        "creatorId": {
           "type": "string"
         },
         "createdAt": {
@@ -340,10 +291,10 @@
         "updatedAt": {
           "type": "string"
         },
-        "roleMenus": {
+        "roleResources": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1RoleMenu"
+            "$ref": "#/definitions/v1RoleResource"
           }
         }
       }
@@ -357,29 +308,36 @@
         "name": {
           "type": "string"
         },
-        "sort": {
-          "type": "integer",
-          "format": "int64"
-        },
         "status": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "hidden": {
           "type": "integer",
           "format": "int64"
         },
         "description": {
           "type": "string"
         },
-        "creatorId": {
-          "type": "string"
-        },
-        "roleMenus": {
+        "roleResources": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1RoleMenu"
+            "$ref": "#/definitions/v1RoleResource"
           }
+        }
+      }
+    },
+    "v1RoleResource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "roleId": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "resourceType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     }

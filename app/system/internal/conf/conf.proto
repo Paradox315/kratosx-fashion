@@ -31,9 +31,10 @@ message Data {
   message Database {
     string driver = 1;
     string source = 2;
-    int32 max_idle_conns = 3;
-    int32 max_open_conns = 4;
-    bool auto_migrate = 5;
+    string log_mode = 3;
+    int32 max_idle_conns = 4;
+    int32 max_open_conns = 5;
+    bool auto_migrate = 6;
   }
   message Redis {
     string addr = 1;

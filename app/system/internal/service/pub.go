@@ -66,7 +66,7 @@ func (s *PubService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Login
 	}
 	token, uid, err := s.uc.Login(ctx, u, c)
 	return &pb.LoginReply{
-		Token: &pb.TokenData{
+		Token: &pb.Token{
 			AccessToken: token.AccessToken,
 			ExpiresAt:   token.ExpireAt,
 			TokenType:   token.TokenType,

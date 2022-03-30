@@ -21,6 +21,7 @@ require (
 	github.com/mileusna/useragent v1.0.2
 	github.com/mojocn/base64Captcha v1.3.5
 	github.com/natefinch/lumberjack v2.0.0+incompatible
+	github.com/spf13/cast v1.4.1
 	go.uber.org/zap v1.21.0
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	google.golang.org/genproto v0.0.0-20220304144024-325a89244dc8

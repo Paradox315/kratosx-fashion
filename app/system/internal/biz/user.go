@@ -2,14 +2,15 @@ package biz
 
 import (
 	"context"
+	"github.com/spf13/cast"
 	"golang.org/x/crypto/openpgp/errors"
 	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/cypher"
+	"kratosx-fashion/pkg/xcast"
 	"strconv"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/jinzhu/copier"
-
 	api "kratosx-fashion/api/system/v1"
 	pb "kratosx-fashion/api/system/v1"
 )
@@ -75,7 +76,7 @@ func (u *UserUsecase) validateUser(ctx context.Context, user *pb.UserRequest) (e
 	return
 }
 
-func (u *UserUsecase) CreateUser(ctx context.Context, user *pb.UserRequest) (id string, err error) {
+func (u *UserUsecase) Save(ctx context.Context, user *pb.UserRequest) (id string, err error) {
 	var upo *model.User
 	if err = u.validateUser(ctx, user); err != nil {
 		return
@@ -92,7 +93,7 @@ func (u *UserUsecase) CreateUser(ctx context.Context, user *pb.UserRequest) (id 
 	uid := upo.ID
 	var urs []*model.UserRole
 	for _, ur := range user.UserRoles {
-		rid, _ := strconv.ParseUint(ur.RoleId, 10, 64)
+		rid := cast.ToUint64(ur.RoleId)
 		if uid == 0 || rid == 0 {
 			continue
 		}
@@ -111,9 +112,8 @@ func (u *UserUsecase) CreateUser(ctx context.Context, user *pb.UserRequest) (id 
 	return upo.GetUid(), nil
 }
 
-// TODO: 更新密码待验证
-func (u *UserUsecase) UpdateUser(ctx context.Context, user *pb.UserRequest) (id string, err error) {
-	uid, _ := strconv.ParseUint(user.Uid, 10, 64)
+func (u *UserUsecase) Edit(ctx context.Context, user *pb.UserRequest) (id string, err error) {
+	uid := cast.ToUint64(user.Id)
 	var urs []*model.UserRole
 	for _, ur := range user.UserRoles {
 		rid, _ := strconv.ParseUint(ur.RoleId, 10, 64)
@@ -135,34 +135,34 @@ func (u *UserUsecase) UpdateUser(ctx context.Context, user *pb.UserRequest) (id 
 	if err = u.validateUser(ctx, user); err != nil {
 		return
 	}
-	if err = copier.Copy(&upo, user); err != nil {
+	if err = copier.Copy(upo, user); err != nil {
 		return
 	}
 	err = u.userRepo.Update(ctx, upo)
-	return upo.GetUid(), err
+	id = user.Id
+	return
 }
 
-func (u UserUsecase) DeleteUsers(ctx context.Context, uids []uint) (err error) {
+func (u UserUsecase) Remove(ctx context.Context, uids []uint) (err error) {
 	if len(uids) == 0 {
 		return errors.InvalidArgumentError("uids is null")
 	}
-	var uid64s []uint64
-	for _, uid := range uids {
-		uid64s = append(uid64s, uint64(uid))
-	}
-	err = u.userRoleRepo.DeleteByUserIDs(ctx, uid64s)
+	err = u.userRoleRepo.DeleteByUserIDs(ctx, xcast.ToUint64Slice[uint](uids))
 	if err != nil {
 		return
 	}
 	return u.userRepo.DeleteByIDs(ctx, uids)
 }
 
-func (u *UserUsecase) SelectUser(ctx context.Context, uid uint) (user *pb.UserReply, err error) {
+func (u *UserUsecase) Get(ctx context.Context, uid uint) (user *pb.UserReply, err error) {
 	upo, err := u.userRepo.Select(ctx, uid)
+	if err != nil {
+		return
+	}
 	return u.buildUserReply(ctx, upo)
 }
 
-func (u *UserUsecase) ListUser(ctx context.Context, limit, offset int, opt SQLOption) (list *pb.ListUserReply, err error) {
+func (u *UserUsecase) Search(ctx context.Context, limit, offset int, opt SQLOption) (list *pb.ListUserReply, err error) {
 	users, total, err := u.userRepo.List(ctx, limit, offset, opt)
 	if err != nil {
 		return
@@ -179,11 +179,11 @@ func (u *UserUsecase) ListUser(ctx context.Context, limit, offset int, opt SQLOp
 	return
 }
 
-func (u *UserUsecase) UpdateUserStatus(ctx context.Context, uid uint, status model.UserStatus) error {
+func (u *UserUsecase) EditStatus(ctx context.Context, uid uint, status model.UserStatus) error {
 	return u.userRepo.UpdateStatus(ctx, uid, status)
 }
 
-func (u *UserUsecase) UpdateUserPassword(ctx context.Context, oldpwd, newpwd string, uid uint) error {
+func (u *UserUsecase) EditPassword(ctx context.Context, oldpwd, newpwd string, uid uint) error {
 	user, err := u.userRepo.Select(ctx, uid)
 	if err != nil {
 		return err

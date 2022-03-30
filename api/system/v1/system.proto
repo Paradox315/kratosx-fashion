@@ -37,7 +37,7 @@ message LoginRequest {
 }
 
 message UserRequest {
-  string uid = 1;
+  string id = 1;
   string username = 2 [(validate.rules).string.pattern = "^[a-zA-Z][a-zA-Z0-9_]{4,15}$"];
   string password = 3 [(validate.rules).string.pattern = "^[a-zA-Z]\\w{5,17}$"];
   string avatar = 4;
@@ -57,6 +57,11 @@ message IDRequest {
 
 message IDsRequest {
   string ids = 1;
+}
+
+message StatusRequest{
+  string id=1;
+  uint32 status=2;
 }
 
 message PasswordRequest {
@@ -79,9 +84,8 @@ message ListSearchRequest {
 message RoleRequest {
   string id = 1;
   string name = 2;
-  uint32 status = 3;
-  string description = 4;
-  repeated RoleResource role_resources = 5;
+  string description = 3;
+  repeated RoleResource role_resources = 4;
 }
 
 message MenuRequest {

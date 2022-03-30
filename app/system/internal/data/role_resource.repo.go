@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
+	"gorm.io/gorm"
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/app/system/internal/data/linq"
 	"kratosx-fashion/app/system/internal/data/model"
@@ -68,4 +69,11 @@ func (r *RoleResourceRepo) DeleteByResourceIDs(ctx context.Context, resIDs []uin
 
 func (r *RoleResourceRepo) BaseRepo(ctx context.Context) *linq.Query {
 	return r.baseRepo
+}
+
+func (r *RoleResourceRepo) UpdateByRoleID(ctx context.Context, rid uint64, rrs []*model.RoleResource) error {
+	return r.dao.DB.Transaction(func(tx *gorm.DB) error {
+		tx.Where("role_id = ?", rid).Delete(&model.RoleResource{})
+		return tx.Create(&rrs).Error
+	})
 }

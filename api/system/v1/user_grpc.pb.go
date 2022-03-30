@@ -25,7 +25,7 @@ type UserClient interface {
 	CreateUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*IDReply, error)
 	UpdateUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*IDReply, error)
 	UpdatePassword(ctx context.Context, in *PasswordRequest, opts ...grpc.CallOption) (*IDReply, error)
-	UpdateUserStatus(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*IDReply, error)
+	UpdateUserStatus(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*IDReply, error)
 	DeleteUser(ctx context.Context, in *IDsRequest, opts ...grpc.CallOption) (*EmptyReply, error)
 	GetUser(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*UserReply, error)
 	ListUser(ctx context.Context, in *ListSearchRequest, opts ...grpc.CallOption) (*ListUserReply, error)
@@ -66,7 +66,7 @@ func (c *userClient) UpdatePassword(ctx context.Context, in *PasswordRequest, op
 	return out, nil
 }
 
-func (c *userClient) UpdateUserStatus(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*IDReply, error) {
+func (c *userClient) UpdateUserStatus(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*IDReply, error) {
 	out := new(IDReply)
 	err := c.cc.Invoke(ctx, "/api.system.v1.User/UpdateUserStatus", in, out, opts...)
 	if err != nil {
@@ -109,7 +109,7 @@ type UserServer interface {
 	CreateUser(context.Context, *UserRequest) (*IDReply, error)
 	UpdateUser(context.Context, *UserRequest) (*IDReply, error)
 	UpdatePassword(context.Context, *PasswordRequest) (*IDReply, error)
-	UpdateUserStatus(context.Context, *IDRequest) (*IDReply, error)
+	UpdateUserStatus(context.Context, *StatusRequest) (*IDReply, error)
 	DeleteUser(context.Context, *IDsRequest) (*EmptyReply, error)
 	GetUser(context.Context, *IDRequest) (*UserReply, error)
 	ListUser(context.Context, *ListSearchRequest) (*ListUserReply, error)
@@ -129,7 +129,7 @@ func (UnimplementedUserServer) UpdateUser(context.Context, *UserRequest) (*IDRep
 func (UnimplementedUserServer) UpdatePassword(context.Context, *PasswordRequest) (*IDReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePassword not implemented")
 }
-func (UnimplementedUserServer) UpdateUserStatus(context.Context, *IDRequest) (*IDReply, error) {
+func (UnimplementedUserServer) UpdateUserStatus(context.Context, *StatusRequest) (*IDReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserStatus not implemented")
 }
 func (UnimplementedUserServer) DeleteUser(context.Context, *IDsRequest) (*EmptyReply, error) {
@@ -209,7 +209,7 @@ func _User_UpdatePassword_Handler(srv interface{}, ctx context.Context, dec func
 }
 
 func _User_UpdateUserStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IDRequest)
+	in := new(StatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -221,7 +221,7 @@ func _User_UpdateUserStatus_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: "/api.system.v1.User/UpdateUserStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).UpdateUserStatus(ctx, req.(*IDRequest))
+		return srv.(UserServer).UpdateUserStatus(ctx, req.(*StatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

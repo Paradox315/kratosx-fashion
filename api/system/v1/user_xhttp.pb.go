@@ -34,7 +34,7 @@ type UserXHTTPServer interface {
 	ListUser(context.Context, *ListSearchRequest) (*ListUserReply, error)
 	UpdatePassword(context.Context, *PasswordRequest) (*IDReply, error)
 	UpdateUser(context.Context, *UserRequest) (*IDReply, error)
-	UpdateUserStatus(context.Context, *IDRequest) (*IDReply, error)
+	UpdateUserStatus(context.Context, *StatusRequest) (*IDReply, error)
 }
 
 func RegisterUserXHTTPServer(s *xhttp.Server, srv UserXHTTPServer) {
@@ -102,7 +102,7 @@ func _User_UpdatePassword0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 
 func _User_UpdateUserStatus0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var in IDRequest
+		var in StatusRequest
 		if err := binding.BindBody(c, &in); err != nil {
 			return apistate.Error().WithError(err).Send(c)
 		}

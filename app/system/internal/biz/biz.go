@@ -72,6 +72,7 @@ type RoleResourceRepo interface {
 	SelectByRoleID(context.Context, uint64, ...model.ResourceType) ([]*model.RoleResource, error)
 	Insert(context.Context, ...*model.RoleResource) error
 	Update(context.Context, *model.RoleResource) error
+	UpdateByRoleID(context.Context, uint64, []*model.RoleResource) error
 	Delete(context.Context, uint) error
 	DeleteByRoleIDs(context.Context, []uint64) error
 	DeleteByResourceIDs(context.Context, []uint64, model.ResourceType) error

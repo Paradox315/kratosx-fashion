@@ -33,7 +33,7 @@ service User {
 		};
 	}
 
-	rpc UpdateUserStatus(IDRequest) returns (IDReply){
+	rpc UpdateUserStatus(StatusRequest) returns (IDReply){
 		option (google.api.http) = {
 			put: "/status/{id}"
 			body: "*"

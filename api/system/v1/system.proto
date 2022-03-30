@@ -60,8 +60,8 @@ message IDsRequest {
 }
 
 message StatusRequest{
-  string id=1;
-  uint32 status=2;
+  string id = 1;
+  uint32 status = 2;
 }
 
 message PasswordRequest {
@@ -114,6 +114,10 @@ message IDReply {
 message CaptchaReply {
   string captcha_id = 1;
   string pic_path = 2;
+}
+message RoutePolicyRequest {
+  string id = 1;
+  repeated RouterGroup routers = 2;
 }
 
 message UserReply {
@@ -179,7 +183,7 @@ message UploadReply {
 }
 
 message RouterReply{
-  repeated Router routers = 1;
+  repeated RouterGroup routers = 1;
   uint32 total = 2;
 }
 
@@ -240,7 +244,12 @@ message Router{
   string path = 1;
   string method = 2;
   string name = 3;
-  string group = 4;
+  bool owned = 4;
   repeated string params = 5;
-  repeated Router children = 6;
+}
+
+message RouterGroup{
+  string path = 1;
+  string name = 2;
+  repeated Router router = 3;
 }

@@ -1,9 +1,11 @@
-package data
+package repo
 
 import (
 	"context"
+	iploc "github.com/ip2location/ip2location-go"
 	ua "github.com/mileusna/useragent"
 	"kratosx-fashion/app/system/internal/biz"
+	"kratosx-fashion/app/system/internal/data"
 	"kratosx-fashion/app/system/internal/data/linq"
 	"kratosx-fashion/app/system/internal/data/model"
 
@@ -11,15 +13,17 @@ import (
 )
 
 type LoginLogRepo struct {
-	dao      *Data
+	dao      *data.Data
 	log      *log.Helper
+	ipdb     *iploc.DB
 	baseRepo *linq.Query
 }
 
-func NewLoginLogRepo(data *Data, logger log.Logger) biz.LoginLogRepo {
+func NewLoginLogRepo(data *data.Data, logger log.Logger, ipdb *iploc.DB) biz.LoginLogRepo {
 	return &LoginLogRepo{
 		dao:      data,
 		log:      log.NewHelper(logger),
+		ipdb:     ipdb,
 		baseRepo: linq.Use(data.DB),
 	}
 }
@@ -33,7 +37,7 @@ func (l *LoginLogRepo) SelectLocation(ctx context.Context, ip string) (loc *biz.
 			Position: nil,
 		}
 	}
-	result, err := l.dao.IP_DB.Get_all(ip)
+	result, err := l.ipdb.Get_all(ip)
 	if err != nil {
 		return nil, err
 	}

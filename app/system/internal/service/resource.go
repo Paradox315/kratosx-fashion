@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-
 	pb "kratosx-fashion/api/system/v1"
 )
 
@@ -29,6 +28,12 @@ func (s *ResourceService) GetMenuTree(ctx context.Context, req *pb.IDRequest) (*
 func (s *ResourceService) GetMenuTreeByRole(ctx context.Context, req *pb.IDRequest) (*pb.MenuReply, error) {
 	return &pb.MenuReply{}, nil
 }
-func (s *ResourceService) GetRouteTree(ctx context.Context, req *pb.EmptyRequest) (*pb.RouterReply, error) {
+func (s *ResourceService) GetRouteTree(ctx context.Context, req *pb.IDRequest) (*pb.RouterReply, error) {
 	return &pb.RouterReply{}, nil
+}
+func (s *ResourceService) GetRouteTreeByRole(ctx context.Context, req *pb.IDRequest) (*pb.RouterReply, error) {
+	return &pb.RouterReply{}, nil
+}
+func (s *ResourceService) EditRoutePolicy(ctx context.Context, req *pb.RoutePolicyRequest) (*pb.EmptyReply, error) {
+	return &pb.EmptyReply{}, nil
 }

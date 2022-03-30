@@ -2,8 +2,6 @@ package biz
 
 import (
 	"context"
-	"kratosx-fashion/app/system/internal/data/linq"
-
 	"kratosx-fashion/app/system/internal/data/model"
 
 	"github.com/google/wire"
@@ -16,6 +14,11 @@ var ProviderSet = wire.NewSet(
 	NewRoleUsecase,
 	NewResourceUsecase,
 )
+
+// Transaction 新增事务接口方法
+type Transaction interface {
+	ExecTx(context.Context, func(ctx context.Context) error) error
+}
 
 type UserRepo interface {
 	Select(context.Context, uint) (*model.User, error)
@@ -31,7 +34,6 @@ type UserRepo interface {
 	ExistByUserName(context.Context, string) bool
 	ExistByEmail(context.Context, string) bool
 	ExistByMobile(context.Context, string) bool
-	BaseRepo(ctx context.Context) *linq.Query
 }
 
 type UserRoleRepo interface {
@@ -44,7 +46,6 @@ type UserRoleRepo interface {
 	Delete(context.Context, uint) error
 	DeleteByUserIDs(context.Context, []uint64) error
 	DeleteByRoleIDs(context.Context, []uint64) error
-	Exist(context.Context, uint64, uint64) bool
 }
 
 type LoginLogRepo interface {
@@ -64,7 +65,6 @@ type RoleRepo interface {
 	Insert(context.Context, ...*model.Role) error
 	Update(context.Context, *model.Role) error
 	DeleteByIDs(context.Context, []uint) error
-	BaseRepo(ctx context.Context) *linq.Query
 }
 
 type RoleResourceRepo interface {
@@ -76,33 +76,30 @@ type RoleResourceRepo interface {
 	Delete(context.Context, uint) error
 	DeleteByRoleIDs(context.Context, []uint64) error
 	DeleteByResourceIDs(context.Context, []uint64, model.ResourceType) error
-	BaseRepo(ctx context.Context) *linq.Query
 }
 
 type ResourceMenuRepo interface {
-	Select(context.Context, uint64) (*model.ResourceMenu, error)
+	Select(context.Context, uint) (*model.ResourceMenu, error)
 	SelectByIDs(context.Context, []uint) ([]*model.ResourceMenu, error)
-	Insert(context.Context, *model.ResourceMenu) error
+	Insert(context.Context, ...*model.ResourceMenu) error
 	Update(context.Context, *model.ResourceMenu) error
 	DeleteByIDs(context.Context, []uint) error
 }
 
 type ResourceActionRepo interface {
-	Select(context.Context, uint64) (*model.ResourceAction, error)
+	Select(context.Context, uint) (*model.ResourceAction, error)
 	SelectByMenuID(context.Context, uint64) ([]*model.ResourceAction, error)
-	Insert(context.Context, *model.ResourceAction) error
+	Insert(context.Context, ...*model.ResourceAction) error
 	Update(context.Context, *model.ResourceAction) error
-	Delete(context.Context, uint64) error
+	Delete(context.Context, uint) error
 	DeleteByMenuIDs(context.Context, []uint64) error
 }
 
 type ResourceRouterRepo interface {
-	SelectAll(context.Context) ([]*model.ResourceRouter, error)
+	SelectAll(context.Context) ([]*Router, error)
 	SelectByRoleIDs(context.Context, []string) ([]*model.ResourceRouter, error)
-	Insert(context.Context, *model.ResourceRouter) error
-	Update(context.Context, *model.ResourceRouter) error
-	DeleteByRoleIDs(context.Context, []string) error
-	Exist(context.Context, string, string, string) (bool, error)
+	Update(context.Context, []*model.ResourceRouter) error
+	ClearByRoleIDs(context.Context, []string) error
 }
 
 type CaptchaRepo interface {

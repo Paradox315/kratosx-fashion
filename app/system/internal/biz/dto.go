@@ -53,3 +53,17 @@ type SQLOption struct {
 	Order string        `json:"order,omitempty"`
 	Args  []interface{} `json:"args,omitempty"`
 }
+
+type Router struct {
+	Method string   `json:"method,omitempty"`
+	Path   string   `json:"path,omitempty"`
+	Name   string   `json:"name,omitempty"`
+	Params []string `json:"params,omitempty"`
+	Group  string   `json:"group,omitempty"`
+}
+
+type RouterGroup struct {
+	Path   string   `json:"path,omitempty"`
+	Name   string   `json:"name,omitempty"`
+	Router []Router `json:"router,omitempty"`
+}

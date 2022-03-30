@@ -24,7 +24,7 @@ const _ = xhttp.SupportPackageIsVersion1
 const _ = middleware.SupportPackageIsVersion1
 const _ = transport.KindXHTTP
 
-var _ = new(apistate.Resp)
+var _ = new(apistate.Resp[any])
 
 // 用户服务
 type UserXHTTPServer interface {
@@ -59,14 +59,14 @@ func _User_CreateUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in UserRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.CreateUser(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*IDReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -74,14 +74,14 @@ func _User_UpdateUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in UserRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.UpdateUser(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*IDReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -89,14 +89,14 @@ func _User_UpdatePassword0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in PasswordRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.UpdatePassword(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*IDReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -104,17 +104,17 @@ func _User_UpdateUserStatus0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in StatusRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		if err := binding.BindParams(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.UpdateUserStatus(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*IDReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -122,14 +122,14 @@ func _User_DeleteUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDsRequest
 		if err := binding.BindParams(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.DeleteUser(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*EmptyReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -137,14 +137,14 @@ func _User_GetUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDRequest
 		if err := binding.BindParams(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.GetUser(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*UserReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -152,13 +152,13 @@ func _User_ListUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in ListSearchRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.ListUser(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*ListUserReply]().WithData(reply).Send(c)
 	}
 }

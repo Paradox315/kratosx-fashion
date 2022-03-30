@@ -1,22 +1,22 @@
-package data
+package repo
 
 import (
 	"context"
-	"errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
 	"kratosx-fashion/app/system/internal/biz"
+	"kratosx-fashion/app/system/internal/data"
 	"kratosx-fashion/app/system/internal/data/linq"
 	"kratosx-fashion/app/system/internal/data/model"
 )
 
 type userRoleRepo struct {
-	dao      *Data
+	dao      *data.Data
 	log      *log.Helper
 	baseRepo *linq.Query
 }
 
-func NewUserRoleRepo(data *Data, logger log.Logger) biz.UserRoleRepo {
+func NewUserRoleRepo(data *data.Data, logger log.Logger) biz.UserRoleRepo {
 	return &userRoleRepo{
 		dao:      data,
 		log:      log.NewHelper(log.With(logger, "repo", "user_role")),
@@ -72,16 +72,4 @@ func (u *userRoleRepo) DeleteByRoleIDs(ctx context.Context, rids []uint64) error
 	ur := u.baseRepo.UserRole
 	_, err := ur.WithContext(ctx).Where(ur.RoleID.In(rids...)).Delete()
 	return err
-}
-
-func (u *userRoleRepo) Exist(ctx context.Context, uid uint64, rid uint64) bool {
-	ur := u.baseRepo.UserRole
-	_, err := ur.WithContext(ctx).Where(ur.UserID.Eq(uid)).Where(ur.RoleID.Eq(rid)).First()
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return false
-	} else if err != nil {
-		u.log.Error("userRoleRepo.Exist", err)
-		return false
-	}
-	return true
 }

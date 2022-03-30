@@ -24,7 +24,7 @@ const _ = xhttp.SupportPackageIsVersion1
 const _ = middleware.SupportPackageIsVersion1
 const _ = transport.KindXHTTP
 
-var _ = new(apistate.Resp)
+var _ = new(apistate.Resp[any])
 
 // 角色服务
 type RoleXHTTPServer interface {
@@ -55,14 +55,14 @@ func _Role_CreateRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in RoleRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.CreateRole(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*IDReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -70,14 +70,14 @@ func _Role_UpdateRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in RoleRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.UpdateRole(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*IDReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -85,14 +85,14 @@ func _Role_DeleteRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDsRequest
 		if err := binding.BindParams(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.DeleteRole(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*EmptyReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -100,14 +100,14 @@ func _Role_GetRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDRequest
 		if err := binding.BindParams(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.GetRole(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*RoleReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -115,13 +115,13 @@ func _Role_ListRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in ListRequest
 		if err := binding.BindQuery(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.ListRole(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*ListRoleReply]().WithData(reply).Send(c)
 	}
 }

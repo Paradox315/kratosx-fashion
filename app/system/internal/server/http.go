@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
 	"github.com/gofiber/contrib/fiberzap"
 	"kratosx-fashion/app/system/internal/conf"
 	"kratosx-fashion/app/system/internal/service"
@@ -45,10 +46,8 @@ func NewHTTPServer(c *conf.Server,
 	}
 	srv := xhttp.NewServer(opts...)
 	srv.Route(func(r fiber.Router) {
-		r.Get("/routers", func(c *fiber.Ctx) error {
-			return c.JSON(fiber.Map{
-				"routers": srv.Routers(),
-			})
+		r.Get("/", func(c *fiber.Ctx) error {
+			return apistate.Success[[][]*fiber.Route]().WithData(srv.Routers()).Send(c)
 		})
 	})
 	{

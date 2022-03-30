@@ -11,6 +11,8 @@ import (
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/app/system/internal/conf"
 	"kratosx-fashion/app/system/internal/data"
+	"kratosx-fashion/app/system/internal/data/infra"
+	"kratosx-fashion/app/system/internal/data/repo"
 	"kratosx-fashion/app/system/internal/middleware"
 	"kratosx-fashion/app/system/internal/server"
 	"kratosx-fashion/app/system/internal/service"
@@ -20,25 +22,32 @@ import (
 
 // initApp init kratos application.
 func initApp(confServer *conf.Server, registry *conf.Registry, storage *conf.Storage, confData *conf.Data, jwt *conf.JWT, logger *conf.Logger) (*kratos.App, func(), error) {
-	logLogger := data.NewLogger(logger)
+	logLogger := infra.NewLogger(logger)
 	db := data.NewDB(confData, logLogger)
 	client := data.NewRedis(confData, logLogger)
-	dataData, cleanup, err := data.NewData(confData, logLogger, db, client)
+	ip2locationDB := data.NewIPLocationDB(confData, logLogger)
+	dataData, cleanup, err := data.NewData(confData, logLogger, db, client, ip2locationDB)
 	if err != nil {
 		return nil, nil, err
 	}
-	userRepo := data.NewUserRepo(dataData, logLogger)
-	loginLogRepo := data.NewLoginLogRepo(dataData, logLogger)
-	captchaRepo := data.NewCaptchaRepo(logLogger)
+	userRepo := repo.NewUserRepo(dataData, logLogger)
+	loginLogRepo := repo.NewLoginLogRepo(dataData, logLogger, ip2locationDB)
+	captchaRepo := repo.NewCaptchaRepo(logLogger)
 	jwtService := middleware.NewJwtService(jwt, client, logLogger)
-	storageStorage := data.NewStorage(storage)
+	storageStorage := infra.NewStorage(storage)
 	publicUsecase := biz.NewPublicUsecase(userRepo, loginLogRepo, captchaRepo, jwtService, storageStorage, logLogger)
 	pubService := service.NewPubService(publicUsecase, logLogger)
-	userService := service.NewUserService()
-	roleService := service.NewRoleService()
+	userRoleRepo := repo.NewUserRoleRepo(dataData, logLogger)
+	roleRepo := repo.NewRoleRepo(dataData, logLogger)
+	transaction := data.NewTransaction(dataData)
+	userUsecase := biz.NewUserUsecase(userRepo, userRoleRepo, roleRepo, transaction, logLogger)
+	userService := service.NewUserService(userUsecase, logLogger)
+	roleResourceRepo := repo.NewRoleResourceRepo(dataData, logLogger)
+	roleUsecase := biz.NewRoleUsecase(roleRepo, userRoleRepo, roleResourceRepo, transaction, logLogger)
+	roleService := service.NewRoleService(roleUsecase, logLogger)
 	resourceService := service.NewResourceService()
 	xhttpServer := server.NewHTTPServer(confServer, pubService, userService, roleService, resourceService, logLogger)
-	registrar := data.NewRegistrar(registry)
+	registrar := infra.NewRegistrar(registry)
 	app := newApp(logLogger, xhttpServer, registrar)
 	return app, func() {
 		cleanup()

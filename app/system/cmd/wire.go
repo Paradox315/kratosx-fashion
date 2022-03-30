@@ -11,6 +11,8 @@ import (
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/app/system/internal/conf"
 	"kratosx-fashion/app/system/internal/data"
+	"kratosx-fashion/app/system/internal/data/infra"
+	"kratosx-fashion/app/system/internal/data/repo"
 	"kratosx-fashion/app/system/internal/middleware"
 	"kratosx-fashion/app/system/internal/server"
 	"kratosx-fashion/app/system/internal/service"
@@ -18,5 +20,13 @@ import (
 
 // initApp init kratos application.
 func initApp(*conf.Server, *conf.Registry, *conf.Storage, *conf.Data, *conf.JWT, *conf.Logger) (*kratos.App, func(), error) {
-	panic(wire.Build(server.ProviderSet, data.ProviderSet, biz.ProviderSet, service.ProviderSet, middleware.ProviderSet, newApp))
+	panic(wire.Build(
+		server.ProviderSet,
+		data.ProviderSet,
+		infra.ProviderSet,
+		repo.ProviderSet,
+		biz.ProviderSet,
+		service.ProviderSet,
+		middleware.ProviderSet,
+		newApp))
 }

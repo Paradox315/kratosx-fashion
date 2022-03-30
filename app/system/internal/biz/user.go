@@ -19,14 +19,16 @@ type UserUsecase struct {
 	userRepo     UserRepo
 	userRoleRepo UserRoleRepo
 	roleRepo     RoleRepo
+	tx           Transaction
 	log          *log.Helper
 }
 
-func NewUserUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, roleRepo RoleRepo, logger log.Logger) *UserUsecase {
+func NewUserUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, roleRepo RoleRepo, tx Transaction, logger log.Logger) *UserUsecase {
 	return &UserUsecase{
 		userRepo:     userRepo,
 		userRoleRepo: userRoleRepo,
 		roleRepo:     roleRepo,
+		tx:           tx,
 		log:          log.NewHelper(log.With(logger, "biz", "user")),
 	}
 }
@@ -147,11 +149,13 @@ func (u UserUsecase) Remove(ctx context.Context, uids []uint) (err error) {
 	if len(uids) == 0 {
 		return errors.InvalidArgumentError("uids is null")
 	}
-	err = u.userRoleRepo.DeleteByUserIDs(ctx, xcast.ToUint64Slice[uint](uids))
-	if err != nil {
-		return
-	}
-	return u.userRepo.DeleteByIDs(ctx, uids)
+	return u.tx.ExecTx(ctx, func(ctx context.Context) error {
+		err = u.userRoleRepo.DeleteByUserIDs(ctx, xcast.ToUint64Slice[uint](uids))
+		if err != nil {
+			return err
+		}
+		return u.userRepo.DeleteByIDs(ctx, uids)
+	})
 }
 
 func (u *UserUsecase) Get(ctx context.Context, uid uint) (user *pb.UserReply, err error) {

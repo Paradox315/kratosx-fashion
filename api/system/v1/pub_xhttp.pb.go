@@ -24,7 +24,7 @@ const _ = xhttp.SupportPackageIsVersion1
 const _ = middleware.SupportPackageIsVersion1
 const _ = transport.KindXHTTP
 
-var _ = new(apistate.Resp)
+var _ = new(apistate.Resp[any])
 
 // 公共接口
 type PubXHTTPServer interface {
@@ -56,14 +56,14 @@ func _Pub_Generate0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in EmptyRequest
 		if err := binding.BindQuery(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.Generate(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*CaptchaReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -71,14 +71,14 @@ func _Pub_Register0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in RegisterRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.Register(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*RegisterReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -86,14 +86,14 @@ func _Pub_Login0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in LoginRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.Login(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*LoginReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -101,14 +101,14 @@ func _Pub_Logout0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in EmptyRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.Logout(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*EmptyReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -116,14 +116,14 @@ func _Pub_RetrievePwd0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in RetrieveRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.RetrievePwd(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*EmptyReply]().WithData(reply).Send(c)
 	}
 }
 
@@ -131,13 +131,13 @@ func _Pub_UploadFile0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in EmptyRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
 		reply, err := srv.UploadFile(ctx, &in)
 		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success().WithData(reply).Send(c)
+		return apistate.Success[*UploadReply]().WithData(reply).Send(c)
 	}
 }

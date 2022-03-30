@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cast"
 	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/data/model"
+	"kratosx-fashion/pkg/xcast"
 	"strconv"
 )
 
@@ -14,14 +15,16 @@ type RoleUsecase struct {
 	roleRepo         RoleRepo
 	roleUserRepo     UserRoleRepo
 	roleResourceRepo RoleResourceRepo
+	tx               Transaction
 	log              *log.Helper
 }
 
-func NewRoleUsecase(roleRepo RoleRepo, roleUserRepo UserRoleRepo, roleResourceRepo RoleResourceRepo, logger log.Logger) *RoleUsecase {
+func NewRoleUsecase(roleRepo RoleRepo, roleUserRepo UserRoleRepo, roleResourceRepo RoleResourceRepo, tx Transaction, logger log.Logger) *RoleUsecase {
 	return &RoleUsecase{
 		roleRepo:         roleRepo,
 		roleUserRepo:     roleUserRepo,
 		roleResourceRepo: roleResourceRepo,
+		tx:               tx,
 		log:              log.NewHelper(logger),
 	}
 }
@@ -38,7 +41,8 @@ func (r *RoleUsecase) buildRoleReply(ctx context.Context, rpo *model.Role) (role
 			ResourceType: uint32(rr.Type),
 		})
 	}
-
+	role.CreatedAt = rpo.CreatedAt.Format(timeFormat)
+	role.UpdatedAt = rpo.UpdatedAt.Format(timeFormat)
 	return
 }
 
@@ -86,16 +90,18 @@ func (r *RoleUsecase) Edit(ctx context.Context, role *pb.RoleRequest) (id string
 	return
 }
 
-func (r *RoleUsecase) Remove(ctx context.Context, id uint) (err error) {
-	err = r.roleRepo.DeleteByIDs(ctx, []uint{id})
-	if err != nil {
-		return
-	}
-	err = r.roleResourceRepo.DeleteByRoleIDs(ctx, []uint64{uint64(id)})
-	if err != nil {
-		return
-	}
-	return r.roleUserRepo.DeleteByRoleIDs(ctx, []uint64{uint64(id)})
+func (r *RoleUsecase) Remove(ctx context.Context, ids []uint) (err error) {
+	return r.tx.ExecTx(ctx, func(ctx context.Context) error {
+		err = r.roleRepo.DeleteByIDs(ctx, ids)
+		if err != nil {
+			return err
+		}
+		err = r.roleResourceRepo.DeleteByRoleIDs(ctx, xcast.ToUint64Slice(ids))
+		if err != nil {
+			return err
+		}
+		return r.roleUserRepo.DeleteByRoleIDs(ctx, xcast.ToUint64Slice(ids))
+	})
 }
 
 func (r *RoleUsecase) Get(ctx context.Context, id uint) (role *pb.RoleReply, err error) {
@@ -106,6 +112,7 @@ func (r *RoleUsecase) Get(ctx context.Context, id uint) (role *pb.RoleReply, err
 	}
 	return r.buildRoleReply(ctx, rpo)
 }
+
 func (r *RoleUsecase) List(ctx context.Context, limit, offset int) (list *pb.ListRoleReply, err error) {
 	roles, total, err := r.roleRepo.List(ctx, limit, offset)
 	if err != nil {

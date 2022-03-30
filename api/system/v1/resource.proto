@@ -12,41 +12,54 @@ option java_package = "api.system.v1";
 // 菜单服务
 // @Auth
 service Resource {
-	rpc CreateMenu (MenuRequest) returns (IDReply){
-		option (google.api.http) = {
-			post: "/menu"
-			body: "*"
-		};
-	}
+  rpc CreateMenu (MenuRequest) returns (IDReply){
+    option (google.api.http) = {
+      post: "/menu"
+      body: "*"
+    };
+  }
 
-	rpc UpdateMenu (MenuRequest) returns (IDReply){
-		option (google.api.http) = {
-			put: "/menu"
-			body: "*"
-		};
-	}
+  rpc UpdateMenu (MenuRequest) returns (IDReply){
+    option (google.api.http) = {
+      put: "/menu"
+      body: "*"
+    };
+  }
 
-	rpc DeleteMenu (IDsRequest) returns (EmptyReply){
-		option (google.api.http) = {
-			delete: "/menus/{ids}"
-		};
-	}
+  rpc DeleteMenu (IDsRequest) returns (EmptyReply){
+    option (google.api.http) = {
+      delete: "/menu/{ids}"
+    };
+  }
 
-	rpc GetMenuTree (IDRequest) returns (MenuReply){
-		option (google.api.http) = {
-			get: "/menu/tree/{id}"
-		};
-	}
+  rpc GetMenuTree (IDRequest) returns (MenuReply){
+    option (google.api.http) = {
+      get: "/menu/{id}"
+    };
+  }
 
-	rpc GetMenuTreeByRole (IDRequest) returns (MenuReply){
-		option (google.api.http) = {
-			get: "/menu/tree/role/{id}"
-		};
-	}
+  rpc GetMenuTreeByRole (IDRequest) returns (MenuReply){
+    option (google.api.http) = {
+      get: "/menu/role/{id}"
+    };
+  }
 
-	rpc GetRouteTree(EmptyRequest) returns (RouterReply){
-		option (google.api.http) = {
-			get: "/router"
-		};
-	}
+  rpc GetRouteTree(IDRequest) returns (RouterReply){
+    option (google.api.http) = {
+      get: "/router/{id}"
+    };
+  }
+
+  rpc GetRouteTreeByRole (IDRequest) returns (RouterReply){
+    option (google.api.http) = {
+      get: "/router/role/{id}"
+    };
+  }
+
+  rpc EditRoutePolicy(RoutePolicyRequest) returns (EmptyReply){
+    option (google.api.http) = {
+      post: "/router"
+      body: "*"
+    };
+  }
 }

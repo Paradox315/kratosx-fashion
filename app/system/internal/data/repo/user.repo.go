@@ -1,4 +1,4 @@
-package data
+package repo
 
 import (
 	"context"
@@ -6,17 +6,18 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
 	"kratosx-fashion/app/system/internal/biz"
+	"kratosx-fashion/app/system/internal/data"
 	"kratosx-fashion/app/system/internal/data/linq"
 	"kratosx-fashion/app/system/internal/data/model"
 )
 
 type userRepo struct {
-	dao      *Data
+	dao      *data.Data
 	log      *log.Helper
 	baseRepo *linq.Query
 }
 
-func NewUserRepo(data *Data, logger log.Logger) biz.UserRepo {
+func NewUserRepo(data *data.Data, logger log.Logger) biz.UserRepo {
 	return &userRepo{
 		dao:      data,
 		log:      log.NewHelper(log.With(logger, "repo", "user")),

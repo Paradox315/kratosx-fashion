@@ -152,7 +152,7 @@ func (j *JWTService) MiddlewareFunc() fiber.Handler {
 		}
 		if err := errCatch(c.Context()); err != nil {
 			j.log.WithContext(c.Context()).Error(err)
-			return apistate.Error().WithError(err).Send(c)
+			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		return c.Next()
 	}

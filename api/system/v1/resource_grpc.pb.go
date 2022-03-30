@@ -27,7 +27,9 @@ type ResourceClient interface {
 	DeleteMenu(ctx context.Context, in *IDsRequest, opts ...grpc.CallOption) (*EmptyReply, error)
 	GetMenuTree(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*MenuReply, error)
 	GetMenuTreeByRole(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*MenuReply, error)
-	GetRouteTree(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*RouterReply, error)
+	GetRouteTree(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*RouterReply, error)
+	GetRouteTreeByRole(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*RouterReply, error)
+	EditRoutePolicy(ctx context.Context, in *RoutePolicyRequest, opts ...grpc.CallOption) (*EmptyReply, error)
 }
 
 type resourceClient struct {
@@ -83,9 +85,27 @@ func (c *resourceClient) GetMenuTreeByRole(ctx context.Context, in *IDRequest, o
 	return out, nil
 }
 
-func (c *resourceClient) GetRouteTree(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*RouterReply, error) {
+func (c *resourceClient) GetRouteTree(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*RouterReply, error) {
 	out := new(RouterReply)
 	err := c.cc.Invoke(ctx, "/api.system.v1.Resource/GetRouteTree", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceClient) GetRouteTreeByRole(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*RouterReply, error) {
+	out := new(RouterReply)
+	err := c.cc.Invoke(ctx, "/api.system.v1.Resource/GetRouteTreeByRole", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceClient) EditRoutePolicy(ctx context.Context, in *RoutePolicyRequest, opts ...grpc.CallOption) (*EmptyReply, error) {
+	out := new(EmptyReply)
+	err := c.cc.Invoke(ctx, "/api.system.v1.Resource/EditRoutePolicy", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +121,9 @@ type ResourceServer interface {
 	DeleteMenu(context.Context, *IDsRequest) (*EmptyReply, error)
 	GetMenuTree(context.Context, *IDRequest) (*MenuReply, error)
 	GetMenuTreeByRole(context.Context, *IDRequest) (*MenuReply, error)
-	GetRouteTree(context.Context, *EmptyRequest) (*RouterReply, error)
+	GetRouteTree(context.Context, *IDRequest) (*RouterReply, error)
+	GetRouteTreeByRole(context.Context, *IDRequest) (*RouterReply, error)
+	EditRoutePolicy(context.Context, *RoutePolicyRequest) (*EmptyReply, error)
 	mustEmbedUnimplementedResourceServer()
 }
 
@@ -124,8 +146,14 @@ func (UnimplementedResourceServer) GetMenuTree(context.Context, *IDRequest) (*Me
 func (UnimplementedResourceServer) GetMenuTreeByRole(context.Context, *IDRequest) (*MenuReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMenuTreeByRole not implemented")
 }
-func (UnimplementedResourceServer) GetRouteTree(context.Context, *EmptyRequest) (*RouterReply, error) {
+func (UnimplementedResourceServer) GetRouteTree(context.Context, *IDRequest) (*RouterReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRouteTree not implemented")
+}
+func (UnimplementedResourceServer) GetRouteTreeByRole(context.Context, *IDRequest) (*RouterReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRouteTreeByRole not implemented")
+}
+func (UnimplementedResourceServer) EditRoutePolicy(context.Context, *RoutePolicyRequest) (*EmptyReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EditRoutePolicy not implemented")
 }
 func (UnimplementedResourceServer) mustEmbedUnimplementedResourceServer() {}
 
@@ -231,7 +259,7 @@ func _Resource_GetMenuTreeByRole_Handler(srv interface{}, ctx context.Context, d
 }
 
 func _Resource_GetRouteTree_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EmptyRequest)
+	in := new(IDRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -243,7 +271,43 @@ func _Resource_GetRouteTree_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: "/api.system.v1.Resource/GetRouteTree",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceServer).GetRouteTree(ctx, req.(*EmptyRequest))
+		return srv.(ResourceServer).GetRouteTree(ctx, req.(*IDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Resource_GetRouteTreeByRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceServer).GetRouteTreeByRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.system.v1.Resource/GetRouteTreeByRole",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceServer).GetRouteTreeByRole(ctx, req.(*IDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Resource_EditRoutePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RoutePolicyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceServer).EditRoutePolicy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.system.v1.Resource/EditRoutePolicy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceServer).EditRoutePolicy(ctx, req.(*RoutePolicyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -278,6 +342,14 @@ var Resource_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRouteTree",
 			Handler:    _Resource_GetRouteTree_Handler,
+		},
+		{
+			MethodName: "GetRouteTreeByRole",
+			Handler:    _Resource_GetRouteTreeByRole_Handler,
+		},
+		{
+			MethodName: "EditRoutePolicy",
+			Handler:    _Resource_EditRoutePolicy_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

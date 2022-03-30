@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/cast"
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/pkg/pagination"
+	"kratosx-fashion/pkg/xcast"
+	"strings"
 
 	pb "kratosx-fashion/api/system/v1"
 )
@@ -42,10 +44,13 @@ func (s *RoleService) UpdateRole(ctx context.Context, req *pb.RoleRequest) (*pb.
 		Id: id,
 	}, nil
 }
-func (s *RoleService) UpdateRoleStatus(ctx context.Context, req *pb.IDRequest) (*pb.IDReply, error) {
-	return &pb.IDReply{}, nil
-}
+
 func (s *RoleService) DeleteRole(ctx context.Context, req *pb.IDsRequest) (*pb.EmptyReply, error) {
+	ids := strings.Split(req.Ids, ",")
+	err := s.uc.Remove(ctx, xcast.ToUintSlice(ids))
+	if err != nil {
+		return nil, err
+	}
 	return &pb.EmptyReply{}, nil
 }
 func (s *RoleService) GetRole(ctx context.Context, req *pb.IDRequest) (*pb.RoleReply, error) {

@@ -1,4 +1,4 @@
-package data
+package infra
 
 import (
 	"github.com/jassue/go-storage/local"

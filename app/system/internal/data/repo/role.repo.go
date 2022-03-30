@@ -1,20 +1,21 @@
-package data
+package repo
 
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
 	"kratosx-fashion/app/system/internal/biz"
+	"kratosx-fashion/app/system/internal/data"
 	"kratosx-fashion/app/system/internal/data/linq"
 	"kratosx-fashion/app/system/internal/data/model"
 )
 
 type RoleRepo struct {
-	dao      *Data
+	dao      *data.Data
 	log      *log.Helper
 	baseRepo *linq.Query
 }
 
-func NewRoleRepo(data *Data, logger log.Logger) biz.RoleRepo {
+func NewRoleRepo(data *data.Data, logger log.Logger) biz.RoleRepo {
 	return &RoleRepo{
 		dao:      data,
 		log:      log.NewHelper(log.With(logger, "repo", "role")),
@@ -52,8 +53,4 @@ func (r *RoleRepo) DeleteByIDs(ctx context.Context, rids []uint) error {
 	rr := r.baseRepo.Role
 	_, err := rr.WithContext(ctx).Where(rr.ID.In(rids...)).Delete()
 	return err
-}
-
-func (r *RoleRepo) BaseRepo(ctx context.Context) *linq.Query {
-	return r.baseRepo
 }

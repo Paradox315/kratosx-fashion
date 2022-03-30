@@ -3,59 +3,57 @@ package data
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
-	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/biz"
+	"kratosx-fashion/app/system/internal/data/linq"
 	"kratosx-fashion/app/system/internal/data/model"
 )
 
 type RoleRepo struct {
-	dao *Data
-	log *log.Helper
+	dao      *Data
+	log      *log.Helper
+	baseRepo *linq.Query
 }
 
 func NewRoleRepo(data *Data, logger log.Logger) biz.RoleRepo {
 	return &RoleRepo{
-		dao: data,
-		log: log.NewHelper(logger),
+		dao:      data,
+		log:      log.NewHelper(log.With(logger, "repo", "role")),
+		baseRepo: linq.Use(data.DB),
 	}
 }
 
-func (r *RoleRepo) Select(ctx context.Context, u uint64) (*model.Role, error) {
-	//TODO implement me
-	panic("implement me")
+func (r *RoleRepo) Select(ctx context.Context, id uint) (*model.Role, error) {
+	rr := r.baseRepo.Role
+	return rr.WithContext(ctx).Where(rr.ID.Eq(id)).First()
 }
 
-func (r *RoleRepo) SelectByIDs(ctx context.Context, uint64s []uint64) ([]*model.Role, error) {
-	//TODO implement me
-	panic("implement me")
+func (r *RoleRepo) SelectByIDs(ctx context.Context, rids []uint) ([]*model.Role, error) {
+	rr := r.baseRepo.Role
+	return rr.WithContext(ctx).Where(rr.ID.In(rids...)).Find()
 }
 
-func (r *RoleRepo) List(ctx context.Context, request *pb.ListRequest, option ...*pb.QueryOption) ([]*model.Role, uint64, error) {
-	//TODO implement me
-	panic("implement me")
+func (r *RoleRepo) List(ctx context.Context, limit, offset int) (roles []*model.Role, total int64, err error) {
+	err = r.dao.DB.Limit(limit).Offset(offset).Count(&total).Find(&roles).Error
+	return
 }
 
-func (r *RoleRepo) Insert(ctx context.Context, role *model.Role) error {
-	//TODO implement me
-	panic("implement me")
+func (r *RoleRepo) Insert(ctx context.Context, role ...*model.Role) error {
+	rr := r.baseRepo.Role
+	return rr.WithContext(ctx).Create(role...)
 }
 
 func (r *RoleRepo) Update(ctx context.Context, role *model.Role) error {
-	//TODO implement me
-	panic("implement me")
+	rr := r.baseRepo.Role
+	_, err := rr.WithContext(ctx).Updates(role)
+	return err
 }
 
-func (r *RoleRepo) UpdateStatus(ctx context.Context, u uint64, u2 uint8) error {
-	//TODO implement me
-	panic("implement me")
+func (r *RoleRepo) DeleteByIDs(ctx context.Context, rids []uint) error {
+	rr := r.baseRepo.Role
+	_, err := rr.WithContext(ctx).Where(rr.ID.In(rids...)).Delete()
+	return err
 }
 
-func (r *RoleRepo) Delete(ctx context.Context, u uint64) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r *RoleRepo) DeleteByIDs(ctx context.Context, uint64s []uint64) error {
-	//TODO implement me
-	panic("implement me")
+func (r *RoleRepo) BaseRepo(ctx context.Context) *linq.Query {
+	return r.baseRepo
 }

@@ -42,19 +42,19 @@ func RegisterUserXHTTPServer(s *xhttp.Server, srv UserXHTTPServer) {
 		api := r.Group("api/system/v1/user")
 		// Register all service annotation
 		{
+			api.Name("User-XHTTPServer")
 			api.Use(middleware.Authenticator(), middleware.Authorizer())
 		}
-		api.Post("/", _User_CreateUser0_XHTTP_Handler(srv))
-		api.Put("/", _User_UpdateUser0_XHTTP_Handler(srv))
-		api.Put("/password", _User_UpdatePassword0_XHTTP_Handler(srv))
-		api.Put("/status/:id", _User_UpdateUserStatus0_XHTTP_Handler(srv))
-		api.Delete("/:ids", _User_DeleteUser0_XHTTP_Handler(srv))
-		api.Get("/:id", _User_GetUser0_XHTTP_Handler(srv))
-		api.Post("/list", _User_ListUser0_XHTTP_Handler(srv))
+		api.Post("/", _User_CreateUser0_XHTTP_Handler(srv)).Name("User-CreateUser.0-XHTTP_Handler")
+		api.Put("/", _User_UpdateUser0_XHTTP_Handler(srv)).Name("User-UpdateUser.0-XHTTP_Handler")
+		api.Put("/password", _User_UpdatePassword0_XHTTP_Handler(srv)).Name("User-UpdatePassword.0-XHTTP_Handler")
+		api.Put("/status/:id", _User_UpdateUserStatus0_XHTTP_Handler(srv)).Name("User-UpdateUserStatus.0-XHTTP_Handler")
+		api.Delete("/:ids", _User_DeleteUser0_XHTTP_Handler(srv)).Name("User-DeleteUser.0-XHTTP_Handler")
+		api.Get("/:id", _User_GetUser0_XHTTP_Handler(srv)).Name("User-GetUser.0-XHTTP_Handler")
+		api.Post("/list", _User_ListUser0_XHTTP_Handler(srv)).Name("User-ListUser.0-XHTTP_Handler")
 	})
 }
 
-//
 func _User_CreateUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in UserRequest
@@ -70,7 +70,6 @@ func _User_CreateUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	}
 }
 
-//
 func _User_UpdateUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in UserRequest
@@ -86,7 +85,6 @@ func _User_UpdateUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	}
 }
 
-//
 func _User_UpdatePassword0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in PasswordRequest
@@ -102,7 +100,6 @@ func _User_UpdatePassword0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	}
 }
 
-//
 func _User_UpdateUserStatus0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDRequest
@@ -121,7 +118,6 @@ func _User_UpdateUserStatus0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	}
 }
 
-//
 func _User_DeleteUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDsRequest
@@ -137,7 +133,6 @@ func _User_DeleteUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	}
 }
 
-//
 func _User_GetUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDRequest
@@ -153,7 +148,6 @@ func _User_GetUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	}
 }
 
-//
 func _User_ListUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in ListSearchRequest

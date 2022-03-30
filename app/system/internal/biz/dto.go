@@ -1,6 +1,11 @@
 package biz
 
-import "mime/multipart"
+import (
+	"kratosx-fashion/app/system/internal/data/model"
+	"mime/multipart"
+)
+
+const timeFormat = `2006-01-02 15:04:05`
 
 type Captcha struct {
 	Captcha   string `json:"captcha,omitempty"`
@@ -10,6 +15,20 @@ type Captcha struct {
 type UserSession struct {
 	Username string `json:"username,omitempty"`
 	Password string `json:"password,omitempty"`
+}
+
+type Location struct {
+	Country  string             `json:"country,omitempty"`
+	Region   string             `json:"region,omitempty"`
+	City     string             `json:"city,omitempty"`
+	Position map[string]float32 `json:"position,omitempty"`
+}
+
+type Agent struct {
+	Name       string           `json:"name,omitempty"`
+	OS         string           `json:"os,omitempty"`
+	Device     string           `json:"device,omitempty"`
+	DeviceType model.DeviceType `json:"device_type,omitempty"`
 }
 
 type RegisterInfo struct {
@@ -27,4 +46,10 @@ type Token struct {
 
 type UploadInfo struct {
 	File *multipart.FileHeader `form:"file"`
+}
+
+type SQLOption struct {
+	Where string        `json:"query,omitempty"`
+	Order string        `json:"order,omitempty"`
+	Args  []interface{} `json:"args,omitempty"`
 }

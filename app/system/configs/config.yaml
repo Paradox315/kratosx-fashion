@@ -17,6 +17,10 @@ data:
     addr: 127.0.0.1:6379
     read_timeout: 0.2s
     write_timeout: 0.2s
+  iplocation:
+    source: ./resources/IP2LOCATION-LITE-DB5.BIN
+  casbin:
+    source: ./resources/model.conf
 logger:
   prefix: kratosx-fashion:system
   level: info

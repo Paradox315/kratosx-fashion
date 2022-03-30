@@ -2,7 +2,10 @@ package biz
 
 import (
 	"context"
+	"github.com/go-kratos/kratos/v2/encoding"
+	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/google/uuid"
 	"github.com/jassue/go-storage/storage"
 	"github.com/jinzhu/copier"
@@ -35,7 +38,7 @@ func NewPublicUsecase(userRepo UserRepo, logRepo LoginLogRepo, captchaRepo Captc
 }
 
 func (p *PublicUsecase) Register(ctx context.Context, regInfo RegisterInfo, c Captcha) (uid string, username string, err error) {
-	if !p.captchaRepo.Verify(ctx, c.CaptchaId, c.Captcha) {
+	if !p.captchaRepo.Verify(ctx, c) {
 		err = api.ErrorCaptchaInvalid("验证码错误")
 		return
 	}
@@ -70,8 +73,8 @@ func (p *PublicUsecase) Register(ctx context.Context, regInfo RegisterInfo, c Ca
 	return
 }
 
-func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c Captcha) (token Token, uid uint, err error) {
-	if !p.captchaRepo.Verify(ctx, c.CaptchaId, c.Captcha) {
+func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c Captcha) (token *Token, uid string, err error) {
+	if !p.captchaRepo.Verify(ctx, c) {
 		err = api.ErrorCaptchaInvalid("验证码错误")
 		return
 	}
@@ -84,24 +87,88 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 		err = api.ErrorUserInvalid("用户已被禁用")
 		return
 	}
+	uid = user.GetUid()
 	tokenOut, err := p.jwtSrv.CreateToken(ctx, user)
 	if err != nil {
 		p.log.WithContext(ctx).Error(err)
 		return
 	}
-	token = Token{
+	fc, ok := transport.FromFiberContext(ctx)
+	if !ok {
+		err = errors.InternalServer("CONTEXT PARSE", "find context error")
+		return
+	}
+	loc, err := p.logRepo.SelectLocation(ctx, fc.IP())
+	if err != nil {
+		return
+	}
+	agent, err := p.logRepo.SelectAgent(ctx, fc.Get("User-Agent"))
+	if err != nil {
+		return
+	}
+	bytes, err := encoding.GetCodec("json").Marshal(loc)
+	if err != nil {
+		return
+	}
+	if err = p.logRepo.Insert(ctx, &model.LoginLog{
+		UserID:     uint64(user.ID),
+		Ip:         fc.IP(),
+		Location:   string(bytes),
+		LoginType:  model.LoginType_Login,
+		Agent:      fc.Get("User-Agent"),
+		OS:         agent.OS,
+		Device:     agent.Device,
+		DeviceType: agent.DeviceType,
+	}); err != nil {
+		return
+	}
+	token = &Token{
 		AccessToken: tokenOut.Token,
 		TokenType:   tokenOut.TokenType,
 		ExpireAt:    tokenOut.ExpireAt,
 	}
+
 	return
 }
 
-func (p *PublicUsecase) Generate(ctx context.Context) (id string, b64s string, err error) {
+func (p *PublicUsecase) Generate(ctx context.Context) (c Captcha, err error) {
 	return p.captchaRepo.Create(ctx)
 }
 
 func (p *PublicUsecase) Logout(ctx context.Context, token string) (err error) {
+	fc, ok := transport.FromFiberContext(ctx)
+	if !ok {
+		err = errors.InternalServer("CONTEXT PARSE", "find context error")
+		return
+	}
+	loc, err := p.logRepo.SelectLocation(ctx, fc.IP())
+	if err != nil {
+		p.log.WithContext(ctx).Error(err)
+		return
+	}
+	agent, err := p.logRepo.SelectAgent(ctx, fc.Get("User-Agent"))
+	if err != nil {
+		p.log.WithContext(ctx).Error(err)
+		return
+	}
+	bytes, err := encoding.GetCodec("json").Marshal(loc)
+	if err != nil {
+		p.log.WithContext(ctx).Error(err)
+		return
+	}
+	uid := fc.Locals("uid")
+	if err = p.logRepo.Insert(ctx, &model.LoginLog{
+		UserID:     uid.(uint64),
+		Ip:         fc.IP(),
+		Location:   string(bytes),
+		LoginType:  model.LoginType_Logout,
+		Agent:      fc.Get("User-Agent"),
+		OS:         agent.OS,
+		Device:     agent.Device,
+		DeviceType: agent.DeviceType,
+	}); err != nil {
+		return
+	}
 	return p.jwtSrv.JoinBlackList(ctx, token)
 }
 

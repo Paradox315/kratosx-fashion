@@ -26,13 +26,6 @@ service Role {
 		};
 	}
 
-	rpc UpdateRoleStatus (IDRequest) returns (IDReply){
-		option (google.api.http) = {
-			put: "/status/{id}"
-			body: "*"
-		};
-	}
-
 	rpc DeleteRole (IDsRequest) returns (EmptyReply){
 		option (google.api.http) = {
 			delete: "/{ids}"

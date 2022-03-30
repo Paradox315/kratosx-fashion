@@ -45,8 +45,16 @@ message Data {
     google.protobuf.Duration write_timeout = 6;
     google.protobuf.Duration dial_timeout = 7;
   }
+  message IPLocation {
+    string source = 1;
+  }
+  message Casbin {
+    string source = 1;
+  }
   Database database = 1;
   Redis redis = 2;
+  IPLocation iplocation = 3;
+  Casbin casbin = 4;
 }
 
 message Logger {

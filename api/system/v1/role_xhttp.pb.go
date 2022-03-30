@@ -33,7 +33,6 @@ type RoleXHTTPServer interface {
 	GetRole(context.Context, *IDRequest) (*RoleReply, error)
 	ListRole(context.Context, *ListRequest) (*ListRoleReply, error)
 	UpdateRole(context.Context, *RoleRequest) (*IDReply, error)
-	UpdateRoleStatus(context.Context, *IDRequest) (*IDReply, error)
 }
 
 func RegisterRoleXHTTPServer(s *xhttp.Server, srv RoleXHTTPServer) {
@@ -41,18 +40,17 @@ func RegisterRoleXHTTPServer(s *xhttp.Server, srv RoleXHTTPServer) {
 		api := r.Group("api/system/v1/role")
 		// Register all service annotation
 		{
+			api.Name("Role-XHTTPServer")
 			api.Use(middleware.Authenticator(), middleware.Authorizer())
 		}
-		api.Post("/", _Role_CreateRole0_XHTTP_Handler(srv))
-		api.Put("/", _Role_UpdateRole0_XHTTP_Handler(srv))
-		api.Put("/status/:id", _Role_UpdateRoleStatus0_XHTTP_Handler(srv))
-		api.Delete("/:ids", _Role_DeleteRole0_XHTTP_Handler(srv))
-		api.Get("/:id", _Role_GetRole0_XHTTP_Handler(srv))
-		api.Get("/list", _Role_ListRole0_XHTTP_Handler(srv))
+		api.Post("/", _Role_CreateRole0_XHTTP_Handler(srv)).Name("Role-CreateRole.0-XHTTP_Handler")
+		api.Put("/", _Role_UpdateRole0_XHTTP_Handler(srv)).Name("Role-UpdateRole.0-XHTTP_Handler")
+		api.Delete("/:ids", _Role_DeleteRole0_XHTTP_Handler(srv)).Name("Role-DeleteRole.0-XHTTP_Handler")
+		api.Get("/:id", _Role_GetRole0_XHTTP_Handler(srv)).Name("Role-GetRole.0-XHTTP_Handler")
+		api.Get("/list", _Role_ListRole0_XHTTP_Handler(srv)).Name("Role-ListRole.0-XHTTP_Handler")
 	})
 }
 
-//
 func _Role_CreateRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in RoleRequest
@@ -68,7 +66,6 @@ func _Role_CreateRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	}
 }
 
-//
 func _Role_UpdateRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in RoleRequest
@@ -84,26 +81,6 @@ func _Role_UpdateRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	}
 }
 
-//
-func _Role_UpdateRoleStatus0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		var in IDRequest
-		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
-		}
-		if err := binding.BindParams(c, &in); err != nil {
-			return apistate.Error().WithError(err).Send(c)
-		}
-		ctx := transport.NewFiberContext(context.Background(), c)
-		reply, err := srv.UpdateRoleStatus(ctx, &in)
-		if err != nil {
-			return apistate.Error().WithError(err).Send(c)
-		}
-		return apistate.Success().WithData(reply).Send(c)
-	}
-}
-
-//
 func _Role_DeleteRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDsRequest
@@ -119,7 +96,6 @@ func _Role_DeleteRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	}
 }
 
-//
 func _Role_GetRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDRequest
@@ -135,7 +111,6 @@ func _Role_GetRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	}
 }
 
-//
 func _Role_ListRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in ListRequest

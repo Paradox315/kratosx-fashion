@@ -41,18 +41,18 @@ func RegisterResourceXHTTPServer(s *xhttp.Server, srv ResourceXHTTPServer) {
 		api := r.Group("api/system/v1/resource")
 		// Register all service annotation
 		{
+			api.Name("Resource-XHTTPServer")
 			api.Use(middleware.Authenticator(), middleware.Authorizer())
 		}
-		api.Post("/menu", _Resource_CreateMenu0_XHTTP_Handler(srv))
-		api.Put("/menu", _Resource_UpdateMenu0_XHTTP_Handler(srv))
-		api.Delete("/menus/:ids", _Resource_DeleteMenu0_XHTTP_Handler(srv))
-		api.Get("/menu/tree/:id", _Resource_GetMenuTree0_XHTTP_Handler(srv))
-		api.Get("/menu/tree/role/:id", _Resource_GetMenuTreeByRole0_XHTTP_Handler(srv))
-		api.Get("/router", _Resource_GetRouteTree0_XHTTP_Handler(srv))
+		api.Post("/menu", _Resource_CreateMenu0_XHTTP_Handler(srv)).Name("Resource-CreateMenu.0-XHTTP_Handler")
+		api.Put("/menu", _Resource_UpdateMenu0_XHTTP_Handler(srv)).Name("Resource-UpdateMenu.0-XHTTP_Handler")
+		api.Delete("/menus/:ids", _Resource_DeleteMenu0_XHTTP_Handler(srv)).Name("Resource-DeleteMenu.0-XHTTP_Handler")
+		api.Get("/menu/tree/:id", _Resource_GetMenuTree0_XHTTP_Handler(srv)).Name("Resource-GetMenuTree.0-XHTTP_Handler")
+		api.Get("/menu/tree/role/:id", _Resource_GetMenuTreeByRole0_XHTTP_Handler(srv)).Name("Resource-GetMenuTreeByRole.0-XHTTP_Handler")
+		api.Get("/router", _Resource_GetRouteTree0_XHTTP_Handler(srv)).Name("Resource-GetRouteTree.0-XHTTP_Handler")
 	})
 }
 
-//
 func _Resource_CreateMenu0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in MenuRequest
@@ -68,7 +68,6 @@ func _Resource_CreateMenu0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler 
 	}
 }
 
-//
 func _Resource_UpdateMenu0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in MenuRequest
@@ -84,7 +83,6 @@ func _Resource_UpdateMenu0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler 
 	}
 }
 
-//
 func _Resource_DeleteMenu0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDsRequest
@@ -100,7 +98,6 @@ func _Resource_DeleteMenu0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler 
 	}
 }
 
-//
 func _Resource_GetMenuTree0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDRequest
@@ -116,7 +113,6 @@ func _Resource_GetMenuTree0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler
 	}
 }
 
-//
 func _Resource_GetMenuTreeByRole0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in IDRequest
@@ -132,7 +128,6 @@ func _Resource_GetMenuTreeByRole0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.H
 	}
 }
 
-//
 func _Resource_GetRouteTree0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in EmptyRequest

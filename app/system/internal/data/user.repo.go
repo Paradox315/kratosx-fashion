@@ -3,30 +3,24 @@ package data
 import (
 	"context"
 	"errors"
-
-	"kratosx-fashion/app/system/internal/biz"
-	"kratosx-fashion/app/system/internal/data/model"
-	"kratosx-fashion/app/system/internal/data/query"
-	"kratosx-fashion/pkg/option"
-	"kratosx-fashion/pkg/pagination"
-
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
-
-	pb "kratosx-fashion/api/system/v1"
+	"kratosx-fashion/app/system/internal/biz"
+	"kratosx-fashion/app/system/internal/data/linq"
+	"kratosx-fashion/app/system/internal/data/model"
 )
 
 type userRepo struct {
 	dao      *Data
 	log      *log.Helper
-	baseRepo *query.Query
+	baseRepo *linq.Query
 }
 
 func NewUserRepo(data *Data, logger log.Logger) biz.UserRepo {
 	return &userRepo{
 		dao:      data,
 		log:      log.NewHelper(log.With(logger, "repo", "user")),
-		baseRepo: query.Use(data.DB),
+		baseRepo: linq.Use(data.DB),
 	}
 }
 
@@ -55,18 +49,8 @@ func (u *userRepo) SelectPasswordByEmail(ctx context.Context, email string) (*mo
 	return ur.WithContext(ctx).Where(ur.Email.Eq(email)).Select(ur.Password, ur.ID, ur.Status).First()
 }
 
-func (u userRepo) List(ctx context.Context, req *pb.ListRequest, opts ...*pb.QueryOption) (users []*model.User, total int64, err error) {
-	orders, keywords := option.Parse(opts...)
-	limit, offset, err := pagination.Parse(req)
-	if err != nil {
-		u.log.WithContext(ctx).Error("pagination.Parse error", err)
-		return
-	}
-	tx := u.dao.DB.Where(keywords).Limit(limit).Offset(offset)
-	for _, order := range orders {
-		tx.Order(order)
-	}
-	err = tx.Count(&total).Find(users).Error
+func (u userRepo) List(ctx context.Context, limit, offset int, sqlopt biz.SQLOption) (users []*model.User, total int64, err error) {
+	err = u.dao.DB.Where(sqlopt.Where, sqlopt.Args).Order(sqlopt.Order).Offset(offset).Limit(limit).Count(&total).Find(users).Error
 	return
 }
 
@@ -77,18 +61,13 @@ func (u userRepo) Insert(ctx context.Context, user *model.User) error {
 
 func (u userRepo) Update(ctx context.Context, user *model.User) error {
 	ur := u.baseRepo.User
-	return ur.WithContext(ctx).Save(user)
-}
-
-func (u *userRepo) UpdateStatus(ctx context.Context, id uint, status uint8) error {
-	ur := u.baseRepo.User
-	_, err := ur.WithContext(ctx).Update(ur.Status, status)
+	_, err := ur.WithContext(ctx).Updates(user)
 	return err
 }
 
-func (u userRepo) Delete(ctx context.Context, id uint) error {
+func (u *userRepo) UpdateStatus(ctx context.Context, id uint, status model.UserStatus) error {
 	ur := u.baseRepo.User
-	_, err := ur.WithContext(ctx).Where(ur.ID.Eq(id)).Delete()
+	_, err := ur.WithContext(ctx).Where(ur.ID.Eq(id)).Update(ur.Status, status)
 	return err
 }
 
@@ -133,4 +112,8 @@ func (u *userRepo) ExistByMobile(ctx context.Context, mobile string) bool {
 		return false
 	}
 	return true
+}
+
+func (u *userRepo) BaseRepo(ctx context.Context) *linq.Query {
+	return u.baseRepo
 }

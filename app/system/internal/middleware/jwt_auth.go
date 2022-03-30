@@ -12,6 +12,7 @@ import (
 	"kratosx-fashion/app/system/internal/conf"
 	"kratosx-fashion/pkg/cypher"
 	"kratosx-fashion/pkg/xsync"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -71,7 +72,7 @@ type JWTService struct {
 	ttl    int64
 	issuer string
 
-	once *sync.Once
+	once sync.Once
 	rdb  *redis.Client
 	log  *log.Helper
 	lock xsync.XMutex
@@ -83,7 +84,6 @@ func NewJwtService(jc *conf.JWT, rdb *redis.Client, logger log.Logger) *JWTServi
 		ttl:    jc.Ttl.Seconds,
 		issuer: jc.Issuer,
 		rdb:    rdb,
-		once:   new(sync.Once),
 		log:    log.NewHelper(logger),
 		lock:   xsync.Lock("refresh_token_lock", 2000, rdb),
 	}
@@ -95,6 +95,9 @@ func NewJwtService(jc *conf.JWT, rdb *redis.Client, logger log.Logger) *JWTServi
 
 func (j *JWTService) MiddlewareFunc() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		if os.Getenv("env") == "dev" {
+			return c.Next()
+		}
 		errCatch := func(ctx context.Context) error {
 			auths := strings.SplitN(c.Get(authorizationKey), " ", 2)
 			if len(auths) != 2 || !strings.EqualFold(auths[0], bearerWord) {
@@ -143,7 +146,7 @@ func (j *JWTService) MiddlewareFunc() fiber.Handler {
 					}
 				}
 			}
-
+			// TODO 存储uid、username、roles
 			c.Locals("token", jwtToken)
 			return nil
 		}

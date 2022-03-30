@@ -44,6 +44,13 @@ func NewHTTPServer(c *conf.Server,
 		opts = append(opts, xhttp.Timeout(c.Http.Timeout.AsDuration()))
 	}
 	srv := xhttp.NewServer(opts...)
+	srv.Route(func(r fiber.Router) {
+		r.Get("/routers", func(c *fiber.Ctx) error {
+			return c.JSON(fiber.Map{
+				"routers": srv.Routers(),
+			})
+		})
+	})
 	{
 		v1.RegisterPubXHTTPServer(srv, publicSrv)
 		v1.RegisterUserXHTTPServer(srv, userSrv)

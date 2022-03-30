@@ -2,30 +2,70 @@ package data
 
 import (
 	"context"
-
+	ua "github.com/mileusna/useragent"
 	"kratosx-fashion/app/system/internal/biz"
+	"kratosx-fashion/app/system/internal/data/linq"
 	"kratosx-fashion/app/system/internal/data/model"
-	"kratosx-fashion/app/system/internal/data/query"
-	"kratosx-fashion/pkg/option"
-	"kratosx-fashion/pkg/pagination"
 
 	"github.com/go-kratos/kratos/v2/log"
-
-	pb "kratosx-fashion/api/system/v1"
 )
 
 type LoginLogRepo struct {
 	dao      *Data
 	log      *log.Helper
-	baseRepo *query.Query
+	baseRepo *linq.Query
 }
 
 func NewLoginLogRepo(data *Data, logger log.Logger) biz.LoginLogRepo {
 	return &LoginLogRepo{
 		dao:      data,
 		log:      log.NewHelper(logger),
-		baseRepo: query.Use(data.DB),
+		baseRepo: linq.Use(data.DB),
 	}
+}
+
+func (l *LoginLogRepo) SelectLocation(ctx context.Context, ip string) (loc *biz.Location, err error) {
+	if len(ip) == 0 || ip == "127.0.0.1" || ip == "localhost" || ip == "::1" {
+		loc = &biz.Location{
+			Country:  "本地",
+			Region:   "本地",
+			City:     "本地",
+			Position: nil,
+		}
+	}
+	result, err := l.dao.IP_DB.Get_all(ip)
+	if err != nil {
+		return nil, err
+	}
+	loc = &biz.Location{
+		Country: result.Country_short,
+		Region:  result.Region,
+		City:    result.City,
+		Position: map[string]float32{
+			"lat": result.Latitude,
+			"lng": result.Longitude,
+		},
+	}
+	return
+}
+
+func (l *LoginLogRepo) SelectAgent(ctx context.Context, agentStr string) (agent *biz.Agent, err error) {
+	result := ua.Parse(agentStr)
+	agent = &biz.Agent{
+		Name:   result.Name,
+		OS:     result.OS,
+		Device: result.Device,
+	}
+	if result.Desktop {
+		agent.DeviceType = model.DeviceType_PC
+	} else if result.Mobile {
+		agent.DeviceType = model.DeviceType_Mobile
+	} else if result.Tablet {
+		agent.DeviceType = model.DeviceType_Pad
+	} else if result.Bot {
+		agent.DeviceType = model.DeviceType_Bot
+	}
+	return
 }
 
 func (l *LoginLogRepo) Select(ctx context.Context, id uint) (loginLog *model.LoginLog, err error) {
@@ -33,19 +73,19 @@ func (l *LoginLogRepo) Select(ctx context.Context, id uint) (loginLog *model.Log
 	return lr.WithContext(ctx).Where(lr.ID.Eq(id)).First()
 }
 
-func (l *LoginLogRepo) ListByUserID(ctx context.Context, id uint64, req *pb.ListRequest, opts ...*pb.QueryOption) (logs []*model.LoginLog, total int64, err error) {
-	orders, keywords := option.Parse(opts...)
-	limit, offset, err := pagination.Parse(req)
+func (l *LoginLogRepo) ListByUserID(ctx context.Context, id uint64, limit, offset int) (logs []*model.LoginLog, total int64, err error) {
 	if err != nil {
 		l.log.WithContext(ctx).Error("pagination.Parse error", err)
 		return
 	}
-	keywords["user_id"] = id
-	tx := l.dao.DB.Where(keywords).Limit(limit).Offset(offset)
-	for _, order := range orders {
-		tx.Order(order)
+	lr := l.baseRepo.LoginLog
+	tx := lr.WithContext(ctx).Where(lr.UserID.Eq(id)).Limit(limit).Offset(offset)
+	total, err = tx.Count()
+	if err != nil {
+		l.log.WithContext(ctx).Error("pagination.Count error", err)
+		return
 	}
-	err = tx.Count(&total).Find(logs).Error
+	logs, err = tx.Find()
 	return
 }
 

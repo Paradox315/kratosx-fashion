@@ -6,21 +6,21 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
 	"kratosx-fashion/app/system/internal/biz"
+	"kratosx-fashion/app/system/internal/data/linq"
 	"kratosx-fashion/app/system/internal/data/model"
-	"kratosx-fashion/app/system/internal/data/query"
 )
 
 type userRoleRepo struct {
 	dao      *Data
 	log      *log.Helper
-	baseRepo *query.Query
+	baseRepo *linq.Query
 }
 
 func NewUserRoleRepo(data *Data, logger log.Logger) biz.UserRoleRepo {
 	return &userRoleRepo{
 		dao:      data,
-		log:      log.NewHelper(logger),
-		baseRepo: query.Use(data.DB),
+		log:      log.NewHelper(log.With(logger, "repo", "user_role")),
+		baseRepo: linq.Use(data.DB),
 	}
 }
 
@@ -39,31 +39,26 @@ func (u *userRoleRepo) SelectAllByUserID(ctx context.Context, uid uint64) ([]*mo
 	return ur.WithContext(ctx).Where(ur.UserID.Eq(uid)).Find()
 }
 
-func (u *userRoleRepo) SelectRoleIDByUserID(ctx context.Context, uid uint64) (rids []uint64, err error) {
+func (u *userRoleRepo) Insert(ctx context.Context, userRole ...*model.UserRole) error {
 	ur := u.baseRepo.UserRole
-	err = ur.WithContext(ctx).Where(ur.UserID.Eq(uid)).Scan(&rids)
-	return
-}
-
-func (u *userRoleRepo) Insert(ctx context.Context, userRole *model.UserRole) error {
-	ur := u.baseRepo.UserRole
-	return ur.WithContext(ctx).Create(userRole)
+	return ur.WithContext(ctx).Create(userRole...)
 }
 
 func (u *userRoleRepo) Update(ctx context.Context, userRole *model.UserRole) error {
 	ur := u.baseRepo.UserRole
-	return ur.WithContext(ctx).Save(userRole)
-}
-
-func (u *userRoleRepo) Delete(ctx context.Context, id uint) error {
-	ur := u.baseRepo.UserRole
-	_, err := ur.WithContext(ctx).Where(ur.ID.Eq(id)).Delete()
+	_, err := ur.WithContext(ctx).Updates(userRole)
 	return err
 }
 
-func (u *userRoleRepo) DeleteByUserID(ctx context.Context, uid uint64) error {
+func (u *userRoleRepo) UpdateByUserID(ctx context.Context, uid uint64, urs []*model.UserRole) error {
+	return u.dao.DB.Transaction(func(tx *gorm.DB) error {
+		tx.Where("user_id = ?", uid).Delete(&model.UserRole{})
+		return tx.Create(&urs).Error
+	})
+}
+func (u *userRoleRepo) Delete(ctx context.Context, id uint) error {
 	ur := u.baseRepo.UserRole
-	_, err := ur.WithContext(ctx).Where(ur.UserID.Eq(uid)).Delete()
+	_, err := ur.WithContext(ctx).Where(ur.ID.Eq(id)).Delete()
 	return err
 }
 
@@ -73,23 +68,20 @@ func (u *userRoleRepo) DeleteByUserIDs(ctx context.Context, uids []uint64) error
 	return err
 }
 
-func (u *userRoleRepo) DeleteByRoleID(ctx context.Context, rid uint64) error {
-	ur := u.baseRepo.UserRole
-	_, err := ur.WithContext(ctx).Where(ur.RoleID.Eq(rid)).Delete()
-	return err
-}
-
 func (u *userRoleRepo) DeleteByRoleIDs(ctx context.Context, rids []uint64) error {
 	ur := u.baseRepo.UserRole
 	_, err := ur.WithContext(ctx).Where(ur.RoleID.In(rids...)).Delete()
 	return err
 }
 
-func (u *userRoleRepo) ExistByUserIDAndRoleID(ctx context.Context, uid uint64, rid uint64) (bool, error) {
+func (u *userRoleRepo) Exist(ctx context.Context, uid uint64, rid uint64) bool {
 	ur := u.baseRepo.UserRole
 	_, err := ur.WithContext(ctx).Where(ur.UserID.Eq(uid)).Where(ur.RoleID.Eq(rid)).First()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return true, nil
+		return false
+	} else if err != nil {
+		u.log.Error("userRoleRepo.Exist", err)
+		return false
 	}
-	return false, err
+	return true
 }

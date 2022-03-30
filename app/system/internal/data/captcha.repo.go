@@ -19,12 +19,15 @@ func NewCaptchaRepo(logger log.Logger) biz.CaptchaRepo {
 	}
 }
 
-func (c CaptchaRepo) Create(ctx context.Context) (id string, b64s string, err error) {
+func (c CaptchaRepo) Create(ctx context.Context) (captcha biz.Captcha, err error) {
 	driver := base64Captcha.NewDriverDigit(80, 240, 6, 0.7, 80)
 	cp := base64Captcha.NewCaptcha(driver, c.store)
-	return cp.Generate()
+	id, b64s, err := cp.Generate()
+	captcha.CaptchaId = id
+	captcha.Captcha = b64s
+	return
 }
 
-func (c CaptchaRepo) Verify(ctx context.Context, id string, captcha string) bool {
-	return c.store.Verify(id, captcha, true)
+func (c CaptchaRepo) Verify(ctx context.Context, captcha biz.Captcha) bool {
+	return c.store.Verify(captcha.CaptchaId, captcha.Captcha, true)
 }

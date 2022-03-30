@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 
+	iploc "github.com/ip2location/ip2location-go"
 	gormlogger "gorm.io/gorm/logger"
 	zgorm "moul.io/zapgorm2"
 )
@@ -23,6 +24,7 @@ var ProviderSet = wire.NewSet(
 	NewData,
 	NewDB,
 	NewRedis,
+	NewIPLocationDB,
 
 	NewDiscovery,
 	NewRegistrar,
@@ -33,21 +35,22 @@ var ProviderSet = wire.NewSet(
 	NewUserRepo,
 	NewUserRoleRepo,
 	NewRoleRepo,
-	NewRoleMenuRepo,
-	NewMenuRepo,
-	NewMenuActionRepo,
-	NewMenuActionResourceRepo,
+	NewRoleResourceRepo,
+	NewResourceMenuRepo,
+	NewResourceActionRepo,
+	NewResourceRouterRepo,
 	NewCaptchaRepo,
 )
 
 // Data .
 type Data struct {
-	DB  *gorm.DB
-	RDB *redis.Client
+	DB    *gorm.DB
+	RDB   *redis.Client
+	IP_DB *iploc.DB
 }
 
 // NewData .
-func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client) (*Data, func(), error) {
+func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client, ipdb *iploc.DB) (*Data, func(), error) {
 	cleanup := func() {
 		if err := rdb.Close(); err != nil {
 			log.NewHelper(logger).Fatal("redis close error", zap.Error(err))
@@ -55,8 +58,9 @@ func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client) (*
 		log.NewHelper(logger).Info("closing the data resources")
 	}
 	return &Data{
-		DB:  db,
-		RDB: rdb,
+		DB:    db,
+		RDB:   rdb,
+		IP_DB: ipdb,
 	}, cleanup, nil
 }
 
@@ -116,4 +120,12 @@ func NewRedis(c *conf.Data, logger log.Logger) *redis.Client {
 	})
 	rdb.AddHook(redisotel.TracingHook{})
 	return rdb
+}
+
+func NewIPLocationDB(c *conf.Data, logger log.Logger) *iploc.DB {
+	db, err := iploc.OpenDB(c.Iplocation.Source)
+	if err != nil {
+		log.NewHelper(logger).Fatal("failed to connect database", zap.Error(err))
+	}
+	return db
 }

@@ -2993,50 +2993,7 @@ func (m *MenuReply) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Id
-
-	// no validation rules for ParentId
-
-	// no validation rules for Path
-
-	// no validation rules for Name
-
-	// no validation rules for Component
-
-	if all {
-		switch v := interface{}(m.GetMeta()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, MenuReplyValidationError{
-					field:  "Meta",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, MenuReplyValidationError{
-					field:  "Meta",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetMeta()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return MenuReplyValidationError{
-				field:  "Meta",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	// no validation rules for Hidden
-
-	// no validation rules for Keepalive
-
-	for idx, item := range m.GetChildren() {
+	for idx, item := range m.GetTree() {
 		_, _ = idx, item
 
 		if all {
@@ -3044,7 +3001,7 @@ func (m *MenuReply) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, MenuReplyValidationError{
-						field:  fmt.Sprintf("Children[%v]", idx),
+						field:  fmt.Sprintf("Tree[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -3052,7 +3009,7 @@ func (m *MenuReply) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, MenuReplyValidationError{
-						field:  fmt.Sprintf("Children[%v]", idx),
+						field:  fmt.Sprintf("Tree[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -3061,45 +3018,7 @@ func (m *MenuReply) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return MenuReplyValidationError{
-					field:  fmt.Sprintf("Children[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	// no validation rules for CreatedAt
-
-	// no validation rules for UpdatedAt
-
-	for idx, item := range m.GetActions() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, MenuReplyValidationError{
-						field:  fmt.Sprintf("Actions[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, MenuReplyValidationError{
-						field:  fmt.Sprintf("Actions[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return MenuReplyValidationError{
-					field:  fmt.Sprintf("Actions[%v]", idx),
+					field:  fmt.Sprintf("Tree[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -3577,8 +3496,6 @@ func (m *RouterReply) validate(all bool) error {
 		}
 
 	}
-
-	// no validation rules for Total
 
 	if len(errors) > 0 {
 		return RouterReplyMultiError(errors)
@@ -4078,6 +3995,219 @@ var _ interface {
 	ErrorName() string
 } = TokenValidationError{}
 
+// Validate checks the field values on Menu with the rules defined in the proto
+// definition for this message. If any rules are violated, the first error
+// encountered is returned, or nil if there are no violations.
+func (m *Menu) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Menu with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in MenuMultiError, or nil if none found.
+func (m *Menu) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Menu) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for ParentId
+
+	// no validation rules for Path
+
+	// no validation rules for Name
+
+	// no validation rules for Component
+
+	if all {
+		switch v := interface{}(m.GetMeta()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, MenuValidationError{
+					field:  "Meta",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, MenuValidationError{
+					field:  "Meta",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetMeta()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return MenuValidationError{
+				field:  "Meta",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Hidden
+
+	// no validation rules for Keepalive
+
+	for idx, item := range m.GetChildren() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, MenuValidationError{
+						field:  fmt.Sprintf("Children[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, MenuValidationError{
+						field:  fmt.Sprintf("Children[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return MenuValidationError{
+					field:  fmt.Sprintf("Children[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for CreatedAt
+
+	// no validation rules for UpdatedAt
+
+	for idx, item := range m.GetActions() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, MenuValidationError{
+						field:  fmt.Sprintf("Actions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, MenuValidationError{
+						field:  fmt.Sprintf("Actions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return MenuValidationError{
+					field:  fmt.Sprintf("Actions[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return MenuMultiError(errors)
+	}
+
+	return nil
+}
+
+// MenuMultiError is an error wrapping multiple validation errors returned by
+// Menu.ValidateAll() if the designated constraints aren't met.
+type MenuMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m MenuMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m MenuMultiError) AllErrors() []error { return m }
+
+// MenuValidationError is the validation error returned by Menu.Validate if the
+// designated constraints aren't met.
+type MenuValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MenuValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MenuValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MenuValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MenuValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MenuValidationError) ErrorName() string { return "MenuValidationError" }
+
+// Error satisfies the builtin error interface
+func (e MenuValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMenu.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MenuValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MenuValidationError{}
+
 // Validate checks the field values on MenuAction with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -4099,10 +4229,6 @@ func (m *MenuAction) validate(all bool) error {
 	}
 
 	var errors []error
-
-	// no validation rules for Id
-
-	// no validation rules for MenuId
 
 	// no validation rules for Code
 
@@ -4559,6 +4685,8 @@ func (m *RouterGroup) validate(all bool) error {
 	// no validation rules for Path
 
 	// no validation rules for Name
+
+	// no validation rules for Owned
 
 	for idx, item := range m.GetRouter() {
 		_, _ = idx, item

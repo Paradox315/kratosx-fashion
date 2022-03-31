@@ -171,7 +171,13 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
             }
           }
         ],
@@ -361,24 +367,6 @@
         }
       }
     },
-    "v1RoleResource": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "roleId": {
-          "type": "string"
-        },
-        "resourceId": {
-          "type": "string"
-        },
-        "resourceType": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "v1UserReply": {
       "type": "object",
       "properties": {
@@ -424,6 +412,9 @@
     "v1UserRequest": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "username": {
           "type": "string"
         },
@@ -436,11 +427,12 @@
         "email": {
           "type": "string"
         },
-        "phone": {
+        "mobile": {
           "type": "string"
         },
-        "nickname": {
-          "type": "string"
+        "gender": {
+          "type": "integer",
+          "format": "int64"
         },
         "status": {
           "type": "integer",
@@ -463,29 +455,8 @@
         "name": {
           "type": "string"
         },
-        "sort": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
         "description": {
           "type": "string"
-        },
-        "creatorId": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        },
-        "roleResources": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1RoleResource"
-          }
         }
       }
     },

@@ -116,44 +116,6 @@
         ]
       }
     },
-    "/status/{id}": {
-      "put": {
-        "operationId": "Role_UpdateRoleStatus",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1IDReply"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object"
-            }
-          }
-        ],
-        "tags": [
-          "Role"
-        ]
-      }
-    },
     "/{ids}": {
       "delete": {
         "operationId": "Role_DeleteRole",
@@ -275,13 +237,6 @@
         "id": {
           "type": "string"
         },
-        "name": {
-          "type": "string"
-        },
-        "status": {
-          "type": "integer",
-          "format": "int64"
-        },
         "description": {
           "type": "string"
         },
@@ -307,10 +262,6 @@
         },
         "name": {
           "type": "string"
-        },
-        "status": {
-          "type": "integer",
-          "format": "int64"
         },
         "description": {
           "type": "string"

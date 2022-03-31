@@ -50,8 +50,8 @@ func (u *userRepo) SelectPasswordByEmail(ctx context.Context, email string) (*mo
 	return ur.WithContext(ctx).Where(ur.Email.Eq(email)).Select(ur.Password, ur.ID, ur.Status).First()
 }
 
-func (u userRepo) List(ctx context.Context, limit, offset int, sqlopt biz.SQLOption) (users []*model.User, total int64, err error) {
-	err = u.dao.DB.Where(sqlopt.Where, sqlopt.Args).Order(sqlopt.Order).Offset(offset).Limit(limit).Count(&total).Find(users).Error
+func (u userRepo) List(ctx context.Context, limit, offset int, sqlopt biz.SQLOption) (users []model.User, total int64, err error) {
+	err = u.dao.DB.Where(sqlopt.Where, sqlopt.Args).Order(sqlopt.Order).Offset(offset).Limit(limit).Count(&total).Find(&users).Error
 	return
 }
 

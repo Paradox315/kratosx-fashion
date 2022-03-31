@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/jinzhu/copier"
 	"github.com/spf13/cast"
 	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/biz"
@@ -72,14 +73,34 @@ func (s *UserService) DeleteUser(ctx context.Context, req *pb.IDsRequest) (*pb.E
 }
 func (s *UserService) GetUser(ctx context.Context, req *pb.IDRequest) (*pb.UserReply, error) {
 	uid, _ := strconv.ParseUint(req.Id, 10, 64)
-	return s.uc.Get(ctx, uint(uid))
+	user, err := s.uc.Get(ctx, uint(uid))
+	if err != nil {
+		return nil, err
+	}
+	var reply *pb.UserReply
+	if err = copier.Copy(reply, user); err != nil {
+		return nil, err
+	}
+	return reply, nil
 }
-func (s *UserService) ListUser(ctx context.Context, req *pb.ListSearchRequest) (*pb.ListUserReply, error) {
+func (s *UserService) ListUser(ctx context.Context, req *pb.ListSearchRequest) (list *pb.ListUserReply, err error) {
 	limit, offset := pagination.Parse(req.PageNum, req.PageSize)
 	where, order, args := option.Parse(req.Query...)
-	return s.uc.Search(ctx, limit, offset, biz.SQLOption{
+	users, total, err := s.uc.Search(ctx, limit, offset, biz.SQLOption{
 		Where: where,
 		Order: order,
 		Args:  args,
 	})
+	if err != nil {
+		return
+	}
+	list = &pb.ListUserReply{
+		Total: uint32(total),
+	}
+	for _, user := range users {
+		var uReply *pb.UserReply
+		_ = copier.Copy(uReply, user)
+		list.Users = append(list.Users, uReply)
+	}
+	return
 }

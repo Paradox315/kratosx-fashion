@@ -51,16 +51,8 @@ func newUser(db *gorm.DB) user {
 		RelationField: field.NewRelation("Roles", "model.Role"),
 		Menus: struct {
 			field.RelationField
-			MenuActions struct {
-				field.RelationField
-			}
 		}{
 			RelationField: field.NewRelation("Roles.Menus", "model.ResourceMenu"),
-			MenuActions: struct {
-				field.RelationField
-			}{
-				RelationField: field.NewRelation("Roles.Menus.MenuActions", "model.ResourceAction"),
-			},
 		},
 	}
 
@@ -236,9 +228,6 @@ type userRoles struct {
 
 	Menus struct {
 		field.RelationField
-		MenuActions struct {
-			field.RelationField
-		}
 	}
 }
 
@@ -405,8 +394,7 @@ func (u userDo) Save(values ...*model.User) error {
 	if len(values) == 0 {
 		return nil
 	}
-	_, err := u.DO.Updates(values)
-	return err
+	return u.DO.Save(values)
 }
 
 func (u userDo) First() (*model.User, error) {

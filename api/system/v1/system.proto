@@ -152,21 +152,9 @@ message ListRoleReply {
   uint32 total = 2;
 }
 
-message MenuReply {
-  string id = 1;
-  string parent_id = 2;
-  string path = 3;
-  string name = 4;
-  string component = 5;
-  MenuMeta meta = 6;
-  bool hidden = 7;
-  bool keepalive = 8;
-  repeated MenuReply children = 9;
-  string created_at = 10;
-  string updated_at = 11;
-  repeated MenuAction actions = 12;
+message MenuReply{
+  repeated Menu tree = 1;
 }
-
 message RegisterReply {
   string user_id = 1;
   string username = 2;
@@ -184,7 +172,6 @@ message UploadReply {
 
 message RouterReply{
   repeated RouterGroup routers = 1;
-  uint32 total = 2;
 }
 
 message UserRoleID{
@@ -212,11 +199,24 @@ message Token{
   string token_type = 3;
 }
 
-message MenuAction{
+message Menu {
   string id = 1;
-  string menu_id = 2;
-  string code = 3;
+  string parent_id = 2;
+  string path = 3;
   string name = 4;
+  string component = 5;
+  MenuMeta meta = 6;
+  bool hidden = 7;
+  bool keepalive = 8;
+  repeated Menu children = 9;
+  string created_at = 10;
+  string updated_at = 11;
+  repeated MenuAction actions = 12;
+}
+
+message MenuAction{
+  string code = 1;
+  string name = 2;
 }
 
 message MenuMeta{
@@ -251,5 +251,7 @@ message Router{
 message RouterGroup{
   string path = 1;
   string name = 2;
-  repeated Router router = 3;
+  bool owned = 3;
+  repeated string methods = 4;
+  repeated Router router = 5;
 }

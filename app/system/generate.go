@@ -36,7 +36,7 @@ func main() {
 		model.LoginLog{},
 		model.User{}, model.UserRole{},
 		model.Role{}, model.RoleResource{},
-		model.ResourceMenu{}, model.ResourceAction{},
+		model.ResourceMenu{},
 	)
 
 	// execute the action of code generation

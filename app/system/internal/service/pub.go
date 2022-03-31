@@ -2,18 +2,23 @@ package service
 
 import (
 	"context"
+
+	"kratosx-fashion/app/system/internal/biz"
+
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
+
 	pb "kratosx-fashion/api/system/v1"
-	"kratosx-fashion/app/system/internal/biz"
+	mw "kratosx-fashion/app/system/internal/middleware"
 )
 
 type PubService struct {
 	pb.UnimplementedPubServer
 
-	uc  *biz.PublicUsecase
-	log *log.Helper
+	uc     *biz.PublicUsecase
+	jwtSrv *mw.JWTService
+	log    *log.Helper
 }
 
 func NewPubService(uc *biz.PublicUsecase, logger log.Logger) *PubService {
@@ -67,7 +72,7 @@ func (s *PubService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Login
 	return &pb.LoginReply{
 		Token: &pb.Token{
 			AccessToken: token.AccessToken,
-			ExpiresAt:   token.ExpireAt,
+			ExpiresAt:   token.ExpiresAt,
 			TokenType:   token.TokenType,
 		},
 		UserId:   uid,

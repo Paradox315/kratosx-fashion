@@ -2,9 +2,8 @@ package biz
 
 import (
 	"context"
-	"kratosx-fashion/app/system/internal/data/model"
-
 	"github.com/google/wire"
+	"kratosx-fashion/app/system/internal/data/model"
 )
 
 // ProviderSet is biz providers.
@@ -14,6 +13,13 @@ var ProviderSet = wire.NewSet(
 	NewRoleUsecase,
 	NewResourceUsecase,
 )
+
+type JwtUser interface {
+	GetUid() string
+	GetUsername() string
+	GetRoleIDs() []string
+	GetNickname() string
+}
 
 // Transaction 新增事务接口方法
 type Transaction interface {
@@ -86,17 +92,8 @@ type ResourceMenuRepo interface {
 	DeleteByIDs(context.Context, []uint) error
 }
 
-type ResourceActionRepo interface {
-	Select(context.Context, uint) (*model.ResourceAction, error)
-	SelectByMenuID(context.Context, uint64) ([]*model.ResourceAction, error)
-	Insert(context.Context, ...*model.ResourceAction) error
-	Update(context.Context, *model.ResourceAction) error
-	Delete(context.Context, uint) error
-	DeleteByMenuIDs(context.Context, []uint64) error
-}
-
 type ResourceRouterRepo interface {
-	SelectAll(context.Context) ([]*Router, error)
+	SelectAll(context.Context) ([]Router, error)
 	SelectByRoleIDs(context.Context, []string) ([]*model.ResourceRouter, error)
 	Update(context.Context, []*model.ResourceRouter) error
 	ClearByRoleIDs(context.Context, []string) error
@@ -105,4 +102,12 @@ type ResourceRouterRepo interface {
 type CaptchaRepo interface {
 	Create(context.Context) (Captcha, error)
 	Verify(context.Context, Captcha) bool
+}
+
+type JwtRepo interface {
+	Create(context.Context, JwtUser) (*Token, error)
+	IsInBlackList(context.Context, string) bool
+	JoinInBlackList(context.Context, string) error
+	GetSecretKey() string
+	GetIssuer() string
 }

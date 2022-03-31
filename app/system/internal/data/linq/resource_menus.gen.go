@@ -39,11 +39,7 @@ func newResourceMenu(db *gorm.DB) resourceMenu {
 	_resourceMenu.Order = field.NewUint32(tableName, "order")
 	_resourceMenu.Hidden = field.NewUint8(tableName, "hidden")
 	_resourceMenu.KeepAlive = field.NewUint8(tableName, "keep_alive")
-	_resourceMenu.MenuActions = resourceMenuMenuActions{
-		db: db.Session(&gorm.Session{}),
-
-		RelationField: field.NewRelation("MenuActions", "model.ResourceAction"),
-	}
+	_resourceMenu.Actions = field.NewString(tableName, "actions")
 
 	_resourceMenu.fillFieldMap()
 
@@ -68,7 +64,7 @@ type resourceMenu struct {
 	Order       field.Uint32
 	Hidden      field.Uint8
 	KeepAlive   field.Uint8
-	MenuActions resourceMenuMenuActions
+	Actions     field.String
 
 	fieldMap map[string]field.Expr
 }
@@ -99,6 +95,7 @@ func (r *resourceMenu) updateTableName(table string) *resourceMenu {
 	r.Order = field.NewUint32(table, "order")
 	r.Hidden = field.NewUint8(table, "hidden")
 	r.KeepAlive = field.NewUint8(table, "keep_alive")
+	r.Actions = field.NewString(table, "actions")
 
 	r.fillFieldMap()
 
@@ -136,78 +133,12 @@ func (r *resourceMenu) fillFieldMap() {
 	r.fieldMap["order"] = r.Order
 	r.fieldMap["hidden"] = r.Hidden
 	r.fieldMap["keep_alive"] = r.KeepAlive
-
+	r.fieldMap["actions"] = r.Actions
 }
 
 func (r resourceMenu) clone(db *gorm.DB) resourceMenu {
 	r.resourceMenuDo.ReplaceDB(db)
 	return r
-}
-
-type resourceMenuMenuActions struct {
-	db *gorm.DB
-
-	field.RelationField
-}
-
-func (a resourceMenuMenuActions) Where(conds ...field.Expr) *resourceMenuMenuActions {
-	if len(conds) == 0 {
-		return &a
-	}
-
-	exprs := make([]clause.Expression, 0, len(conds))
-	for _, cond := range conds {
-		exprs = append(exprs, cond.BeCond().(clause.Expression))
-	}
-	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
-	return &a
-}
-
-func (a resourceMenuMenuActions) WithContext(ctx context.Context) *resourceMenuMenuActions {
-	a.db = a.db.WithContext(ctx)
-	return &a
-}
-
-func (a resourceMenuMenuActions) Model(m *model.ResourceMenu) *resourceMenuMenuActionsTx {
-	return &resourceMenuMenuActionsTx{a.db.Model(m).Association(a.Name())}
-}
-
-type resourceMenuMenuActionsTx struct{ tx *gorm.Association }
-
-func (a resourceMenuMenuActionsTx) Find() (result *model.ResourceAction, err error) {
-	return result, a.tx.Find(&result)
-}
-
-func (a resourceMenuMenuActionsTx) Append(values ...*model.ResourceAction) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Append(targetValues...)
-}
-
-func (a resourceMenuMenuActionsTx) Replace(values ...*model.ResourceAction) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Replace(targetValues...)
-}
-
-func (a resourceMenuMenuActionsTx) Delete(values ...*model.ResourceAction) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Delete(targetValues...)
-}
-
-func (a resourceMenuMenuActionsTx) Clear() error {
-	return a.tx.Clear()
-}
-
-func (a resourceMenuMenuActionsTx) Count() int64 {
-	return a.tx.Count()
 }
 
 type resourceMenuDo struct{ gen.DO }

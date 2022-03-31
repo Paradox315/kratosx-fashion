@@ -9,7 +9,7 @@ var ProviderSet = wire.NewSet(
 	NewRoleRepo,
 	NewRoleResourceRepo,
 	NewResourceMenuRepo,
-	NewResourceActionRepo,
 	NewResourceRouterRepo,
 	NewCaptchaRepo,
+	NewJwtRepo,
 )

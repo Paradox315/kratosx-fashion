@@ -2,11 +2,8 @@ package model
 
 import (
 	"gorm.io/gorm"
-	"kratosx-fashion/app/system/internal/middleware"
 	"strconv"
 )
-
-var _ middleware.JwtUser = (*User)(nil)
 
 type UserStatus uint8
 type GenderStatus uint8

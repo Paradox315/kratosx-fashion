@@ -32,7 +32,7 @@ func NewUserUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, roleRepo RoleR
 		log:          log.NewHelper(log.With(logger, "biz", "user")),
 	}
 }
-func (u *UserUsecase) buildUserReply(ctx context.Context, upo *model.User) (user *pb.UserReply, err error) {
+func (u *UserUsecase) buildUserDto(ctx context.Context, upo *model.User) (user User, err error) {
 	if err = copier.Copy(user, upo); err != nil {
 		return
 	}
@@ -48,15 +48,13 @@ func (u *UserUsecase) buildUserReply(ctx context.Context, upo *model.User) (user
 	if err != nil {
 		return
 	}
-	var userRoles []*pb.UserRole
 	for _, role := range roles {
-		userRoles = append(userRoles, &pb.UserRole{
-			Id:          strconv.Itoa(int(role.ID)),
+		user.Roles = append(user.Roles, &UserRole{
+			ID:          strconv.FormatUint(uint64(role.ID), 10),
 			Name:        role.Name,
 			Description: role.Description,
 		})
 	}
-	user.UserRoles = userRoles
 	user.CreatedAt = upo.CreatedAt.Format(timeFormat)
 	user.UpdatedAt = upo.UpdatedAt.Format(timeFormat)
 	user.Gender = upo.Gender.String()
@@ -158,28 +156,27 @@ func (u UserUsecase) Remove(ctx context.Context, uids []uint) (err error) {
 	})
 }
 
-func (u *UserUsecase) Get(ctx context.Context, uid uint) (user *pb.UserReply, err error) {
+func (u *UserUsecase) Get(ctx context.Context, uid uint) (user User, err error) {
 	upo, err := u.userRepo.Select(ctx, uid)
 	if err != nil {
 		return
 	}
-	return u.buildUserReply(ctx, upo)
+	return u.buildUserDto(ctx, upo)
 }
 
-func (u *UserUsecase) Search(ctx context.Context, limit, offset int, opt SQLOption) (list *pb.ListUserReply, err error) {
+func (u *UserUsecase) Search(ctx context.Context, limit, offset int, opt SQLOption) (list []User, total int64, err error) {
 	users, total, err := u.userRepo.List(ctx, limit, offset, opt)
 	if err != nil {
 		return
 	}
-	for _, user := range users {
-		var userReply *pb.UserReply
-		userReply, err = u.buildUserReply(ctx, user)
+	for _, upo := range users {
+		var user User
+		user, err = u.buildUserDto(ctx, upo)
 		if err != nil {
 			return
 		}
-		list.Users = append(list.Users, userReply)
+		list = append(list, user)
 	}
-	list.Total = uint32(total)
 	return
 }
 

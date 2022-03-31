@@ -12,31 +12,52 @@ import (
 	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/cypher"
 	"path"
+	"strconv"
 
 	api "kratosx-fashion/api/system/v1"
-	mw "kratosx-fashion/app/system/internal/middleware"
 )
 
 type PublicUsecase struct {
-	userRepo    UserRepo
-	logRepo     LoginLogRepo
-	captchaRepo CaptchaRepo
-	jwtSrv      *mw.JWTService
-	disk        storage.Storage
-	log         *log.Helper
+	userRepo     UserRepo
+	userRoleRepo UserRoleRepo
+	logRepo      LoginLogRepo
+	captchaRepo  CaptchaRepo
+	jwtRepo      JwtRepo
+	disk         storage.Storage
+	log          *log.Helper
 }
 
-func NewPublicUsecase(userRepo UserRepo, logRepo LoginLogRepo, captchaRepo CaptchaRepo, jwtSrv *mw.JWTService, disk storage.Storage, logger log.Logger) *PublicUsecase {
+func NewPublicUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, logRepo LoginLogRepo, captchaRepo CaptchaRepo, jwtRepo JwtRepo, disk storage.Storage, logger log.Logger) *PublicUsecase {
 	return &PublicUsecase{
-		userRepo:    userRepo,
-		logRepo:     logRepo,
-		captchaRepo: captchaRepo,
-		jwtSrv:      jwtSrv,
-		disk:        disk,
-		log:         log.NewHelper(log.With(logger, "biz", "public")),
+		userRepo:     userRepo,
+		userRoleRepo: userRoleRepo,
+		logRepo:      logRepo,
+		captchaRepo:  captchaRepo,
+		jwtRepo:      jwtRepo,
+		disk:         disk,
+		log:          log.NewHelper(log.With(logger, "biz", "public")),
 	}
 }
-
+func (p *PublicUsecase) buildUserDto(ctx context.Context, upo *model.User) (user *User, err error) {
+	if err = copier.Copy(user, upo); err != nil {
+		return
+	}
+	urs, err := p.userRoleRepo.SelectAllByUserID(ctx, uint64(upo.ID))
+	if err != nil {
+		return
+	}
+	var rids []uint
+	for _, ur := range urs {
+		rids = append(rids, uint(ur.RoleID))
+	}
+	for _, rid := range rids {
+		user.Roles = append(user.Roles, &UserRole{ID: strconv.FormatUint(uint64(rid), 10)})
+	}
+	user.CreatedAt = upo.CreatedAt.Format(timeFormat)
+	user.UpdatedAt = upo.UpdatedAt.Format(timeFormat)
+	user.Gender = upo.Gender.String()
+	return
+}
 func (p *PublicUsecase) Register(ctx context.Context, regInfo RegisterInfo, c Captcha) (uid string, username string, err error) {
 	if !p.captchaRepo.Verify(ctx, c) {
 		err = api.ErrorCaptchaInvalid("验证码错误")
@@ -78,17 +99,20 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 		err = api.ErrorCaptchaInvalid("验证码错误")
 		return
 	}
-	user, err := p.userRepo.SelectPasswordByName(ctx, loginSession.Username)
-	if err != nil || !cypher.BcryptCheck(loginSession.Password, user.Password) {
+	upo, err := p.userRepo.SelectPasswordByName(ctx, loginSession.Username)
+	if err != nil || !cypher.BcryptCheck(loginSession.Password, upo.Password) {
 		err = api.ErrorUserInvalid("用户名或密码错误")
 		return
 	}
-	if user.Status != model.UserStatusForbid {
+	if upo.Status != model.UserStatusForbid {
 		err = api.ErrorUserInvalid("用户已被禁用")
 		return
 	}
-	uid = user.GetUid()
-	tokenOut, err := p.jwtSrv.CreateToken(ctx, user)
+	user, err := p.buildUserDto(ctx, upo)
+	if err != nil {
+		return
+	}
+	token, err = p.jwtRepo.Create(ctx, user)
 	if err != nil {
 		p.log.WithContext(ctx).Error(err)
 		return
@@ -111,7 +135,7 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 		return
 	}
 	if err = p.logRepo.Insert(ctx, &model.LoginLog{
-		UserID:     uint64(user.ID),
+		UserID:     uint64(upo.ID),
 		Ip:         fc.IP(),
 		Location:   string(bytes),
 		LoginType:  model.LoginType_Login,
@@ -121,11 +145,6 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 		DeviceType: agent.DeviceType,
 	}); err != nil {
 		return
-	}
-	token = &Token{
-		AccessToken: tokenOut.Token,
-		TokenType:   tokenOut.TokenType,
-		ExpireAt:    tokenOut.ExpireAt,
 	}
 
 	return
@@ -169,7 +188,7 @@ func (p *PublicUsecase) Logout(ctx context.Context, token string) (err error) {
 	}); err != nil {
 		return
 	}
-	return p.jwtSrv.JoinBlackList(ctx, token)
+	return p.jwtRepo.JoinInBlackList(ctx, token)
 }
 
 func (p *PublicUsecase) Upload(ctx context.Context, params UploadInfo) (url string, err error) {

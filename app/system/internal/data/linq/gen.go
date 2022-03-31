@@ -13,63 +13,58 @@ import (
 
 func Use(db *gorm.DB) *Query {
 	return &Query{
-		db:             db,
-		LoginLog:       newLoginLog(db),
-		ResourceAction: newResourceAction(db),
-		ResourceMenu:   newResourceMenu(db),
-		Role:           newRole(db),
-		RoleResource:   newRoleResource(db),
-		User:           newUser(db),
-		UserRole:       newUserRole(db),
+		db:           db,
+		LoginLog:     newLoginLog(db),
+		ResourceMenu: newResourceMenu(db),
+		Role:         newRole(db),
+		RoleResource: newRoleResource(db),
+		User:         newUser(db),
+		UserRole:     newUserRole(db),
 	}
 }
 
 type Query struct {
 	db *gorm.DB
 
-	LoginLog       loginLog
-	ResourceAction resourceAction
-	ResourceMenu   resourceMenu
-	Role           role
-	RoleResource   roleResource
-	User           user
-	UserRole       userRole
+	LoginLog     loginLog
+	ResourceMenu resourceMenu
+	Role         role
+	RoleResource roleResource
+	User         user
+	UserRole     userRole
 }
 
 func (q *Query) Available() bool { return q.db != nil }
 
 func (q *Query) clone(db *gorm.DB) *Query {
 	return &Query{
-		db:             db,
-		LoginLog:       q.LoginLog.clone(db),
-		ResourceAction: q.ResourceAction.clone(db),
-		ResourceMenu:   q.ResourceMenu.clone(db),
-		Role:           q.Role.clone(db),
-		RoleResource:   q.RoleResource.clone(db),
-		User:           q.User.clone(db),
-		UserRole:       q.UserRole.clone(db),
+		db:           db,
+		LoginLog:     q.LoginLog.clone(db),
+		ResourceMenu: q.ResourceMenu.clone(db),
+		Role:         q.Role.clone(db),
+		RoleResource: q.RoleResource.clone(db),
+		User:         q.User.clone(db),
+		UserRole:     q.UserRole.clone(db),
 	}
 }
 
 type queryCtx struct {
-	LoginLog       loginLogDo
-	ResourceAction resourceActionDo
-	ResourceMenu   resourceMenuDo
-	Role           roleDo
-	RoleResource   roleResourceDo
-	User           userDo
-	UserRole       userRoleDo
+	LoginLog     loginLogDo
+	ResourceMenu resourceMenuDo
+	Role         roleDo
+	RoleResource roleResourceDo
+	User         userDo
+	UserRole     userRoleDo
 }
 
 func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
-		LoginLog:       *q.LoginLog.WithContext(ctx),
-		ResourceAction: *q.ResourceAction.WithContext(ctx),
-		ResourceMenu:   *q.ResourceMenu.WithContext(ctx),
-		Role:           *q.Role.WithContext(ctx),
-		RoleResource:   *q.RoleResource.WithContext(ctx),
-		User:           *q.User.WithContext(ctx),
-		UserRole:       *q.UserRole.WithContext(ctx),
+		LoginLog:     *q.LoginLog.WithContext(ctx),
+		ResourceMenu: *q.ResourceMenu.WithContext(ctx),
+		Role:         *q.Role.WithContext(ctx),
+		RoleResource: *q.RoleResource.WithContext(ctx),
+		User:         *q.User.WithContext(ctx),
+		UserRole:     *q.UserRole.WithContext(ctx),
 	}
 }
 

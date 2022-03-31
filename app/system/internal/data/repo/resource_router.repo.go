@@ -40,7 +40,7 @@ func (r *ResourceRouterRepo) parseGroup(name string) string {
 	return strings.Split(name, "-")[0]
 }
 
-func (r *ResourceRouterRepo) SelectAll(ctx context.Context) (rs []*biz.Router, err error) {
+func (r *ResourceRouterRepo) SelectAll(ctx context.Context) (rs []biz.Router, err error) {
 	_, body, errs := r.cli.Get(r.host).Bytes()
 	if errs != nil {
 		r.log.Error("获取资源路由失败", errs)
@@ -61,7 +61,7 @@ func (r *ResourceRouterRepo) SelectAll(ctx context.Context) (rs []*biz.Router, e
 			if ro.Method == http.MethodHead || ro.Method == http.MethodOptions {
 				continue
 			}
-			rs = append(rs, &biz.Router{
+			rs = append(rs, biz.Router{
 				Method: ro.Method,
 				Path:   ro.Path,
 				Name:   ro.Name,

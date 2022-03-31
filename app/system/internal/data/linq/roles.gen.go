@@ -35,11 +35,6 @@ func newRole(db *gorm.DB) role {
 		db: db.Session(&gorm.Session{}),
 
 		RelationField: field.NewRelation("Menus", "model.ResourceMenu"),
-		MenuActions: struct {
-			field.RelationField
-		}{
-			RelationField: field.NewRelation("Menus.MenuActions", "model.ResourceAction"),
-		},
 	}
 
 	_role.fillFieldMap()
@@ -119,10 +114,6 @@ type roleMenus struct {
 	db *gorm.DB
 
 	field.RelationField
-
-	MenuActions struct {
-		field.RelationField
-	}
 }
 
 func (a roleMenus) Where(conds ...field.Expr) *roleMenus {

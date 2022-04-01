@@ -3,8 +3,11 @@ package server
 import (
 	"github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
 	"github.com/gofiber/contrib/fiberzap"
-	"go.uber.org/zap"
+	"github.com/gofiber/fiber/v2/middleware/cache"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"kratosx-fashion/app/system/internal/conf"
+	mw "kratosx-fashion/app/system/internal/middleware"
 	"kratosx-fashion/app/system/internal/service"
 	"kratosx-fashion/pkg/logutil"
 
@@ -14,13 +17,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
-	kmw "github.com/go-kratos/kratos/v2/middleware"
 	v1 "kratosx-fashion/api/system/v1"
 )
 
 // NewHTTPServer new a XHTTP server.
 func NewHTTPServer(c *conf.Server,
-	jwtService kmw.FiberMiddleware,
+	jwtSrv *mw.JWTService,
+	casbinSrv *mw.CasbinAuth,
 	publicSrv *service.PubService,
 	userSrv *service.UserService,
 	roleSrv *service.RoleService,
@@ -29,6 +32,9 @@ func NewHTTPServer(c *conf.Server,
 	var opts = []xhttp.ServerOption{
 		xhttp.Middleware(
 			recover.New(),
+			cors.New(),
+			cache.New(),
+			compress.New(),
 			fiberzap.New(fiberzap.Config{
 				Logger: logger.(*logutil.Logger).GetZap(),
 			}),
@@ -53,7 +59,7 @@ func NewHTTPServer(c *conf.Server,
 			return apistate.Success[[][]*fiber.Route]().WithData(srv.Routers()).Send(c)
 		})
 	})
-	log.NewHelper(logger).Info(zap.String("middleware", jwtService.Name()))
+	log.NewHelper(logger).Infof("middleware %+v init", jwtSrv.Name(), casbinSrv.Name())
 	{
 		v1.RegisterPubXHTTPServer(srv, publicSrv)
 		v1.RegisterUserXHTTPServer(srv, userSrv)

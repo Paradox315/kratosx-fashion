@@ -4,7 +4,10 @@ import (
 	"fmt"
 	pb "kratosx-fashion/api/system/v1"
 	"strings"
+	"time"
 )
+
+const timeFormat = `2006-01-02 15:04:05`
 
 func Parse(opts ...*pb.QueryOption) (where string, order string, args []any) {
 	var (
@@ -13,42 +16,103 @@ func Parse(opts ...*pb.QueryOption) (where string, order string, args []any) {
 	)
 	for _, opt := range opts {
 		q, o, arg := parseOpt(opt)
-		qs = append(qs, q)
-		os = append(os, o)
-		arg = append(args, arg...)
+		if len(q) > 0 {
+			qs = append(qs, q)
+		}
+		if len(o) > 0 {
+			os = append(os, o)
+		}
+		if arg != nil && len(arg) > 0 {
+			args = append(args, arg...)
+		}
 	}
-	where = strings.Join(qs, "AND")
-	order = strings.Join(os, ",")
+	where = strings.Join(qs, " AND ")
+	order = strings.Join(os, " , ")
 	return
 }
 
 func parseOpt(opt *pb.QueryOption) (query string, order string, args []any) {
 	switch opt.Opt {
 	case "EQ":
+		var arg any
+		if opt.Time {
+			arg, _ = time.ParseInLocation(timeFormat, opt.Value, time.Local)
+		} else {
+			arg = opt.Value
+		}
 		query = fmt.Sprintf("%s = ?", opt.Field)
-		args = append(args, opt.Value)
+		args = append(args, arg)
 	case "NEQ":
-		query = fmt.Sprintf("%s != ?", opt.Field)
-		args = append(args, opt.Value)
+		var arg any
+		if opt.Time {
+			arg, _ = time.ParseInLocation(timeFormat, opt.Value, time.Local)
+		} else {
+			arg = opt.Value
+		}
+		query = fmt.Sprintf("%s = ?", opt.Field)
+		args = append(args, arg)
 	case "GT":
-		query = fmt.Sprintf("%s > ?", opt.Field)
-		args = append(args, opt.Value)
+		var arg any
+		if opt.Time {
+			arg, _ = time.ParseInLocation(timeFormat, opt.Value, time.Local)
+		}
+		query = fmt.Sprintf("%s = ?", opt.Field)
+		args = append(args, arg)
 	case "GTE":
-		query = fmt.Sprintf("%s >= ?", opt.Field)
-		args = append(args, opt.Value)
+		var arg any
+		if opt.Time {
+			arg, _ = time.ParseInLocation(timeFormat, opt.Value, time.Local)
+		} else {
+			arg = opt.Value
+		}
+		query = fmt.Sprintf("%s = ?", opt.Field)
+		args = append(args, arg)
 	case "LT":
-		query = fmt.Sprintf("%s < ?", opt.Field)
-		args = append(args, opt.Value)
+		var arg any
+		if opt.Time {
+			arg, _ = time.ParseInLocation(timeFormat, opt.Value, time.Local)
+		} else {
+			arg = opt.Value
+		}
+		query = fmt.Sprintf("%s = ?", opt.Field)
+		args = append(args, arg)
 	case "LTE":
-		query = fmt.Sprintf("%s <= ?", opt.Field)
-		args = append(args, opt.Value)
+		var arg any
+		if opt.Time {
+			arg, _ = time.ParseInLocation(timeFormat, opt.Value, time.Local)
+		} else {
+			arg = opt.Value
+		}
+		query = fmt.Sprintf("%s = ?", opt.Field)
+		args = append(args, arg)
 	case "IN":
-		query = fmt.Sprintf("%s IN (?)", opt.Field)
-		args = append(args, opt.Value)
+		var arg any
+		if opt.Time {
+			arg, _ = time.ParseInLocation(timeFormat, opt.Value, time.Local)
+		} else {
+			arg = opt.Value
+		}
+		query = fmt.Sprintf("%s = ?", opt.Field)
+		args = append(args, arg)
 	case "BETWEEN":
+
+		var (
+			arg1, arg2 any
+		)
+		if opt.Time {
+			arg1, _ = time.ParseInLocation(timeFormat, opt.Interval.From, time.Local)
+			arg2, _ = time.ParseInLocation(timeFormat, opt.Interval.To, time.Local)
+		} else {
+			arg1 = opt.Interval.From
+			arg2 = opt.Interval.To
+		}
 		query = fmt.Sprintf("%s BETWEEN ? AND ?", opt.Field)
-		args = append(args, opt.Interval.From, opt.Interval.To)
+		args = append(args, arg1)
+		args = append(args, arg2)
 	case "LIKE":
+		if opt.Time {
+			break
+		}
 		query = fmt.Sprintf("%s LIKE ?", opt.Field)
 		args = append(args, opt.Value+"%")
 	case "SORT":

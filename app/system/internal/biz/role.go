@@ -25,12 +25,13 @@ func NewRoleUsecase(roleRepo RoleRepo, roleUserRepo UserRoleRepo, roleResourceRe
 		roleUserRepo:     roleUserRepo,
 		roleResourceRepo: roleResourceRepo,
 		tx:               tx,
-		log:              log.NewHelper(logger),
+		log:              log.NewHelper(log.With(logger, "biz", "role")),
 	}
 }
 
 func (r *RoleUsecase) buildRoleReply(ctx context.Context, rpo *model.Role) (role *pb.RoleReply, err error) {
-	if err = copier.Copy(role, rpo); err != nil {
+	role = &pb.RoleReply{}
+	if err = copier.Copy(&role, &rpo); err != nil {
 		return
 	}
 	rrs, err := r.roleResourceRepo.SelectByRoleID(ctx, uint64(rpo.ID))
@@ -41,14 +42,15 @@ func (r *RoleUsecase) buildRoleReply(ctx context.Context, rpo *model.Role) (role
 			ResourceType: uint32(rr.Type),
 		})
 	}
+	role.Id = cast.ToString(rpo.ID)
 	role.CreatedAt = rpo.CreatedAt.Format(timeFormat)
 	role.UpdatedAt = rpo.UpdatedAt.Format(timeFormat)
 	return
 }
 
 func (r *RoleUsecase) Save(ctx context.Context, role *pb.RoleRequest) (id string, err error) {
-	var rpo *model.Role
-	if err = copier.Copy(rpo, role); err != nil {
+	rpo := &model.Role{}
+	if err = copier.Copy(&rpo, &role); err != nil {
 		return
 	}
 	var rrs []*model.RoleResource
@@ -64,15 +66,18 @@ func (r *RoleUsecase) Save(ctx context.Context, role *pb.RoleRequest) (id string
 		return
 	}
 	id = strconv.Itoa(int(rpo.ID))
-	err = r.roleResourceRepo.Insert(ctx, rrs...)
+	if len(rrs) > 0 {
+		err = r.roleResourceRepo.Insert(ctx, rrs...)
+	}
 	return
 }
 
 func (r *RoleUsecase) Edit(ctx context.Context, role *pb.RoleRequest) (id string, err error) {
-	var rpo *model.Role
-	if err = copier.Copy(rpo, role); err != nil {
+	rpo := &model.Role{}
+	if err = copier.Copy(&rpo, &role); err != nil {
 		return
 	}
+	rpo.ID = cast.ToUint(role.Id)
 	var rrs []*model.RoleResource
 	for _, rr := range role.RoleResources {
 		rrs = append(rrs, &model.RoleResource{
@@ -81,9 +86,11 @@ func (r *RoleUsecase) Edit(ctx context.Context, role *pb.RoleRequest) (id string
 			Type:       model.ResourceType(rr.ResourceType),
 		})
 	}
-	err = r.roleResourceRepo.UpdateByRoleID(ctx, uint64(rpo.ID), rrs)
-	if err != nil {
-		return
+	if len(rrs) > 0 {
+		err = r.roleResourceRepo.UpdateByRoleID(ctx, uint64(rpo.ID), rrs)
+		if err != nil {
+			return
+		}
 	}
 	err = r.roleRepo.Update(ctx, rpo)
 	id = role.Id
@@ -114,6 +121,7 @@ func (r *RoleUsecase) Get(ctx context.Context, id uint) (role *pb.RoleReply, err
 }
 
 func (r *RoleUsecase) List(ctx context.Context, limit, offset int) (list *pb.ListRoleReply, err error) {
+	list = &pb.ListRoleReply{}
 	roles, total, err := r.roleRepo.List(ctx, limit, offset)
 	if err != nil {
 		return

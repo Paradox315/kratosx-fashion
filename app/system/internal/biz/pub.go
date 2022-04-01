@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jassue/go-storage/storage"
 	"github.com/jinzhu/copier"
+	"github.com/spf13/cast"
 	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/cypher"
 	"path"
@@ -38,8 +39,8 @@ func NewPublicUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, logRepo Logi
 		log:          log.NewHelper(log.With(logger, "biz", "public")),
 	}
 }
-func (p *PublicUsecase) buildUserDto(ctx context.Context, upo *model.User) (user *User, err error) {
-	if err = copier.Copy(user, upo); err != nil {
+func (p *PublicUsecase) buildUserDto(ctx context.Context, upo *model.User) (user User, err error) {
+	if err = copier.Copy(&user, &upo); err != nil {
 		return
 	}
 	urs, err := p.userRoleRepo.SelectAllByUserID(ctx, uint64(upo.ID))
@@ -51,8 +52,9 @@ func (p *PublicUsecase) buildUserDto(ctx context.Context, upo *model.User) (user
 		rids = append(rids, uint(ur.RoleID))
 	}
 	for _, rid := range rids {
-		user.Roles = append(user.Roles, &UserRole{ID: strconv.FormatUint(uint64(rid), 10)})
+		user.Roles = append(user.Roles, UserRole{ID: strconv.FormatUint(uint64(rid), 10)})
 	}
+	user.Id = cast.ToString(upo.ID)
 	user.CreatedAt = upo.CreatedAt.Format(timeFormat)
 	user.UpdatedAt = upo.UpdatedAt.Format(timeFormat)
 	user.Gender = upo.Gender.String()
@@ -95,16 +97,16 @@ func (p *PublicUsecase) Register(ctx context.Context, regInfo RegisterInfo, c Ca
 }
 
 func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c Captcha) (token *Token, uid string, err error) {
-	if !p.captchaRepo.Verify(ctx, c) {
-		err = api.ErrorCaptchaInvalid("验证码错误")
-		return
-	}
+	//if !p.captchaRepo.Verify(ctx, c) {
+	//	err = api.ErrorCaptchaInvalid("验证码错误")
+	//	return
+	//}
 	upo, err := p.userRepo.SelectPasswordByName(ctx, loginSession.Username)
 	if err != nil || !cypher.BcryptCheck(loginSession.Password, upo.Password) {
 		err = api.ErrorUserInvalid("用户名或密码错误")
 		return
 	}
-	if upo.Status != model.UserStatusForbid {
+	if upo.Status == model.UserStatusForbid {
 		err = api.ErrorUserInvalid("用户已被禁用")
 		return
 	}
@@ -175,9 +177,9 @@ func (p *PublicUsecase) Logout(ctx context.Context, token string) (err error) {
 		p.log.WithContext(ctx).Error(err)
 		return
 	}
-	uid := fc.Locals("uid")
+	uid := fc.Locals("user_id")
 	if err = p.logRepo.Insert(ctx, &model.LoginLog{
-		UserID:     uid.(uint64),
+		UserID:     cast.ToUint64(uid),
 		Ip:         fc.IP(),
 		Location:   string(bytes),
 		LoginType:  model.LoginType_Logout,

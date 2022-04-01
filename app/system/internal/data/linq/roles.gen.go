@@ -31,11 +31,6 @@ func newRole(db *gorm.DB) role {
 	_role.DeletedAt = field.NewField(tableName, "deleted_at")
 	_role.Name = field.NewString(tableName, "name")
 	_role.Description = field.NewString(tableName, "description")
-	_role.Menus = roleMenus{
-		db: db.Session(&gorm.Session{}),
-
-		RelationField: field.NewRelation("Menus", "model.ResourceMenu"),
-	}
 
 	_role.fillFieldMap()
 
@@ -52,7 +47,6 @@ type role struct {
 	DeletedAt   field.Field
 	Name        field.String
 	Description field.String
-	Menus       roleMenus
 
 	fieldMap map[string]field.Expr
 }
@@ -95,85 +89,18 @@ func (r *role) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (r *role) fillFieldMap() {
-	r.fieldMap = make(map[string]field.Expr, 7)
+	r.fieldMap = make(map[string]field.Expr, 6)
 	r.fieldMap["id"] = r.ID
 	r.fieldMap["created_at"] = r.CreatedAt
 	r.fieldMap["updated_at"] = r.UpdatedAt
 	r.fieldMap["deleted_at"] = r.DeletedAt
 	r.fieldMap["name"] = r.Name
 	r.fieldMap["description"] = r.Description
-
 }
 
 func (r role) clone(db *gorm.DB) role {
 	r.roleDo.ReplaceDB(db)
 	return r
-}
-
-type roleMenus struct {
-	db *gorm.DB
-
-	field.RelationField
-}
-
-func (a roleMenus) Where(conds ...field.Expr) *roleMenus {
-	if len(conds) == 0 {
-		return &a
-	}
-
-	exprs := make([]clause.Expression, 0, len(conds))
-	for _, cond := range conds {
-		exprs = append(exprs, cond.BeCond().(clause.Expression))
-	}
-	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
-	return &a
-}
-
-func (a roleMenus) WithContext(ctx context.Context) *roleMenus {
-	a.db = a.db.WithContext(ctx)
-	return &a
-}
-
-func (a roleMenus) Model(m *model.Role) *roleMenusTx {
-	return &roleMenusTx{a.db.Model(m).Association(a.Name())}
-}
-
-type roleMenusTx struct{ tx *gorm.Association }
-
-func (a roleMenusTx) Find() (result *model.ResourceMenu, err error) {
-	return result, a.tx.Find(&result)
-}
-
-func (a roleMenusTx) Append(values ...*model.ResourceMenu) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Append(targetValues...)
-}
-
-func (a roleMenusTx) Replace(values ...*model.ResourceMenu) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Replace(targetValues...)
-}
-
-func (a roleMenusTx) Delete(values ...*model.ResourceMenu) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Delete(targetValues...)
-}
-
-func (a roleMenusTx) Clear() error {
-	return a.tx.Clear()
-}
-
-func (a roleMenusTx) Count() int64 {
-	return a.tx.Count()
 }
 
 type roleDo struct{ gen.DO }

@@ -25,6 +25,7 @@ type PubClient interface {
 	Generate(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*CaptchaReply, error)
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterReply, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginReply, error)
+	// @Auth
 	Logout(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*EmptyReply, error)
 	RetrievePwd(ctx context.Context, in *RetrieveRequest, opts ...grpc.CallOption) (*EmptyReply, error)
 	UploadFile(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*UploadReply, error)
@@ -99,6 +100,7 @@ type PubServer interface {
 	Generate(context.Context, *EmptyRequest) (*CaptchaReply, error)
 	Register(context.Context, *RegisterRequest) (*RegisterReply, error)
 	Login(context.Context, *LoginRequest) (*LoginReply, error)
+	// @Auth
 	Logout(context.Context, *EmptyRequest) (*EmptyReply, error)
 	RetrievePwd(context.Context, *RetrieveRequest) (*EmptyReply, error)
 	UploadFile(context.Context, *EmptyRequest) (*UploadReply, error)

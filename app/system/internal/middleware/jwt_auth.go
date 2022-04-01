@@ -6,10 +6,8 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
 	"github.com/go-redis/redis/v8"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/cast"
 	"kratosx-fashion/app/system/internal/biz"
-	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/xsync"
 	"os"
 	"strings"
@@ -57,7 +55,7 @@ type JWTService struct {
 	lock    xsync.XMutex
 }
 
-func NewJwtService(jwtRepo biz.JwtRepo, uc *biz.UserUsecase, rdb *redis.Client, logger log.Logger) kmw.FiberMiddleware {
+func NewJwtService(jwtRepo biz.JwtRepo, uc *biz.UserUsecase, rdb *redis.Client, logger log.Logger) *JWTService {
 	j := &JWTService{
 		jwtRepo: jwtRepo,
 		uc:      uc,
@@ -73,7 +71,7 @@ func NewJwtService(jwtRepo biz.JwtRepo, uc *biz.UserUsecase, rdb *redis.Client, 
 
 func (j *JWTService) MiddlewareFunc() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		if os.Getenv("env") == "dev" {
+		if os.Getenv("JWT") == "false" {
 			return c.Next()
 		}
 		errCatch := func(ctx context.Context) error {
@@ -82,34 +80,9 @@ func (j *JWTService) MiddlewareFunc() fiber.Handler {
 				return ErrMissingJwtToken
 			}
 			jwtToken := auths[1]
-			tokenInfo, err := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
-				return []byte(j.jwtRepo.GetSecretKey()), nil
-			})
+			claims, err := j.jwtRepo.ParseToken(ctx, jwtToken)
 			if err != nil {
-				if ve, ok := err.(*jwt.ValidationError); ok {
-					if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-						return ErrTokenInvalid
-					} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
-						return ErrTokenExpired
-					} else {
-						return ErrTokenParseFail
-					}
-				}
-				return errors.Unauthorized(reason, err.Error())
-			} else if !tokenInfo.Valid {
-				return ErrTokenInvalid
-			} else if tokenInfo.Method != jwt.SigningMethodHS256 {
-				return ErrUnSupportSigningMethod
-			} else if j.jwtRepo.IsInBlackList(ctx, jwtToken) {
-				return ErrTokenInvalid
-			}
-			var claims model.CustomClaims
-			if _, ok := tokenInfo.Claims.(model.CustomClaims); !ok {
-				return ErrParseClaimsFail
-			}
-			claims = tokenInfo.Claims.(model.CustomClaims)
-			if claims.Issuer != j.jwtRepo.GetIssuer() {
-				return ErrTokenInvalid
+				return err
 			}
 			if claims.ExpiresAt-time.Now().Unix() < jwtBlacklistGracePeriod.Milliseconds() {
 				if j.lock.Get() {
@@ -130,6 +103,7 @@ func (j *JWTService) MiddlewareFunc() fiber.Handler {
 			c.Locals("user_name", claims.Username)
 			c.Locals("roles", claims.RoleIDs)
 			c.Locals("nick_name", claims.Nickname)
+			c.Locals("token", jwtToken)
 			return nil
 		}
 		if err := errCatch(c.Context()); err != nil {

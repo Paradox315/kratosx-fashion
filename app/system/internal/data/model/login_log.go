@@ -48,9 +48,9 @@ func (d DeviceType) String() string {
 
 type LoginLog struct {
 	gorm.Model
-	UserID     uint64     `gorm:"index;type:unsigned bigint;default:0;not null;comment:'用户ID'"`
+	UserID     uint64     `gorm:"index;default:0;not null;comment:'用户ID'"`
 	Ip         string     `gorm:"type:varchar(40);default:'';not null;comment:'IP地址'"`
-	Location   string     `gorm:"type:varchar(40);default:'';not null;comment:'地理位置'"`
+	Location   string     `gorm:"type:varchar(255);default:'';not null;comment:'地理位置'"`
 	LoginType  LoginType  `gorm:"type:tinyint(1);default:1;not null;comment:'登录类型：1-登录，2-退出'"`
 	Agent      string     `gorm:"type:varchar(255);default:'';not null;comment:'浏览器'"`
 	OS         string     `gorm:"type:varchar(40);default:'';not null;comment:'操作系统'"`

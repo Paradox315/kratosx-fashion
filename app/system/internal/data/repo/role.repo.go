@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/pkg/errors"
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/app/system/internal/data"
 	"kratosx-fashion/app/system/internal/data/linq"
@@ -25,32 +26,60 @@ func NewRoleRepo(data *data.Data, logger log.Logger) biz.RoleRepo {
 
 func (r *RoleRepo) Select(ctx context.Context, id uint) (*model.Role, error) {
 	rr := r.baseRepo.Role
-	return rr.WithContext(ctx).Where(rr.ID.Eq(id)).First()
+	role, err := rr.WithContext(ctx).Where(rr.ID.Eq(id)).First()
+	if err != nil {
+		err = errors.Wrap(err, "role.repo.Select")
+		return nil, err
+	}
+	return role, nil
 }
 
 func (r *RoleRepo) SelectByIDs(ctx context.Context, rids []uint) ([]*model.Role, error) {
 	rr := r.baseRepo.Role
-	return rr.WithContext(ctx).Where(rr.ID.In(rids...)).Find()
+	roles, err := rr.WithContext(ctx).Where(rr.ID.In(rids...)).Find()
+	if err != nil {
+		err = errors.Wrap(err, "role.repo.SelectByIDs")
+		return nil, err
+	}
+	return roles, nil
 }
 
 func (r *RoleRepo) List(ctx context.Context, limit, offset int) (roles []*model.Role, total int64, err error) {
-	err = r.dao.DB.Limit(limit).Offset(offset).Count(&total).Find(&roles).Error
+	rr := r.baseRepo.Role
+	roles, total, err = rr.WithContext(ctx).FindByPage(offset, limit)
+	if err != nil {
+		err = errors.Wrap(err, "role.repo.List")
+		return
+	}
 	return
 }
 
 func (r *RoleRepo) Insert(ctx context.Context, role ...*model.Role) error {
 	rr := r.baseRepo.Role
-	return rr.WithContext(ctx).Create(role...)
+	err := rr.WithContext(ctx).Create(role...)
+	if err != nil {
+		err = errors.Wrap(err, "role.repo.Insert")
+		return err
+	}
+	return nil
 }
 
 func (r *RoleRepo) Update(ctx context.Context, role *model.Role) error {
 	rr := r.baseRepo.Role
-	_, err := rr.WithContext(ctx).Updates(role)
-	return err
+	if _, err := rr.WithContext(ctx).Where(rr.ID.Eq(role.ID)).Updates(role); err != nil {
+		err = errors.Wrap(err, "role.repo.Update")
+		r.log.WithContext(ctx).Error(err)
+		return err
+	}
+	return nil
 }
 
 func (r *RoleRepo) DeleteByIDs(ctx context.Context, rids []uint) error {
 	rr := r.baseRepo.Role
-	_, err := rr.WithContext(ctx).Where(rr.ID.In(rids...)).Delete()
-	return err
+	if _, err := rr.WithContext(ctx).Where(rr.ID.In(rids...)).Delete(); err != nil {
+		err = errors.Wrap(err, "role.repo.DeleteByIDs")
+		r.log.WithContext(ctx).Error(err)
+		return err
+	}
+	return nil
 }

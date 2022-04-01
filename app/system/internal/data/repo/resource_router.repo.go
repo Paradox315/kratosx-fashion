@@ -2,25 +2,27 @@ package repo
 
 import (
 	"context"
-	"github.com/casbin/casbin/v2"
-	"github.com/go-kratos/kratos/v2/encoding"
-	"github.com/go-kratos/kratos/v2/errors"
-	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
-	"github.com/gofiber/fiber/v2"
+	"net/http"
+	"strings"
+
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/app/system/internal/conf"
 	"kratosx-fashion/app/system/internal/data"
 	"kratosx-fashion/app/system/internal/data/model"
-	"net/http"
-	"strings"
+
+	"github.com/casbin/casbin/v2"
+	"github.com/go-kratos/kratos/v2/encoding"
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
+	"github.com/gofiber/fiber/v2"
+
+	kerrors "github.com/go-kratos/kratos/v2/errors"
 )
 
 type ResourceRouterRepo struct {
 	dao   *data.Data
 	cRepo *casbin.SyncedEnforcer
-	cli   *fiber.Client
-	host  string
+	cli   *fiber.Agent
 	log   *log.Helper
 }
 
@@ -28,8 +30,8 @@ func NewResourceRouterRepo(dao *data.Data, c *conf.Server, logger log.Logger, ca
 	return &ResourceRouterRepo{
 		dao:   dao,
 		cRepo: casbinRepo,
-		host:  "http://" + c.Http.Addr,
 		log:   log.NewHelper(log.With(logger, "repo", "resource_router")),
+		cli:   fiber.Get("http://" + c.Http.Addr),
 	}
 }
 
@@ -41,24 +43,28 @@ func (r *ResourceRouterRepo) parseGroup(name string) string {
 }
 
 func (r *ResourceRouterRepo) SelectAll(ctx context.Context) (rs []biz.Router, err error) {
-	_, body, errs := r.cli.Get(r.host).Bytes()
+	_, body, errs := r.cli.Bytes()
 	if errs != nil {
 		r.log.Error("获取资源路由失败", errs)
-		return nil, errors.InternalServer("HTTP_CLIENT", "资源路由获取失败")
+		return nil, kerrors.InternalServer("HTTP_CLIENT", "资源路由获取失败")
 	}
 	var resp apistate.Resp[[][]*fiber.Route]
 	if err = encoding.GetCodec("json").Unmarshal(body, &resp); err != nil {
 		r.log.Error("序列化失败", err)
-		return nil, errors.InternalServer("CODEC", "序列化失败")
+		return nil, kerrors.InternalServer("CODEC", "序列化失败")
 	}
 	if resp.Code != http.StatusOK {
 		r.log.Error("获取资源路由失败", resp.Message)
-		return nil, errors.InternalServer("HTTP_CLIENT", "资源路由获取失败")
+		return nil, kerrors.InternalServer("HTTP_CLIENT", "资源路由获取失败")
 	}
 	routers := resp.Metadata
 	for _, router := range routers {
 		for _, ro := range router {
-			if ro.Method == http.MethodHead || ro.Method == http.MethodOptions {
+			switch ro.Method {
+			case http.MethodHead, http.MethodOptions, http.MethodTrace, http.MethodConnect, http.MethodPatch:
+				continue
+			}
+			if ro.Name == "" {
 				continue
 			}
 			rs = append(rs, biz.Router{
@@ -87,6 +93,7 @@ func (r *ResourceRouterRepo) SelectByRoleIDs(ctx context.Context, rids []string)
 func (r *ResourceRouterRepo) Update(ctx context.Context, router []*model.ResourceRouter) (err error) {
 	rid := router[0].RoleID
 	if err = r.ClearByRoleIDs(ctx, []string{rid}); err != nil {
+		err = kerrors.InternalServer("CASBIN", "清除角色资源路由失败")
 		return
 	}
 	var rules [][]string

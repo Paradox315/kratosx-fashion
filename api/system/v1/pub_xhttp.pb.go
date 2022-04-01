@@ -46,7 +46,9 @@ func RegisterPubXHTTPServer(s *xhttp.Server, srv PubXHTTPServer) {
 		api.Get("/captcha", _Pub_Generate0_XHTTP_Handler(srv)).Name("Pub-Generate.0-XHTTP_Handler")
 		api.Post("/register", _Pub_Register0_XHTTP_Handler(srv)).Name("Pub-Register.0-XHTTP_Handler")
 		api.Post("/login", _Pub_Login0_XHTTP_Handler(srv)).Name("Pub-Login.0-XHTTP_Handler")
-		api.Post("/logout", _Pub_Logout0_XHTTP_Handler(srv)).Name("Pub-Logout.0-XHTTP_Handler")
+		api.Post("/logout",
+			middleware.Authenticator(), middleware.Authorizer(),
+			_Pub_Logout0_XHTTP_Handler(srv)).Name("Pub-Logout.0-XHTTP_Handler")
 		api.Post("/retrieve", _Pub_RetrievePwd0_XHTTP_Handler(srv)).Name("Pub-RetrievePwd.0-XHTTP_Handler")
 		api.Post("/upload", _Pub_UploadFile0_XHTTP_Handler(srv)).Name("Pub-UploadFile.0-XHTTP_Handler")
 	})
@@ -100,7 +102,7 @@ func _Pub_Login0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
 func _Pub_Logout0_XHTTP_Handler(srv PubXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in EmptyRequest
-		if err := binding.BindBody(c, &in); err != nil {
+		if err := binding.BindQuery(c, &in); err != nil {
 			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)

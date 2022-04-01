@@ -77,20 +77,24 @@ func (s *UserService) GetUser(ctx context.Context, req *pb.IDRequest) (*pb.UserR
 	if err != nil {
 		return nil, err
 	}
-	var reply *pb.UserReply
-	if err = copier.Copy(reply, user); err != nil {
+	reply := &pb.UserReply{}
+	if err = copier.Copy(&reply, &user); err != nil {
 		return nil, err
 	}
 	return reply, nil
 }
 func (s *UserService) ListUser(ctx context.Context, req *pb.ListSearchRequest) (list *pb.ListUserReply, err error) {
 	limit, offset := pagination.Parse(req.PageNum, req.PageSize)
-	where, order, args := option.Parse(req.Query...)
-	users, total, err := s.uc.Search(ctx, limit, offset, biz.SQLOption{
-		Where: where,
-		Order: order,
-		Args:  args,
-	})
+	var opt *biz.SQLOption
+	if len(req.Query) > 0 {
+		where, order, args := option.Parse(req.Query...)
+		opt = &biz.SQLOption{
+			Where: where,
+			Order: order,
+			Args:  args,
+		}
+	}
+	users, total, err := s.uc.Search(ctx, limit, offset, opt)
 	if err != nil {
 		return
 	}
@@ -98,8 +102,8 @@ func (s *UserService) ListUser(ctx context.Context, req *pb.ListSearchRequest) (
 		Total: uint32(total),
 	}
 	for _, user := range users {
-		var uReply *pb.UserReply
-		_ = copier.Copy(uReply, user)
+		uReply := &pb.UserReply{}
+		_ = copier.Copy(&uReply, &user)
 		list.Users = append(list.Users, uReply)
 	}
 	return

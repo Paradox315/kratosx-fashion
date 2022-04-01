@@ -47,7 +47,7 @@ func RegisterRoleXHTTPServer(s *xhttp.Server, srv RoleXHTTPServer) {
 		api.Put("/", _Role_UpdateRole0_XHTTP_Handler(srv)).Name("Role-UpdateRole.0-XHTTP_Handler")
 		api.Delete("/:ids", _Role_DeleteRole0_XHTTP_Handler(srv)).Name("Role-DeleteRole.0-XHTTP_Handler")
 		api.Get("/:id", _Role_GetRole0_XHTTP_Handler(srv)).Name("Role-GetRole.0-XHTTP_Handler")
-		api.Get("/list", _Role_ListRole0_XHTTP_Handler(srv)).Name("Role-ListRole.0-XHTTP_Handler")
+		api.Get("/list/:page_num/:page_size", _Role_ListRole0_XHTTP_Handler(srv)).Name("Role-ListRole.0-XHTTP_Handler")
 	})
 }
 
@@ -114,7 +114,7 @@ func _Role_GetRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 func _Role_ListRole0_XHTTP_Handler(srv RoleXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in ListRequest
-		if err := binding.BindQuery(c, &in); err != nil {
+		if err := binding.BindParams(c, &in); err != nil {
 			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)

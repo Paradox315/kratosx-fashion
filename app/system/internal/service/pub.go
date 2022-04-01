@@ -69,6 +69,9 @@ func (s *PubService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Login
 		CaptchaId: req.CaptchaId,
 	}
 	token, uid, err := s.uc.Login(ctx, u, c)
+	if err != nil {
+		return nil, err
+	}
 	return &pb.LoginReply{
 		Token: &pb.Token{
 			AccessToken: token.AccessToken,
@@ -85,7 +88,10 @@ func (s *PubService) Logout(ctx context.Context, req *pb.EmptyRequest) (*pb.Empt
 		return nil, errors.InternalServer("CONTEXT PARSE", "find context error")
 	}
 	err := s.uc.Logout(ctx, c.Locals("token").(string))
-	return &pb.EmptyReply{}, err
+	if err != nil {
+		return nil, err
+	}
+	return &pb.EmptyReply{}, nil
 }
 func (s *PubService) RetrievePwd(ctx context.Context, req *pb.RetrieveRequest) (*pb.EmptyReply, error) {
 	return &pb.EmptyReply{}, nil

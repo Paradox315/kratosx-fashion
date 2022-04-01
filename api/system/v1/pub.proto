@@ -31,10 +31,11 @@ service Pub {
 		};
 	}
 
+	// @Auth
 	rpc Logout(EmptyRequest) returns (EmptyReply){
 		option (google.api.http) = {
 			post: "/logout"
-			body: "*"
+			body: ""
 		};
 	}
 

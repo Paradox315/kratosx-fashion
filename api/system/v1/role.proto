@@ -40,7 +40,7 @@ service Role {
 
 	rpc ListRole (ListRequest) returns (ListRoleReply){
 		option (google.api.http) = {
-			get: "/list"
+			get: "/list/{page_num}/{page_size}"
 		};
 	}
 }

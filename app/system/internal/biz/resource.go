@@ -34,6 +34,7 @@ func longestCommonPrefix(rs []Router, group string) (prefix string) {
 	if len(rs) == 0 {
 		return ""
 	}
+	group = strings.ToLower(group)
 	index := strings.Index(rs[0].Path, group)
 	if index != -1 {
 		return rs[0].Path[:index+len(group)] + "/*"
@@ -79,7 +80,7 @@ func (r *ResourceUsecase) buildMenuChild(ctx context.Context, menu Menu, menuMap
 }
 
 func (r *ResourceUsecase) buildMenuDTO(ctx context.Context, mpo *model.ResourceMenu, rids []string) (menu Menu, err error) {
-	_ = copier.Copy(menu, mpo)
+	_ = copier.Copy(&menu, &mpo)
 	menu.Meta = &MenuMeta{
 		Locale:      mpo.Locale,
 		RequireAuth: mpo.RequireAuth == model.RequireAuthStatusOpen,
@@ -87,6 +88,7 @@ func (r *ResourceUsecase) buildMenuDTO(ctx context.Context, mpo *model.ResourceM
 		Icon:        mpo.Icon,
 		Order:       mpo.Order,
 	}
+	menu.Id = cast.ToString(mpo.ID)
 	menu.Keepalive = mpo.KeepAlive == model.KeepAliveStatusOpen
 	menu.Hidden = mpo.Hidden == model.HiddenStatusShow
 	menu.CreatedAt = mpo.CreatedAt.Format(timeFormat)
@@ -100,8 +102,8 @@ func (r *ResourceUsecase) buildMenuDTO(ctx context.Context, mpo *model.ResourceM
 }
 
 func (r *ResourceUsecase) SaveMenu(ctx context.Context, menu *pb.MenuRequest) (id string, err error) {
-	var mpo *model.ResourceMenu
-	if err = copier.Copy(mpo, menu); err != nil {
+	mpo := &model.ResourceMenu{}
+	if err = copier.Copy(&mpo, &menu); err != nil {
 		return
 	}
 	mpo.Locale = menu.Meta.Locale
@@ -130,10 +132,11 @@ func (r *ResourceUsecase) SaveMenu(ctx context.Context, menu *pb.MenuRequest) (i
 }
 
 func (r *ResourceUsecase) EditMenu(ctx context.Context, menu *pb.MenuRequest) (id string, err error) {
-	var mpo *model.ResourceMenu
-	if err = copier.Copy(mpo, menu); err != nil {
+	mpo := &model.ResourceMenu{}
+	if err = copier.Copy(&mpo, &menu); err != nil {
 		return
 	}
+	mpo.ID = cast.ToUint(menu.Id)
 	mpo.Locale = menu.Meta.Locale
 	if menu.Meta.RequireAuth {
 		mpo.RequireAuth = 1

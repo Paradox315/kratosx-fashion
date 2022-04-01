@@ -39,22 +39,6 @@ func newUser(db *gorm.DB) user {
 	_user.Status = field.NewUint8(tableName, "status")
 	_user.Creator = field.NewString(tableName, "creator")
 	_user.Extras = field.NewString(tableName, "extras")
-	_user.LoginLogs = userLoginLogs{
-		db: db.Session(&gorm.Session{}),
-
-		RelationField: field.NewRelation("LoginLogs", "model.LoginLog"),
-	}
-
-	_user.Roles = userRoles{
-		db: db.Session(&gorm.Session{}),
-
-		RelationField: field.NewRelation("Roles", "model.Role"),
-		Menus: struct {
-			field.RelationField
-		}{
-			RelationField: field.NewRelation("Roles.Menus", "model.ResourceMenu"),
-		},
-	}
 
 	_user.fillFieldMap()
 
@@ -79,9 +63,6 @@ type user struct {
 	Status    field.Uint8
 	Creator   field.String
 	Extras    field.String
-	LoginLogs userLoginLogs
-
-	Roles userRoles
 
 	fieldMap map[string]field.Expr
 }
@@ -132,7 +113,7 @@ func (u *user) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (u *user) fillFieldMap() {
-	u.fieldMap = make(map[string]field.Expr, 16)
+	u.fieldMap = make(map[string]field.Expr, 14)
 	u.fieldMap["id"] = u.ID
 	u.fieldMap["created_at"] = u.CreatedAt
 	u.fieldMap["updated_at"] = u.UpdatedAt
@@ -147,148 +128,11 @@ func (u *user) fillFieldMap() {
 	u.fieldMap["status"] = u.Status
 	u.fieldMap["creator"] = u.Creator
 	u.fieldMap["extras"] = u.Extras
-
 }
 
 func (u user) clone(db *gorm.DB) user {
 	u.userDo.ReplaceDB(db)
 	return u
-}
-
-type userLoginLogs struct {
-	db *gorm.DB
-
-	field.RelationField
-}
-
-func (a userLoginLogs) Where(conds ...field.Expr) *userLoginLogs {
-	if len(conds) == 0 {
-		return &a
-	}
-
-	exprs := make([]clause.Expression, 0, len(conds))
-	for _, cond := range conds {
-		exprs = append(exprs, cond.BeCond().(clause.Expression))
-	}
-	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
-	return &a
-}
-
-func (a userLoginLogs) WithContext(ctx context.Context) *userLoginLogs {
-	a.db = a.db.WithContext(ctx)
-	return &a
-}
-
-func (a userLoginLogs) Model(m *model.User) *userLoginLogsTx {
-	return &userLoginLogsTx{a.db.Model(m).Association(a.Name())}
-}
-
-type userLoginLogsTx struct{ tx *gorm.Association }
-
-func (a userLoginLogsTx) Find() (result *model.LoginLog, err error) {
-	return result, a.tx.Find(&result)
-}
-
-func (a userLoginLogsTx) Append(values ...*model.LoginLog) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Append(targetValues...)
-}
-
-func (a userLoginLogsTx) Replace(values ...*model.LoginLog) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Replace(targetValues...)
-}
-
-func (a userLoginLogsTx) Delete(values ...*model.LoginLog) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Delete(targetValues...)
-}
-
-func (a userLoginLogsTx) Clear() error {
-	return a.tx.Clear()
-}
-
-func (a userLoginLogsTx) Count() int64 {
-	return a.tx.Count()
-}
-
-type userRoles struct {
-	db *gorm.DB
-
-	field.RelationField
-
-	Menus struct {
-		field.RelationField
-	}
-}
-
-func (a userRoles) Where(conds ...field.Expr) *userRoles {
-	if len(conds) == 0 {
-		return &a
-	}
-
-	exprs := make([]clause.Expression, 0, len(conds))
-	for _, cond := range conds {
-		exprs = append(exprs, cond.BeCond().(clause.Expression))
-	}
-	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
-	return &a
-}
-
-func (a userRoles) WithContext(ctx context.Context) *userRoles {
-	a.db = a.db.WithContext(ctx)
-	return &a
-}
-
-func (a userRoles) Model(m *model.User) *userRolesTx {
-	return &userRolesTx{a.db.Model(m).Association(a.Name())}
-}
-
-type userRolesTx struct{ tx *gorm.Association }
-
-func (a userRolesTx) Find() (result *model.Role, err error) {
-	return result, a.tx.Find(&result)
-}
-
-func (a userRolesTx) Append(values ...*model.Role) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Append(targetValues...)
-}
-
-func (a userRolesTx) Replace(values ...*model.Role) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Replace(targetValues...)
-}
-
-func (a userRolesTx) Delete(values ...*model.Role) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Delete(targetValues...)
-}
-
-func (a userRolesTx) Clear() error {
-	return a.tx.Clear()
-}
-
-func (a userRolesTx) Count() int64 {
-	return a.tx.Count()
 }
 
 type userDo struct{ gen.DO }

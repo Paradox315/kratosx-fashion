@@ -47,17 +47,17 @@ type Token struct {
 }
 
 type User struct {
-	Id        string      ` json:"id"`
-	Username  string      `json:"username"`
-	Avatar    string      `json:"avatar"`
-	Email     string      `json:"email"`
-	Mobile    string      `json:"mobile"`
-	Nickname  string      `json:"nickname"`
-	Gender    string      `json:"gender"`
-	Status    uint32      `json:"status"`
-	CreatedAt string      `json:"created_at"`
-	UpdatedAt string      `json:"updated_at"`
-	Roles     []*UserRole `json:"roles"`
+	Id        string     ` json:"id"`
+	Username  string     `json:"username"`
+	Avatar    string     `json:"avatar"`
+	Email     string     `json:"email"`
+	Mobile    string     `json:"mobile"`
+	Nickname  string     `json:"nickname"`
+	Gender    string     `json:"gender"`
+	Status    uint32     `json:"status"`
+	CreatedAt string     `json:"created_at"`
+	UpdatedAt string     `json:"updated_at"`
+	Roles     []UserRole `json:"roles"`
 }
 
 func (u User) GetUid() string {

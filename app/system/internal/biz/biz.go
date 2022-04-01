@@ -32,7 +32,7 @@ type UserRepo interface {
 	SelectPasswordByName(context.Context, string) (*model.User, error)
 	SelectPasswordByMobile(context.Context, string) (*model.User, error)
 	SelectPasswordByEmail(context.Context, string) (*model.User, error)
-	List(context.Context, int, int, SQLOption) ([]*model.User, int64, error)
+	List(context.Context, int, int, *SQLOption) ([]*model.User, int64, error)
 	Insert(context.Context, *model.User) error
 	Update(context.Context, *model.User) error
 	UpdateStatus(context.Context, uint, model.UserStatus) error
@@ -110,4 +110,5 @@ type JwtRepo interface {
 	JoinInBlackList(context.Context, string) error
 	GetSecretKey() string
 	GetIssuer() string
+	ParseToken(context.Context, string) (*model.CustomClaims, error)
 }

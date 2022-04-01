@@ -48,7 +48,7 @@ func RegisterUserXHTTPServer(s *xhttp.Server, srv UserXHTTPServer) {
 		api.Post("/", _User_CreateUser0_XHTTP_Handler(srv)).Name("User-CreateUser.0-XHTTP_Handler")
 		api.Put("/", _User_UpdateUser0_XHTTP_Handler(srv)).Name("User-UpdateUser.0-XHTTP_Handler")
 		api.Put("/password", _User_UpdatePassword0_XHTTP_Handler(srv)).Name("User-UpdatePassword.0-XHTTP_Handler")
-		api.Put("/status/:id", _User_UpdateUserStatus0_XHTTP_Handler(srv)).Name("User-UpdateUserStatus.0-XHTTP_Handler")
+		api.Put("/status", _User_UpdateUserStatus0_XHTTP_Handler(srv)).Name("User-UpdateUserStatus.0-XHTTP_Handler")
 		api.Delete("/:ids", _User_DeleteUser0_XHTTP_Handler(srv)).Name("User-DeleteUser.0-XHTTP_Handler")
 		api.Get("/:id", _User_GetUser0_XHTTP_Handler(srv)).Name("User-GetUser.0-XHTTP_Handler")
 		api.Post("/list", _User_ListUser0_XHTTP_Handler(srv)).Name("User-ListUser.0-XHTTP_Handler")
@@ -104,9 +104,6 @@ func _User_UpdateUserStatus0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in StatusRequest
 		if err := binding.BindBody(c, &in); err != nil {
-			return apistate.Error[any]().WithError(err).Send(c)
-		}
-		if err := binding.BindParams(c, &in); err != nil {
 			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)

@@ -4,6 +4,7 @@ import (
 	"context"
 	iploc "github.com/ip2location/ip2location-go"
 	ua "github.com/mileusna/useragent"
+	"github.com/pkg/errors"
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/app/system/internal/data"
 	"kratosx-fashion/app/system/internal/data/linq"
@@ -22,7 +23,7 @@ type LoginLogRepo struct {
 func NewLoginLogRepo(data *data.Data, logger log.Logger, ipdb *iploc.DB) biz.LoginLogRepo {
 	return &LoginLogRepo{
 		dao:      data,
-		log:      log.NewHelper(logger),
+		log:      log.NewHelper(log.With(logger, "repo", "login_log")),
 		ipdb:     ipdb,
 		baseRepo: linq.Use(data.DB),
 	}
@@ -39,6 +40,8 @@ func (l *LoginLogRepo) SelectLocation(ctx context.Context, ip string) (loc *biz.
 	}
 	result, err := l.ipdb.Get_all(ip)
 	if err != nil {
+		err = errors.Wrap(err, "ipdb.Get_all")
+		l.log.Error("ip2location get_all error", err)
 		return nil, err
 	}
 	loc = &biz.Location{
@@ -74,7 +77,13 @@ func (l *LoginLogRepo) SelectAgent(ctx context.Context, agentStr string) (agent 
 
 func (l *LoginLogRepo) Select(ctx context.Context, id uint) (loginLog *model.LoginLog, err error) {
 	lr := l.baseRepo.LoginLog
-	return lr.WithContext(ctx).Where(lr.ID.Eq(id)).First()
+	loginLog, err = lr.WithContext(ctx).Where(lr.ID.Eq(id)).First()
+	if err != nil {
+		err = errors.Wrap(err, "baseRepo.LoginLog.Select")
+		l.log.WithContext(ctx).Error("login_log select error", err)
+		return
+	}
+	return
 }
 
 func (l *LoginLogRepo) ListByUserID(ctx context.Context, id uint64, limit, offset int) (logs []*model.LoginLog, total int64, err error) {
@@ -86,32 +95,58 @@ func (l *LoginLogRepo) ListByUserID(ctx context.Context, id uint64, limit, offse
 	tx := lr.WithContext(ctx).Where(lr.UserID.Eq(id)).Limit(limit).Offset(offset)
 	total, err = tx.Count()
 	if err != nil {
+		err = errors.Wrap(err, "baseRepo.LoginLog.ListByUserID")
 		l.log.WithContext(ctx).Error("pagination.Count error", err)
 		return
 	}
 	logs, err = tx.Find()
+	if err != nil {
+		err = errors.Wrap(err, "baseRepo.LoginLog.ListByUserID")
+		l.log.WithContext(ctx).Error("pagination.Find error", err)
+	}
 	return
 }
 
 func (l *LoginLogRepo) Insert(ctx context.Context, loginLog *model.LoginLog) error {
 	lr := l.baseRepo.LoginLog
-	return lr.WithContext(ctx).Create(loginLog)
+	err := lr.WithContext(ctx).Create(loginLog)
+	if err != nil {
+		err = errors.Wrap(err, "baseRepo.LoginLog.Insert")
+		l.log.WithContext(ctx).Error("login_log insert error", err)
+		return err
+	}
+	return nil
 }
 
 func (l *LoginLogRepo) Delete(ctx context.Context, id uint) error {
 	lr := l.baseRepo.LoginLog
 	_, err := lr.WithContext(ctx).Where(lr.ID.Eq(id)).Delete()
-	return err
+	if err != nil {
+		err = errors.Wrap(err, "baseRepo.LoginLog.Delete")
+		l.log.WithContext(ctx).Error("login_log delete error", err)
+		return err
+	}
+	return nil
 }
 
 func (l *LoginLogRepo) DeleteByUserID(ctx context.Context, uid uint64) error {
 	lr := l.baseRepo.LoginLog
 	_, err := lr.WithContext(ctx).Where(lr.UserID.Eq(uid)).Delete()
-	return err
+	if err != nil {
+		err = errors.Wrap(err, "baseRepo.LoginLog.DeleteByUserID")
+		l.log.WithContext(ctx).Error("login_log delete error", err)
+		return err
+	}
+	return nil
 }
 
 func (l *LoginLogRepo) DeleteByUserIDs(ctx context.Context, uids []uint64) error {
 	lr := l.baseRepo.LoginLog
 	_, err := lr.WithContext(ctx).Where(lr.UserID.In(uids...)).Delete()
-	return err
+	if err != nil {
+		err = errors.Wrap(err, "baseRepo.LoginLog.DeleteByUserIDs")
+		l.log.WithContext(ctx).Error("login_log delete error", err)
+		return err
+	}
+	return nil
 }

@@ -2,8 +2,8 @@ package biz
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"github.com/spf13/cast"
-	"golang.org/x/crypto/openpgp/errors"
 	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/cypher"
 	"kratosx-fashion/pkg/xcast"
@@ -33,11 +33,13 @@ func NewUserUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, roleRepo RoleR
 	}
 }
 func (u *UserUsecase) buildUserDto(ctx context.Context, upo *model.User) (user User, err error) {
-	if err = copier.Copy(user, upo); err != nil {
+	if err = copier.Copy(&user, &upo); err != nil {
 		return
 	}
 	urs, err := u.userRoleRepo.SelectAllByUserID(ctx, uint64(upo.ID))
 	if err != nil {
+		err = errors.Wrap(err, "userUsecase.buildUserDto.SelectAllByUserID")
+		u.log.WithContext(ctx).Error(err)
 		return
 	}
 	var rids []uint
@@ -46,15 +48,18 @@ func (u *UserUsecase) buildUserDto(ctx context.Context, upo *model.User) (user U
 	}
 	roles, err := u.roleRepo.SelectByIDs(ctx, rids)
 	if err != nil {
+		err = errors.Wrap(err, "userUsecase.buildUserDto.SelectByIDs")
+		u.log.WithContext(ctx).Error(err)
 		return
 	}
 	for _, role := range roles {
-		user.Roles = append(user.Roles, &UserRole{
+		user.Roles = append(user.Roles, UserRole{
 			ID:          strconv.FormatUint(uint64(role.ID), 10),
 			Name:        role.Name,
 			Description: role.Description,
 		})
 	}
+	user.Id = cast.ToString(upo.ID)
 	user.CreatedAt = upo.CreatedAt.Format(timeFormat)
 	user.UpdatedAt = upo.UpdatedAt.Format(timeFormat)
 	user.Gender = upo.Gender.String()
@@ -77,13 +82,11 @@ func (u *UserUsecase) validateUser(ctx context.Context, user *pb.UserRequest) (e
 }
 
 func (u *UserUsecase) Save(ctx context.Context, user *pb.UserRequest) (id string, err error) {
-	var upo *model.User
+	upo := &model.User{}
 	if err = u.validateUser(ctx, user); err != nil {
 		return
 	}
-	if err = copier.Copy(&upo, user); err != nil {
-		return
-	}
+	_ = copier.Copy(&upo, &user)
 	upo.Password = cypher.BcryptMake(user.Password)
 	err = u.userRepo.Insert(ctx, upo)
 	if err != nil {
@@ -105,6 +108,8 @@ func (u *UserUsecase) Save(ctx context.Context, user *pb.UserRequest) (id string
 	if len(urs) > 0 {
 		err = u.userRoleRepo.Insert(ctx, urs...)
 		if err != nil {
+			err = errors.Wrap(err, "userUsecase.Save.Insert")
+			u.log.WithContext(ctx).Error(err)
 			return
 		}
 	}
@@ -128,24 +133,25 @@ func (u *UserUsecase) Edit(ctx context.Context, user *pb.UserRequest) (id string
 	if len(urs) > 0 {
 		err = u.userRoleRepo.UpdateByUserID(ctx, uid, urs)
 		if err != nil {
+			err = errors.Wrap(err, "useUsecase.Edit.UpdateByUserID")
+			u.log.WithContext(ctx).Error(err)
 			return
 		}
 	}
-	var upo *model.User
+	upo := &model.User{}
 	if err = u.validateUser(ctx, user); err != nil {
 		return
 	}
-	if err = copier.Copy(upo, user); err != nil {
-		return
-	}
+	_ = copier.Copy(&upo, &user)
+	upo.ID = uint(uid)
 	err = u.userRepo.Update(ctx, upo)
 	id = user.Id
 	return
 }
 
-func (u UserUsecase) Remove(ctx context.Context, uids []uint) (err error) {
+func (u *UserUsecase) Remove(ctx context.Context, uids []uint) (err error) {
 	if len(uids) == 0 {
-		return errors.InvalidArgumentError("uids is null")
+		return
 	}
 	return u.tx.ExecTx(ctx, func(ctx context.Context) error {
 		err = u.userRoleRepo.DeleteByUserIDs(ctx, xcast.ToUint64Slice[uint](uids))
@@ -159,12 +165,14 @@ func (u UserUsecase) Remove(ctx context.Context, uids []uint) (err error) {
 func (u *UserUsecase) Get(ctx context.Context, uid uint) (user User, err error) {
 	upo, err := u.userRepo.Select(ctx, uid)
 	if err != nil {
+		err = errors.Wrap(err, "userUsecase.Get.Select")
+		u.log.WithContext(ctx).Error(err)
 		return
 	}
 	return u.buildUserDto(ctx, upo)
 }
 
-func (u *UserUsecase) Search(ctx context.Context, limit, offset int, opt SQLOption) (list []User, total int64, err error) {
+func (u *UserUsecase) Search(ctx context.Context, limit, offset int, opt *SQLOption) (list []User, total int64, err error) {
 	users, total, err := u.userRepo.List(ctx, limit, offset, opt)
 	if err != nil {
 		return
@@ -187,6 +195,8 @@ func (u *UserUsecase) EditStatus(ctx context.Context, uid uint, status model.Use
 func (u *UserUsecase) EditPassword(ctx context.Context, oldpwd, newpwd string, uid uint) error {
 	user, err := u.userRepo.Select(ctx, uid)
 	if err != nil {
+		err = errors.Wrap(err, "userUsecase.EditPassword.Select")
+		u.log.WithContext(ctx).Error(err)
 		return err
 	}
 	if !cypher.BcryptCheck(oldpwd, user.Password) {

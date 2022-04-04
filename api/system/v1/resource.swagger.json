@@ -17,6 +17,26 @@
   ],
   "paths": {
     "/menu": {
+      "get": {
+        "operationId": "Resource_GetMenuTree",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1MenuReply"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      },
       "post": {
         "operationId": "Resource_CreateMenu",
         "responses": {
@@ -138,14 +158,14 @@
         ]
       }
     },
-    "/menu/{id}": {
+    "/router": {
       "get": {
-        "operationId": "Resource_GetMenuTree",
+        "operationId": "Resource_GetRouteTree",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1MenuReply"
+              "$ref": "#/definitions/v1RouterReply"
             }
           },
           "default": {
@@ -155,20 +175,10 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
         "tags": [
           "Resource"
         ]
-      }
-    },
-    "/router": {
+      },
       "post": {
         "operationId": "Resource_EditRoutePolicy",
         "responses": {
@@ -203,36 +213,6 @@
     "/router/role/{id}": {
       "get": {
         "operationId": "Resource_GetRouteTreeByRole",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1RouterReply"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Resource"
-        ]
-      }
-    },
-    "/router/{id}": {
-      "get": {
-        "operationId": "Resource_GetRouteTree",
         "responses": {
           "200": {
             "description": "A successful response.",

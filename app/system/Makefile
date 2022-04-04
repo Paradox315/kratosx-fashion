@@ -16,6 +16,7 @@ init:
 	go get -u github.com/gogo/protobuf/proto
 	go get -u github.com/gogo/protobuf/gogoproto
 	go install github.com/gogo/protobuf/protoc-gen-gofast@latest
+	go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
 
 	go get -u github.com/google/wire/cmd/wire
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest

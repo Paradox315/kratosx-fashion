@@ -13,6 +13,8 @@ import (
 )
 
 func NewLogger(conf *conf.Logger) log.Logger {
+	var zlog *zap.Logger
+
 	if ok, _ := logutil.PathExists(conf.Dir); !ok { // 判断是否有Director文件夹
 		fmt.Printf("create %v directory\n", conf.Dir)
 		_ = os.Mkdir(conf.Dir, os.ModePerm)
@@ -41,21 +43,39 @@ func NewLogger(conf *conf.Logger) log.Logger {
 		getEncoderCore(conf, fmt.Sprintf("./%s/server_error.log", conf.Dir), errorPriority),
 	}
 	id, _ := os.Hostname()
-	zlog := zap.New(
-		zapcore.NewTee(cores...),
-		zap.Fields(zap.String("service.id", id), zap.String("service.name", conf.Prefix)),
-	)
+	switch conf.Level {
+	case "info", "INFO":
+		zlog = zap.New(
+			zapcore.NewTee(cores...),
+			zap.Fields(zap.String("service.id", id), zap.String("service.name", conf.Prefix)),
+		)
+	case "debug", "DEBUG":
+		zlog = zap.New(
+			zapcore.NewTee(cores...),
+			zap.Fields(zap.String("service.id", id), zap.String("service.name", conf.Prefix)),
+			zap.AddStacktrace(zap.DebugLevel),
+		)
+	case "warn", "WARN":
+		zlog = zap.New(
+			zapcore.NewTee(cores...),
+			zap.Fields(zap.String("service.id", id), zap.String("service.name", conf.Prefix)),
+			zap.AddStacktrace(zap.WarnLevel),
+		)
+	case "error", "ERROR":
+		zlog = zap.New(
+			zapcore.NewTee(cores...),
+			zap.Fields(zap.String("service.id", id), zap.String("service.name", conf.Prefix)),
+			zap.AddStacktrace(zap.ErrorLevel),
+		)
+	default:
+		zlog = zap.New(
+			zapcore.NewTee(cores...),
+			zap.Fields(zap.String("service.id", id), zap.String("service.name", conf.Prefix)),
+		)
+	}
 
 	if conf.ShowLine {
 		zlog = zlog.WithOptions(zap.AddCaller())
-	}
-	switch conf.Level {
-	case "debug":
-		zlog.WithOptions(zap.AddStacktrace(zapcore.DebugLevel))
-	case "warn":
-		zlog.WithOptions(zap.AddStacktrace(zapcore.WarnLevel))
-	case "error":
-		zlog.WithOptions(zap.AddStacktrace(zapcore.ErrorLevel))
 	}
 
 	return logutil.NewLogger(zlog)

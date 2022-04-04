@@ -51,7 +51,7 @@ func (s *ResourceService) DeleteMenu(ctx context.Context, req *pb.IDsRequest) (*
 	}
 	return &pb.EmptyReply{}, nil
 }
-func (s *ResourceService) GetMenuTree(ctx context.Context, req *pb.IDRequest) (*pb.MenuReply, error) {
+func (s *ResourceService) GetMenuTree(ctx context.Context, req *pb.EmptyRequest) (*pb.MenuReply, error) {
 	roleIDs := ctxutil.GetRoleIDs(ctx)
 	tree, err := s.uc.RoleMenuTree(ctx, xcast.ToUintSlice(roleIDs)...)
 	if err != nil {
@@ -78,16 +78,15 @@ func (s *ResourceService) GetMenuTreeByRole(ctx context.Context, req *pb.IDReque
 	}
 	return &pb.MenuReply{}, nil
 }
-func (s *ResourceService) GetRouteTree(ctx context.Context, req *pb.IDRequest) (*pb.RouterReply, error) {
-	roleIDs := ctxutil.GetRoleIDs(ctx)
-	tree, err := s.uc.RoleRouterTree(ctx, roleIDs...)
+func (s *ResourceService) GetRouteTree(ctx context.Context, req *pb.EmptyRequest) (*pb.RouterReply, error) {
+	tree, err := s.uc.RouterTree(ctx)
 	if err != nil {
 		return nil, err
 	}
 	resp := &pb.RouterReply{}
 	for _, route := range tree {
-		var routeResp *pb.RouterGroup
-		_ = copier.Copy(routeResp, &route)
+		routeResp := &pb.RouterGroup{}
+		_ = copier.Copy(&routeResp, &route)
 		resp.Routers = append(resp.Routers, routeResp)
 	}
 	return resp, nil
@@ -105,7 +104,7 @@ func (s *ResourceService) GetRouteTreeByRole(ctx context.Context, req *pb.IDRequ
 	}
 	return resp, nil
 }
-func (s *ResourceService) EditRoutePolicy(ctx context.Context, req *pb.RoutePolicyRequest) (*pb.EmptyReply, error) {
+func (s *ResourceService) EditRoutePolicy(ctx context.Context, req *pb.RouterRequest) (*pb.EmptyReply, error) {
 	var routers []biz.RouterGroup
 	for _, r := range req.Routers {
 		var router biz.RouterGroup

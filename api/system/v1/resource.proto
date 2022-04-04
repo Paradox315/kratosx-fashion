@@ -32,9 +32,9 @@ service Resource {
     };
   }
 
-  rpc GetMenuTree (IDRequest) returns (MenuReply){
+  rpc GetMenuTree (EmptyRequest) returns (MenuReply){
     option (google.api.http) = {
-      get: "/menu/{id}"
+      get: "/menu"
     };
   }
 
@@ -43,23 +43,20 @@ service Resource {
       get: "/menu/role/{id}"
     };
   }
-
-  rpc GetRouteTree(IDRequest) returns (RouterReply){
+  rpc ListMenu (ListRequest) returns (ListMenuReply){
     option (google.api.http) = {
-      get: "/router/{id}"
+      get: "/menu/list/{page_num}/{page_size}"
+    };
+  }
+  rpc GetRouteTree(EmptyRequest) returns (RouterReply){
+    option (google.api.http) = {
+      get: "/router"
     };
   }
 
   rpc GetRouteTreeByRole (IDRequest) returns (RouterReply){
     option (google.api.http) = {
       get: "/router/role/{id}"
-    };
-  }
-
-  rpc EditRoutePolicy(RoutePolicyRequest) returns (EmptyReply){
-    option (google.api.http) = {
-      post: "/router"
-      body: "*"
     };
   }
 }

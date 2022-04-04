@@ -75,3 +75,14 @@ func (r *ResourceMenuRepo) DeleteByIDs(ctx context.Context, ids []uint) error {
 	}
 	return nil
 }
+
+func (r *ResourceMenuRepo) SelectAll(ctx context.Context) ([]*model.ResourceMenu, error) {
+	rr := r.baseRepo.ResourceMenu
+	menus, err := rr.WithContext(ctx).Find()
+	if err != nil {
+		err = errors.Wrap(err, "resource_menu.repo.SelectAll")
+		r.log.WithContext(ctx).Error(err)
+		return nil, err
+	}
+	return menus, nil
+}

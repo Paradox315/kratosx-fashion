@@ -2718,6 +2718,8 @@ func (m *RoleReply) validate(all bool) error {
 
 	// no validation rules for Id
 
+	// no validation rules for Name
+
 	// no validation rules for Description
 
 	// no validation rules for CreatedAt
@@ -4476,6 +4478,8 @@ func (m *QueryOption) validate(all bool) error {
 	// no validation rules for Field
 
 	// no validation rules for Desc
+
+	// no validation rules for Time
 
 	if len(errors) > 0 {
 		return QueryOptionMultiError(errors)

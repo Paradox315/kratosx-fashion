@@ -142,7 +142,7 @@
         ]
       }
     },
-    "/status/{id}": {
+    "/status": {
       "put": {
         "operationId": "User_UpdateUserStatus",
         "responses": {
@@ -161,23 +161,11 @@
         },
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "status": {
-                  "type": "integer",
-                  "format": "int64"
-                }
-              }
+              "$ref": "#/definitions/v1StatusRequest"
             }
           }
         ],
@@ -364,6 +352,21 @@
         },
         "desc": {
           "type": "boolean"
+        },
+        "time": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1StatusRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

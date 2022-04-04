@@ -104,7 +104,6 @@ func NewDB(c *conf.Data, logger log.Logger) *gorm.DB {
 			&model.UserRole{},
 			&model.Role{},
 			&model.RoleResource{},
-			&model.ResourceAction{},
 			&model.ResourceMenu{},
 		); err != nil {
 			panic(err)

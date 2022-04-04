@@ -78,7 +78,7 @@
         ]
       }
     },
-    "/list": {
+    "/list/{pageNum}/{pageSize}": {
       "get": {
         "operationId": "Role_ListRole",
         "responses": {
@@ -98,15 +98,15 @@
         "parameters": [
           {
             "name": "pageNum",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "type": "integer",
             "format": "int64"
           },
           {
             "name": "pageSize",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "type": "integer",
             "format": "int64"
           }
@@ -235,6 +235,9 @@
       "type": "object",
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "description": {

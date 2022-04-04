@@ -72,6 +72,7 @@
     },
     "/logout": {
       "post": {
+        "summary": "@Auth",
         "operationId": "Pub_Logout",
         "responses": {
           "200": {
@@ -87,16 +88,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1EmptyRequest"
-            }
-          }
-        ],
         "tags": [
           "Pub"
         ]

@@ -2,10 +2,10 @@ package biz
 
 import (
 	"context"
-	"github.com/casbin/casbin/v2/util"
 	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/data/model"
@@ -164,6 +164,25 @@ func (r *ResourceUsecase) EditMenu(ctx context.Context, menu *pb.MenuRequest) (i
 func (r *ResourceUsecase) RemoveMenu(ctx context.Context, ids []uint) (err error) {
 	return r.menuRepo.DeleteByIDs(ctx, ids)
 }
+func (r *ResourceUsecase) MenuTree(ctx context.Context) (menus []Menu, err error) {
+	mpos, err := r.menuRepo.SelectAll(ctx)
+	if err != nil {
+		return
+	}
+	for _, mpo := range mpos {
+		var menu Menu
+		menu, err = r.buildMenuDTO(ctx, mpo, nil)
+		if err != nil {
+			return
+		}
+		menus = append(menus, menu)
+	}
+	menuMap := r.groupMenu(ctx, menus)
+	for _, menu := range menuMap["0"] {
+		r.buildMenuChild(ctx, menu, menuMap)
+	}
+	return
+}
 
 func (r *ResourceUsecase) RoleMenuTree(ctx context.Context, rids ...uint) (menus []Menu, err error) {
 	mpos, err := r.menuRepo.SelectByIDs(ctx, rids)
@@ -189,55 +208,50 @@ func (r *ResourceUsecase) RoleMenuTree(ctx context.Context, rids ...uint) (menus
 	return
 }
 
+func (r *ResourceUsecase) RouterTree(ctx context.Context) (groups []RouterGroup, err error) {
+	allRoutes, err := r.routeRepo.SelectAll(ctx)
+	if err != nil {
+		err = errors.Wrap(err, "ResourceUsecase.RouterTree")
+		r.log.WithContext(ctx).Error(err)
+		return
+	}
+	groups = r.buildRouters(ctx, allRoutes)
+	return
+}
+
 func (r *ResourceUsecase) RoleRouterTree(ctx context.Context, rids ...string) (groups []RouterGroup, err error) {
 	allRoutes, err := r.routeRepo.SelectAll(ctx)
 	if err != nil {
 		return
 	}
 	groups = r.buildRouters(ctx, allRoutes)
-	ownedRoutes, err := r.routeRepo.SelectByRoleIDs(ctx, rids)
+	//ownedRoutes, err := r.routeRepo.SelectByRoleIDs(ctx, rids)
 	if err != nil {
 		return
-	}
-	for _, route := range ownedRoutes {
-		for _, group := range groups {
-			if util.KeyMatch2(group.Path, route.Path) || util.KeyMatch(group.Path, route.Path) {
-				group.Owned = true
-				for _, fr := range group.Router {
-					fr.Owned = true
-				}
-				break
-			}
-			for _, fr := range group.Router {
-				if util.KeyMatch2(fr.Path, route.Path) || util.KeyMatch(fr.Path, route.Path) {
-					fr.Owned = true
-				}
-			}
-		}
 	}
 	return
 }
 
 func (r *ResourceUsecase) EditRouters(ctx context.Context, rid string, routers []RouterGroup) (err error) {
 	var rrs []*model.ResourceRouter
-	for _, group := range routers {
-		if group.Owned {
-			rrs = append(rrs, &model.ResourceRouter{
-				RoleID: rid,
-				Path:   group.Path,
-				Method: strings.Join(group.Methods, "|"),
-			})
-			continue
-		}
-		for _, router := range group.Router {
-			if router.Owned {
-				rrs = append(rrs, &model.ResourceRouter{
-					RoleID: rid,
-					Path:   router.Path,
-					Method: router.Method,
-				})
-			}
-		}
-	}
+	//for _, group := range routers {
+	//	if group.Owned {
+	//		rrs = append(rrs, &model.ResourceRouter{
+	//			RoleID: rid,
+	//			Path:   group.Path,
+	//			Method: strings.Join(group.Methods, "|"),
+	//		})
+	//		continue
+	//	}
+	//	for _, router := range group.Router {
+	//		if router.Owned {
+	//			rrs = append(rrs, &model.ResourceRouter{
+	//				RoleID: rid,
+	//				Path:   router.Path,
+	//				Method: router.Method,
+	//			})
+	//		}
+	//	}
+	//}
 	return r.routeRepo.Update(ctx, rrs)
 }

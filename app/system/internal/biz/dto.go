@@ -100,14 +100,12 @@ type Router struct {
 	Path   string   `json:"path"`
 	Name   string   `json:"name"`
 	Params []string `json:"params"`
-	Owned  bool     `json:"owned"`
 	Group  string   `json:"group"`
 }
 
 type RouterGroup struct {
 	Path    string   `json:"path"`
 	Name    string   `json:"name"`
-	Owned   bool     `json:"owned"`
 	Methods []string `json:"methods"`
 	Router  []Router `json:"router"`
 }

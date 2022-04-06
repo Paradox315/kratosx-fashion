@@ -17,3 +17,11 @@ func ToUintSlice[T any](arr []T) (uints []uint) {
 	}
 	return
 }
+
+func ToStringSlice[T any](arr []T) (strings []string) {
+	strings = make([]string, len(arr))
+	for i := range arr {
+		strings[i] = cast.ToString(arr[i])
+	}
+	return
+}

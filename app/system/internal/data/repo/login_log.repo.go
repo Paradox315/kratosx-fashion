@@ -86,7 +86,7 @@ func (l *LoginLogRepo) Select(ctx context.Context, id uint) (loginLog *model.Log
 	return
 }
 
-func (l *LoginLogRepo) ListByUserID(ctx context.Context, id uint64, limit, offset int) (logs []*model.LoginLog, total int64, err error) {
+func (l *LoginLogRepo) SelectPageByUserID(ctx context.Context, id uint64, limit, offset int) (logs []*model.LoginLog, total int64, err error) {
 	if err != nil {
 		l.log.WithContext(ctx).Error("pagination.Parse error", err)
 		return
@@ -95,13 +95,13 @@ func (l *LoginLogRepo) ListByUserID(ctx context.Context, id uint64, limit, offse
 	tx := lr.WithContext(ctx).Where(lr.UserID.Eq(id)).Limit(limit).Offset(offset)
 	total, err = tx.Count()
 	if err != nil {
-		err = errors.Wrap(err, "baseRepo.LoginLog.ListByUserID")
+		err = errors.Wrap(err, "baseRepo.LoginLog.SelectPageByUserID")
 		l.log.WithContext(ctx).Error("pagination.Count error", err)
 		return
 	}
 	logs, err = tx.Find()
 	if err != nil {
-		err = errors.Wrap(err, "baseRepo.LoginLog.ListByUserID")
+		err = errors.Wrap(err, "baseRepo.LoginLog.SelectPageByUserID")
 		l.log.WithContext(ctx).Error("pagination.Find error", err)
 	}
 	return

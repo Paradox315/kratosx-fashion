@@ -44,11 +44,11 @@ func (r *RoleRepo) SelectByIDs(ctx context.Context, rids []uint) ([]*model.Role,
 	return roles, nil
 }
 
-func (r *RoleRepo) List(ctx context.Context, limit, offset int) (roles []*model.Role, total int64, err error) {
+func (r *RoleRepo) SelectPage(ctx context.Context, limit, offset int) (roles []*model.Role, total int64, err error) {
 	rr := r.baseRepo.Role
 	roles, total, err = rr.WithContext(ctx).FindByPage(offset, limit)
 	if err != nil {
-		err = errors.Wrap(err, "role.repo.List")
+		err = errors.Wrap(err, "role.repo.SelectPage")
 		return
 	}
 	return

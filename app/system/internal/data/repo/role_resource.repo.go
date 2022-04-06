@@ -36,19 +36,29 @@ func (r *RoleResourceRepo) Select(ctx context.Context, id uint) (*model.RoleReso
 	return rrs, nil
 }
 
-func (r *RoleResourceRepo) SelectByRoleID(ctx context.Context, rid uint64, resourceType ...model.ResourceType) ([]*model.RoleResource, error) {
+func (r *RoleResourceRepo) SelectByRoleID(ctx context.Context, rid uint64, resourceType ...model.ResourceType) (list []*model.RoleResource, err error) {
 	rr := r.baseRepo.RoleResource
 	if len(resourceType) == 0 {
-		return rr.WithContext(ctx).Where(rr.RoleID.Eq(rid)).Find()
+		list, err = rr.WithContext(ctx).Where(rr.RoleID.Eq(rid)).Find()
+	} else {
+		typ := resourceType[0]
+		list, err = rr.WithContext(ctx).Where(rr.RoleID.Eq(rid), rr.Type.Eq(uint8(typ))).Find()
 	}
-	typ := resourceType[0]
-	list, err := rr.WithContext(ctx).Where(rr.RoleID.Eq(rid), rr.Type.Eq(uint8(typ))).Find()
 	if err != nil {
 		err = errors.Wrap(err, "role_resource.repo.SelectByRoleID")
 		r.log.WithContext(ctx).Error(err)
 		return nil, err
 	}
-	return list, nil
+	var result []*model.RoleResource
+	visited := make(map[uint64]bool)
+	for _, e := range list {
+		if _, ok := visited[e.ResourceID]; ok {
+			continue
+		}
+		result = append(result, e)
+		visited[e.ResourceID] = true
+	}
+	return result, nil
 }
 
 func (r *RoleResourceRepo) Insert(ctx context.Context, resource ...*model.RoleResource) error {
@@ -106,4 +116,19 @@ func (r *RoleResourceRepo) UpdateByRoleID(ctx context.Context, rid uint64, rrs [
 		tx.Model(&model.RoleResource{}).Where("role_id = ?", rid).Delete(&model.RoleResource{})
 		return tx.Create(&rrs).Error
 	})
+}
+
+func (r *RoleResourceRepo) SelectByResourceID(ctx context.Context, rid uint64, resourceType ...model.ResourceType) ([]*model.RoleResource, error) {
+	rr := r.baseRepo.RoleResource
+	if len(resourceType) == 0 {
+		return rr.WithContext(ctx).Where(rr.ResourceID.Eq(rid)).Find()
+	}
+	typ := resourceType[0]
+	list, err := rr.WithContext(ctx).Where(rr.ResourceID.Eq(rid), rr.Type.Eq(uint8(typ))).Find()
+	if err != nil {
+		err = errors.Wrap(err, "role_resource.repo.SelectByResourceID")
+		r.log.WithContext(ctx).Error(err)
+		return nil, err
+	}
+	return list, nil
 }

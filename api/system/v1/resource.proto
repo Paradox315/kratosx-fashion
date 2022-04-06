@@ -43,11 +43,13 @@ service Resource {
       get: "/menu/role/{id}"
     };
   }
+
   rpc ListMenu (ListRequest) returns (ListMenuReply){
     option (google.api.http) = {
       get: "/menu/list/{page_num}/{page_size}"
     };
   }
+
   rpc GetRouteTree(EmptyRequest) returns (RouterReply){
     option (google.api.http) = {
       get: "/router"
@@ -57,6 +59,12 @@ service Resource {
   rpc GetRouteTreeByRole (IDRequest) returns (RouterReply){
     option (google.api.http) = {
       get: "/router/role/{id}"
+    };
+  }
+
+  rpc ListRoute (ListRequest) returns (ListRouterReply){
+    option (google.api.http) = {
+      get: "/router/list/{page_num}/{page_size}"
     };
   }
 }

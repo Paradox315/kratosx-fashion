@@ -23,7 +23,7 @@ data:
     source: ./resource/model.conf
 logger:
   prefix: kratosx-fashion:system
-  level: debug
+  level: info
   format: console
   dir: log
   encode_level: CapitalColor

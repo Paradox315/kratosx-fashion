@@ -86,6 +86,7 @@ message RoleRequest {
   string name = 2;
   string description = 3;
   repeated RoleResource role_resources = 4;
+  repeated Router role_routers = 5;
 }
 
 message MenuRequest {
@@ -103,12 +104,6 @@ message MenuRequest {
 message TreeRequest {
   string uid = 1;
 }
-
-message RouterRequest {
-  string id = 1;
-  repeated RouterGroup routers = 2;
-}
-
 
 message EmptyReply {
 }
@@ -164,6 +159,11 @@ message ListMenuReply{
   uint32 total=2;
 }
 
+message ListRouterReply{
+  repeated RouterGroup list=1;
+  uint32 total=2;
+}
+
 message RegisterReply {
   string user_id = 1;
   string username = 2;
@@ -184,9 +184,7 @@ message RouterReply{
 }
 
 message UserRoleID{
-  string id = 1;
-  string user_id = 2;
-  string role_id = 3;
+  string role_id = 1;
 }
 
 message UserRole{
@@ -196,11 +194,8 @@ message UserRole{
 }
 
 message RoleResource{
-  string id = 1;
-  string role_id = 2;
-  string resource_id = 3;
-  uint32 resource_type = 4;
-  repeated RouterGroup routers = 5;
+  string resource_id = 1;
+  uint32 resource_type = 2;
 }
 
 message Token{
@@ -261,6 +256,6 @@ message Router{
 message RouterGroup{
   string path = 1;
   string name = 2;
-  repeated string methods = 3;
+  string methods = 3;
   repeated Router router = 4;
 }

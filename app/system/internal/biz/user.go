@@ -32,7 +32,7 @@ func NewUserUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, roleRepo RoleR
 		log:          log.NewHelper(log.With(logger, "biz", "user")),
 	}
 }
-func (u *UserUsecase) buildUserDto(ctx context.Context, upo *model.User) (user User, err error) {
+func (u *UserUsecase) buildUserDo(ctx context.Context, upo *model.User) (user User, err error) {
 	if err = copier.Copy(&user, &upo); err != nil {
 		return
 	}
@@ -53,7 +53,7 @@ func (u *UserUsecase) buildUserDto(ctx context.Context, upo *model.User) (user U
 		return
 	}
 	for _, role := range roles {
-		user.Roles = append(user.Roles, UserRole{
+		user.UserRoles = append(user.UserRoles, UserRole{
 			ID:          strconv.FormatUint(uint64(role.ID), 10),
 			Name:        role.Name,
 			Description: role.Description,
@@ -66,15 +66,15 @@ func (u *UserUsecase) buildUserDto(ctx context.Context, upo *model.User) (user U
 	return
 }
 func (u *UserUsecase) validateUser(ctx context.Context, user *pb.UserRequest) (err error) {
-	if u.userRepo.ExistByUserName(ctx, user.Username) {
+	if len(user.Username) != 0 && u.userRepo.ExistByUserName(ctx, user.Username) {
 		err = api.ErrorUserAlreadyExists("用户名已存在")
 		return
 	}
-	if u.userRepo.ExistByEmail(ctx, user.Email) {
+	if len(user.Email) != 0 && u.userRepo.ExistByEmail(ctx, user.Email) {
 		err = api.ErrorEmailAlreadyExists("邮箱已存在")
 		return
 	}
-	if u.userRepo.ExistByMobile(ctx, user.Mobile) {
+	if len(user.Mobile) != 0 && u.userRepo.ExistByMobile(ctx, user.Mobile) {
 		err = api.ErrorMobileAlreadyExists("手机号已存在")
 		return
 	}
@@ -88,12 +88,11 @@ func (u *UserUsecase) Save(ctx context.Context, user *pb.UserRequest) (id string
 	}
 	_ = copier.Copy(&upo, &user)
 	upo.Password = cypher.BcryptMake(user.Password)
-	err = u.userRepo.Insert(ctx, upo)
-	if err != nil {
+	if err = u.userRepo.Insert(ctx, upo); err != nil {
 		return
 	}
-	id = upo.GetUid()
 	uid := upo.ID
+	id = cast.ToString(uid)
 	var urs []*model.UserRole
 	for _, ur := range user.UserRoles {
 		rid := cast.ToUint64(ur.RoleId)
@@ -114,7 +113,7 @@ func (u *UserUsecase) Save(ctx context.Context, user *pb.UserRequest) (id string
 		}
 	}
 
-	return upo.GetUid(), nil
+	return
 }
 
 func (u *UserUsecase) Edit(ctx context.Context, user *pb.UserRequest) (id string, err error) {
@@ -169,17 +168,17 @@ func (u *UserUsecase) Get(ctx context.Context, uid uint) (user User, err error) 
 		u.log.WithContext(ctx).Error(err)
 		return
 	}
-	return u.buildUserDto(ctx, upo)
+	return u.buildUserDo(ctx, upo)
 }
 
 func (u *UserUsecase) Search(ctx context.Context, limit, offset int, opt *SQLOption) (list []User, total int64, err error) {
-	users, total, err := u.userRepo.List(ctx, limit, offset, opt)
+	users, total, err := u.userRepo.SelectPage(ctx, limit, offset, opt)
 	if err != nil {
 		return
 	}
 	for _, upo := range users {
 		var user User
-		user, err = u.buildUserDto(ctx, upo)
+		user, err = u.buildUserDo(ctx, upo)
 		if err != nil {
 			return
 		}

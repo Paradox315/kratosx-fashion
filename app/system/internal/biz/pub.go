@@ -52,7 +52,7 @@ func (p *PublicUsecase) buildUserDto(ctx context.Context, upo *model.User) (user
 		rids = append(rids, uint(ur.RoleID))
 	}
 	for _, rid := range rids {
-		user.Roles = append(user.Roles, UserRole{ID: strconv.FormatUint(uint64(rid), 10)})
+		user.UserRoles = append(user.UserRoles, UserRole{ID: strconv.FormatUint(uint64(rid), 10)})
 	}
 	user.Id = cast.ToString(upo.ID)
 	user.CreatedAt = upo.CreatedAt.Format(timeFormat)
@@ -92,7 +92,7 @@ func (p *PublicUsecase) Register(ctx context.Context, regInfo RegisterInfo, c Ca
 	err = p.userRepo.Insert(ctx, &user)
 	p.log.WithContext(ctx).Error(err)
 	username = user.Username
-	uid = user.GetUid()
+	uid = cast.ToString(user.ID)
 	return
 }
 

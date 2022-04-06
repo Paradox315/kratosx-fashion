@@ -219,7 +219,7 @@
     "v1ListRoleReply": {
       "type": "object",
       "properties": {
-        "roles": {
+        "list": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1RoleReply"
@@ -274,6 +274,12 @@
           "items": {
             "$ref": "#/definitions/v1RoleResource"
           }
+        },
+        "roleRouters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Router"
+          }
         }
       }
     },
@@ -292,6 +298,26 @@
         "resourceType": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "v1Router": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }

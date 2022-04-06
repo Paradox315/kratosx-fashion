@@ -30,11 +30,12 @@ var _ = new(apistate.Resp[any])
 type ResourceXHTTPServer interface {
 	CreateMenu(context.Context, *MenuRequest) (*IDReply, error)
 	DeleteMenu(context.Context, *IDsRequest) (*EmptyReply, error)
-	EditRoutePolicy(context.Context, *RouterRequest) (*EmptyReply, error)
 	GetMenuTree(context.Context, *EmptyRequest) (*MenuReply, error)
 	GetMenuTreeByRole(context.Context, *IDRequest) (*MenuReply, error)
 	GetRouteTree(context.Context, *EmptyRequest) (*RouterReply, error)
 	GetRouteTreeByRole(context.Context, *IDRequest) (*RouterReply, error)
+	ListMenu(context.Context, *ListRequest) (*ListMenuReply, error)
+	ListRoute(context.Context, *ListRequest) (*ListRouterReply, error)
 	UpdateMenu(context.Context, *MenuRequest) (*IDReply, error)
 }
 
@@ -51,9 +52,10 @@ func RegisterResourceXHTTPServer(s *xhttp.Server, srv ResourceXHTTPServer) {
 		api.Delete("/menu/:ids", _Resource_DeleteMenu0_XHTTP_Handler(srv)).Name("Resource-DeleteMenu.0-XHTTP_Handler")
 		api.Get("/menu", _Resource_GetMenuTree0_XHTTP_Handler(srv)).Name("Resource-GetMenuTree.0-XHTTP_Handler")
 		api.Get("/menu/role/:id", _Resource_GetMenuTreeByRole0_XHTTP_Handler(srv)).Name("Resource-GetMenuTreeByRole.0-XHTTP_Handler")
+		api.Get("/menu/list/:page_num/:page_size", _Resource_ListMenu0_XHTTP_Handler(srv)).Name("Resource-ListMenu.0-XHTTP_Handler")
 		api.Get("/router", _Resource_GetRouteTree0_XHTTP_Handler(srv)).Name("Resource-GetRouteTree.0-XHTTP_Handler")
 		api.Get("/router/role/:id", _Resource_GetRouteTreeByRole0_XHTTP_Handler(srv)).Name("Resource-GetRouteTreeByRole.0-XHTTP_Handler")
-		api.Post("/router", _Resource_EditRoutePolicy0_XHTTP_Handler(srv)).Name("Resource-EditRoutePolicy.0-XHTTP_Handler")
+		api.Get("/router/list/:page_num/:page_size", _Resource_ListRoute0_XHTTP_Handler(srv)).Name("Resource-ListRoute.0-XHTTP_Handler")
 	})
 }
 
@@ -132,6 +134,21 @@ func _Resource_GetMenuTreeByRole0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.H
 	}
 }
 
+func _Resource_ListMenu0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var in ListRequest
+		if err := binding.BindParams(c, &in); err != nil {
+			return apistate.Error[any]().WithError(err).Send(c)
+		}
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.ListMenu(ctx, &in)
+		if err != nil {
+			return apistate.Error[any]().WithError(err).Send(c)
+		}
+		return apistate.Success[*ListMenuReply]().WithData(reply).Send(c)
+	}
+}
+
 func _Resource_GetRouteTree0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in EmptyRequest
@@ -162,17 +179,17 @@ func _Resource_GetRouteTreeByRole0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.
 	}
 }
 
-func _Resource_EditRoutePolicy0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
+func _Resource_ListRoute0_XHTTP_Handler(srv ResourceXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var in RouterRequest
-		if err := binding.BindBody(c, &in); err != nil {
+		var in ListRequest
+		if err := binding.BindParams(c, &in); err != nil {
 			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		ctx := transport.NewFiberContext(context.Background(), c)
-		reply, err := srv.EditRoutePolicy(ctx, &in)
+		reply, err := srv.ListRoute(ctx, &in)
 		if err != nil {
 			return apistate.Error[any]().WithError(err).Send(c)
 		}
-		return apistate.Success[*EmptyReply]().WithData(reply).Send(c)
+		return apistate.Success[*ListRouterReply]().WithData(reply).Send(c)
 	}
 }

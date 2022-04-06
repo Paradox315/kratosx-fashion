@@ -58,13 +58,13 @@ func (r RequireAuthStatus) String() string {
 
 type ResourceMenu struct {
 	gorm.Model
-	Name      string `gorm:"size:50;index;default:'';not null;comment:菜单名称"`  // 菜单名称
-	Path      string `gorm:"size:255;default:'';not null;comment:服务端路由路径URL"` // 访问路由组(后端)
-	Component string `gorm:"size:255;default:'';not null;comment:对应前端的路径"`    //对应前端的路径
-	ParentID  uint   `gorm:"index;default:0;not null;comment:父级内码"`           // 父级内码
+	Name      string `gorm:"size:50;index;default:'';not null;comment:菜单名称"`         // 菜单名称
+	Path      string `gorm:"size:255;default:'';not null;comment:服务端路由路径URL"`        // 访问路由组(后端)
+	Component string `gorm:"size:255;default:'';not null;comment:对应前端的路径"`           //对应前端的路径
+	ParentID  uint   `json:"parent_id" gorm:"index;default:0;not null;comment:父级内码"` // 父级内码
 	MenuMeta  `gorm:"comment:菜单附加属性"`
 	Hidden    HiddenStatus    `gorm:"default:0;type:tinyint(1);not null;comment:是否显示"`       // 是否显示
-	KeepAlive KeepAliveStatus `gorm:"default:0;type:tinyint(1);not null;comment:是否缓存"`       //是否缓存
+	Keepalive KeepAliveStatus `gorm:"default:0;type:tinyint(1);not null;comment:是否缓存"`       //是否缓存
 	Actions   string          `gorm:"size:1024;default:'';not null;comment:前端动作按钮列表，json存储"` //动作按钮
 }
 

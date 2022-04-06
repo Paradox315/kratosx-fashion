@@ -57,7 +57,7 @@ type User struct {
 	Status    uint32     `json:"status"`
 	CreatedAt string     `json:"created_at"`
 	UpdatedAt string     `json:"updated_at"`
-	Roles     []UserRole `json:"roles"`
+	UserRoles []UserRole `json:"user_roles"`
 }
 
 func (u User) GetUid() string {
@@ -69,7 +69,7 @@ func (u User) GetUsername() string {
 }
 
 func (u User) GetRoleIDs() (rids []string) {
-	for _, role := range u.Roles {
+	for _, role := range u.UserRoles {
 		rids = append(rids, role.ID)
 	}
 	return
@@ -95,19 +95,11 @@ type SQLOption struct {
 	Args  []interface{} `json:"args"`
 }
 
-type Router struct {
-	Method string   `json:"method"`
-	Path   string   `json:"path"`
-	Name   string   `json:"name"`
-	Params []string `json:"params"`
-	Group  string   `json:"group"`
-}
-
 type RouterGroup struct {
-	Path    string   `json:"path"`
-	Name    string   `json:"name"`
-	Methods []string `json:"methods"`
-	Router  []Router `json:"router"`
+	Path    string         `json:"path"`
+	Name    string         `json:"name"`
+	Methods string         `json:"methods"`
+	Router  []model.Router `json:"router"`
 }
 
 type Menu struct {

@@ -1,9 +1,9 @@
 package server
 
 import (
-	"github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
+	"context"
+	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/contrib/fiberzap"
-	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"kratosx-fashion/app/system/internal/conf"
@@ -28,12 +28,13 @@ func NewHTTPServer(c *conf.Server,
 	userSrv *service.UserService,
 	roleSrv *service.RoleService,
 	resourceSrv *service.ResourceService,
+	rdb *redis.Client,
 	logger log.Logger) *xhttp.Server {
 	var opts = []xhttp.ServerOption{
+		xhttp.Logger(log.With(logger, "server", "xhttp")),
 		xhttp.Middleware(
 			recover.New(),
 			cors.New(),
-			cache.New(),
 			compress.New(),
 			fiberzap.New(fiberzap.Config{
 				Logger: logger.(*logutil.Logger).GetZap(),
@@ -54,18 +55,25 @@ func NewHTTPServer(c *conf.Server,
 		opts = append(opts, xhttp.Timeout(c.Http.Timeout.AsDuration()))
 	}
 	srv := xhttp.NewServer(opts...)
-	srv.Route(func(r fiber.Router) {
-		r.Get("/", func(c *fiber.Ctx) error {
-			return apistate.Success[[][]*fiber.Route]().WithData(srv.Routers()).Send(c)
-		})
+	srv.OnStart(func() error {
+		routers := srv.Routers()
+		bytes, err := encoding.GetCodec("json").Marshal(routers)
+		if err != nil {
+			return err
+		}
+		log.NewHelper(logger).Info("persist instance routers")
+		return rdb.Set(context.Background(), "system:routers", string(bytes), 0).Err()
 	})
-	log.NewHelper(logger).Infof("middleware %+v init", jwtSrv.Name(), casbinSrv.Name())
+	srv.OnStop(func() error {
+		log.NewHelper(logger).Info("delete instance routers")
+		return rdb.Del(context.Background(), "system:routers").Err()
+	})
+	log.NewHelper(logger).Info("xhttp server middleware init", jwtSrv.Name(), casbinSrv.Name())
 	{
 		v1.RegisterPubXHTTPServer(srv, publicSrv)
 		v1.RegisterUserXHTTPServer(srv, userSrv)
 		v1.RegisterRoleXHTTPServer(srv, roleSrv)
 		v1.RegisterResourceXHTTPServer(srv, resourceSrv)
 	}
-
 	return srv
 }

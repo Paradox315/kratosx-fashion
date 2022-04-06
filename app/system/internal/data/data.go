@@ -56,7 +56,7 @@ type Data struct {
 }
 
 // NewData .
-func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client, ipdb *iploc.DB) (*Data, func(), error) {
+func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client) (*Data, func(), error) {
 	cleanup := func() {
 		if err := rdb.Close(); err != nil {
 			log.NewHelper(logger).Fatal("redis close error", zap.Error(err))

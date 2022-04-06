@@ -58,5 +58,5 @@ func (s *RoleService) GetRole(ctx context.Context, req *pb.IDRequest) (*pb.RoleR
 }
 func (s *RoleService) ListRole(ctx context.Context, req *pb.ListRequest) (*pb.ListRoleReply, error) {
 	limit, offset := pagination.Parse(req.PageNum, req.PageSize)
-	return s.uc.List(ctx, limit, offset)
+	return s.uc.Page(ctx, limit, offset)
 }

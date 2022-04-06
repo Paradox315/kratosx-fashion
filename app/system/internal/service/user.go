@@ -104,7 +104,7 @@ func (s *UserService) ListUser(ctx context.Context, req *pb.ListSearchRequest) (
 	for _, user := range users {
 		uReply := &pb.UserReply{}
 		_ = copier.Copy(&uReply, &user)
-		list.Users = append(list.Users, uReply)
+		list.List = append(list.List, uReply)
 	}
 	return
 }

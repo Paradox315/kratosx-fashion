@@ -46,6 +46,39 @@ func (r *ResourceMenuRepo) SelectByIDs(ctx context.Context, ids []uint) ([]*mode
 	return menus, nil
 }
 
+func (r *ResourceMenuRepo) SelectAll(ctx context.Context) ([]*model.ResourceMenu, error) {
+	rr := r.baseRepo.ResourceMenu
+	menus, err := rr.WithContext(ctx).Find()
+	if err != nil {
+		err = errors.Wrap(err, "resource_menu.repo.SelectAll")
+		r.log.WithContext(ctx).Error(err)
+		return nil, err
+	}
+	return menus, nil
+}
+
+func (r *ResourceMenuRepo) SelectPage(ctx context.Context, limit, offset int) (menus []*model.ResourceMenu, total int64, err error) {
+	rr := r.baseRepo.ResourceMenu
+	menus, total, err = rr.WithContext(ctx).Where(rr.ParentID.Eq(0)).FindByPage(offset, limit)
+	if err != nil {
+		err = errors.Wrap(err, "resource_menu.repo.SelectPage")
+		r.log.WithContext(ctx).Error(err)
+		return
+	}
+	return
+}
+
+func (r *ResourceMenuRepo) SelectPageByIDs(ctx context.Context, ids []uint, limit, offset int) (menus []*model.ResourceMenu, total int64, err error) {
+	rr := r.baseRepo.ResourceMenu
+	menus, total, err = rr.WithContext(ctx).Where(rr.ID.In(ids...), rr.ParentID.Eq(0)).FindByPage(offset, limit)
+	if err != nil {
+		err = errors.Wrap(err, "resource_menu.repo.SelectPageByIDs")
+		r.log.WithContext(ctx).Error(err)
+		return
+	}
+	return
+}
+
 func (r *ResourceMenuRepo) Insert(ctx context.Context, menu ...*model.ResourceMenu) error {
 	rr := r.baseRepo.ResourceMenu
 	if err := rr.WithContext(ctx).Create(menu...); err != nil {
@@ -73,16 +106,10 @@ func (r *ResourceMenuRepo) DeleteByIDs(ctx context.Context, ids []uint) error {
 		r.log.WithContext(ctx).Error(err)
 		return err
 	}
-	return nil
-}
-
-func (r *ResourceMenuRepo) SelectAll(ctx context.Context) ([]*model.ResourceMenu, error) {
-	rr := r.baseRepo.ResourceMenu
-	menus, err := rr.WithContext(ctx).Find()
-	if err != nil {
-		err = errors.Wrap(err, "resource_menu.repo.SelectAll")
+	if _, err := rr.WithContext(ctx).Where(rr.ParentID.In(ids...)).Delete(); err != nil {
+		err = errors.Wrap(err, "resource_menu.repo.DeleteByIDs")
 		r.log.WithContext(ctx).Error(err)
-		return nil, err
+		return err
 	}
-	return menus, nil
+	return nil
 }

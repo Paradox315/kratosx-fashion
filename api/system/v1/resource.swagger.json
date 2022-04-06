@@ -98,6 +98,44 @@
         ]
       }
     },
+    "/menu/list/{pageNum}/{pageSize}": {
+      "get": {
+        "operationId": "Resource_ListMenu",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListMenuReply"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pageNum",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "pageSize",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Resource"
+        ]
+      }
+    },
     "/menu/role/{id}": {
       "get": {
         "operationId": "Resource_GetMenuTreeByRole",
@@ -178,14 +216,16 @@
         "tags": [
           "Resource"
         ]
-      },
-      "post": {
-        "operationId": "Resource_EditRoutePolicy",
+      }
+    },
+    "/router/list/{pageNum}/{pageSize}": {
+      "get": {
+        "operationId": "Resource_ListRoute",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1EmptyReply"
+              "$ref": "#/definitions/v1ListRouterReply"
             }
           },
           "default": {
@@ -197,12 +237,18 @@
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
+            "name": "pageNum",
+            "in": "path",
             "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1RoutePolicyRequest"
-            }
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "pageSize",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -277,6 +323,36 @@
       "properties": {
         "id": {
           "type": "string"
+        }
+      }
+    },
+    "v1ListMenuReply": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Menu"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "v1ListRouterReply": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1RouterGroup"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -408,20 +484,6 @@
         }
       }
     },
-    "v1RoutePolicyRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "routers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1RouterGroup"
-          }
-        }
-      }
-    },
     "v1Router": {
       "type": "object",
       "properties": {
@@ -433,9 +495,6 @@
         },
         "name": {
           "type": "string"
-        },
-        "owned": {
-          "type": "boolean"
         },
         "params": {
           "type": "array",
@@ -454,14 +513,8 @@
         "name": {
           "type": "string"
         },
-        "owned": {
-          "type": "boolean"
-        },
         "methods": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "type": "string"
         },
         "router": {
           "type": "array",

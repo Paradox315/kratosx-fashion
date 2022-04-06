@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cast"
 	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/biz"
-	"kratosx-fashion/pkg/ctxutil"
+	"kratosx-fashion/pkg/pagination"
 	"kratosx-fashion/pkg/xcast"
 	"strings"
 )
@@ -52,15 +52,14 @@ func (s *ResourceService) DeleteMenu(ctx context.Context, req *pb.IDsRequest) (*
 	return &pb.EmptyReply{}, nil
 }
 func (s *ResourceService) GetMenuTree(ctx context.Context, req *pb.EmptyRequest) (*pb.MenuReply, error) {
-	roleIDs := ctxutil.GetRoleIDs(ctx)
-	tree, err := s.uc.RoleMenuTree(ctx, xcast.ToUintSlice(roleIDs)...)
+	tree, err := s.uc.MenuTree(ctx)
 	if err != nil {
 		return nil, err
 	}
 	resp := &pb.MenuReply{}
 	for _, menu := range tree {
-		var menuResp *pb.Menu
-		_ = copier.Copy(menuResp, &menu)
+		menuResp := &pb.Menu{}
+		_ = copier.Copy(&menuResp, &menu)
 		resp.Tree = append(resp.Tree, menuResp)
 	}
 	return resp, nil
@@ -72,11 +71,11 @@ func (s *ResourceService) GetMenuTreeByRole(ctx context.Context, req *pb.IDReque
 	}
 	resp := &pb.MenuReply{}
 	for _, menu := range tree {
-		var menuResp *pb.Menu
-		_ = copier.Copy(menuResp, &menu)
+		menuResp := &pb.Menu{}
+		_ = copier.Copy(&menuResp, &menu)
 		resp.Tree = append(resp.Tree, menuResp)
 	}
-	return &pb.MenuReply{}, nil
+	return resp, nil
 }
 func (s *ResourceService) GetRouteTree(ctx context.Context, req *pb.EmptyRequest) (*pb.RouterReply, error) {
 	tree, err := s.uc.RouterTree(ctx)
@@ -98,22 +97,39 @@ func (s *ResourceService) GetRouteTreeByRole(ctx context.Context, req *pb.IDRequ
 	}
 	resp := &pb.RouterReply{}
 	for _, route := range tree {
-		var routeResp *pb.RouterGroup
-		_ = copier.Copy(routeResp, &route)
+		routeResp := &pb.RouterGroup{}
+		_ = copier.Copy(&routeResp, &route)
 		resp.Routers = append(resp.Routers, routeResp)
 	}
 	return resp, nil
 }
-func (s *ResourceService) EditRoutePolicy(ctx context.Context, req *pb.RouterRequest) (*pb.EmptyReply, error) {
-	var routers []biz.RouterGroup
-	for _, r := range req.Routers {
-		var router biz.RouterGroup
-		_ = copier.Copy(&router, r)
-		routers = append(routers, router)
-	}
-
-	if err := s.uc.EditRouters(ctx, req.Id, routers); err != nil {
+func (s *ResourceService) ListMenu(ctx context.Context, req *pb.ListRequest) (*pb.ListMenuReply, error) {
+	limit, offset := pagination.Parse(req.PageNum, req.PageSize)
+	menus, total, err := s.uc.MenuPage(ctx, limit, offset)
+	if err != nil {
 		return nil, err
 	}
-	return &pb.EmptyReply{}, nil
+	resp := &pb.ListMenuReply{}
+	resp.Total = uint32(total)
+	for _, menu := range menus {
+		menuResp := &pb.Menu{}
+		_ = copier.Copy(&menuResp, &menu)
+		resp.List = append(resp.List, menuResp)
+	}
+	return resp, nil
+}
+func (s *ResourceService) ListRoute(ctx context.Context, req *pb.ListRequest) (*pb.ListRouterReply, error) {
+	limit, offset := pagination.Parse(req.PageNum, req.PageSize)
+	routes, total, err := s.uc.RouterPage(ctx, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListRouterReply{}
+	resp.Total = total
+	for _, route := range routes {
+		routeResp := &pb.RouterGroup{}
+		_ = copier.Copy(&routeResp, &route)
+		resp.List = append(resp.List, routeResp)
+	}
+	return resp, nil
 }

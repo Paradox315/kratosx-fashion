@@ -15,15 +15,17 @@ type RoleUsecase struct {
 	roleRepo         RoleRepo
 	roleUserRepo     UserRoleRepo
 	roleResourceRepo RoleResourceRepo
+	roleRouterRepo   ResourceRouterRepo
 	tx               Transaction
 	log              *log.Helper
 }
 
-func NewRoleUsecase(roleRepo RoleRepo, roleUserRepo UserRoleRepo, roleResourceRepo RoleResourceRepo, tx Transaction, logger log.Logger) *RoleUsecase {
+func NewRoleUsecase(roleRepo RoleRepo, roleUserRepo UserRoleRepo, roleRouterRepo ResourceRouterRepo, roleResourceRepo RoleResourceRepo, tx Transaction, logger log.Logger) *RoleUsecase {
 	return &RoleUsecase{
 		roleRepo:         roleRepo,
 		roleUserRepo:     roleUserRepo,
 		roleResourceRepo: roleResourceRepo,
+		roleRouterRepo:   roleRouterRepo,
 		tx:               tx,
 		log:              log.NewHelper(log.With(logger, "biz", "role")),
 	}
@@ -31,15 +33,15 @@ func NewRoleUsecase(roleRepo RoleRepo, roleUserRepo UserRoleRepo, roleResourceRe
 
 func (r *RoleUsecase) buildRoleReply(ctx context.Context, rpo *model.Role) (role *pb.RoleReply, err error) {
 	role = &pb.RoleReply{}
-	if err = copier.Copy(&role, &rpo); err != nil {
-		return
-	}
-	rrs, err := r.roleResourceRepo.SelectByRoleID(ctx, uint64(rpo.ID))
-	for _, rr := range rrs {
+	_ = copier.Copy(&role, &rpo)
+	var (
+		rMenus []*model.RoleResource
+	)
+	rMenus, err = r.roleResourceRepo.SelectByRoleID(ctx, uint64(rpo.ID))
+	for _, rm := range rMenus {
 		role.RoleResources = append(role.RoleResources, &pb.RoleResource{
-			RoleId:       strconv.FormatUint(rr.RoleID, 10),
-			ResourceId:   strconv.FormatUint(rr.ResourceID, 10),
-			ResourceType: uint32(rr.Type),
+			ResourceId:   strconv.FormatUint(rm.ResourceID, 10),
+			ResourceType: uint32(rm.Type),
 		})
 	}
 	role.Id = cast.ToString(rpo.ID)
@@ -48,47 +50,58 @@ func (r *RoleUsecase) buildRoleReply(ctx context.Context, rpo *model.Role) (role
 	return
 }
 
-func (r *RoleUsecase) Save(ctx context.Context, role *pb.RoleRequest) (id string, err error) {
-	rpo := &model.Role{}
-	if err = copier.Copy(&rpo, &role); err != nil {
-		return
-	}
-	var rrs []*model.RoleResource
-	for _, rr := range role.RoleResources {
-		rrs = append(rrs, &model.RoleResource{
-			RoleID:     cast.ToUint64(rr.RoleId),
-			ResourceID: cast.ToUint64(rr.ResourceId),
-			Type:       model.ResourceType(rr.ResourceType),
+func (r *RoleUsecase) buildResources(ctx context.Context, role *pb.RoleRequest) (menus []*model.RoleResource, routes []model.ResourceRouter) {
+	for _, rm := range role.RoleResources {
+		menus = append(menus, &model.RoleResource{
+			RoleID:     cast.ToUint64(role.Id),
+			ResourceID: cast.ToUint64(rm.ResourceId),
+			Type:       model.ResourceType(rm.ResourceType),
 		})
 	}
-	err = r.roleRepo.Insert(ctx, rpo)
-	if err != nil {
+	for _, rr := range role.RoleRouters {
+		routes = append(routes, model.ResourceRouter{
+			RoleID: role.Id,
+			Path:   rr.Path,
+			Method: rr.Method,
+		})
+	}
+	return
+}
+
+func (r *RoleUsecase) Save(ctx context.Context, role *pb.RoleRequest) (id string, err error) {
+	rpo := &model.Role{}
+	_ = copier.Copy(&rpo, &role)
+	if err = r.roleRepo.Insert(ctx, rpo); err != nil {
 		return
 	}
 	id = strconv.Itoa(int(rpo.ID))
-	if len(rrs) > 0 {
-		err = r.roleResourceRepo.Insert(ctx, rrs...)
+	role.Id = id
+	rMenus, rRoutes := r.buildResources(ctx, role)
+	if len(rMenus) > 0 {
+		if err = r.roleResourceRepo.Insert(ctx, rMenus...); err != nil {
+			return
+		}
+	}
+	if len(rRoutes) > 0 {
+		if err = r.roleRouterRepo.Update(ctx, rRoutes); err != nil {
+			return
+		}
 	}
 	return
 }
 
 func (r *RoleUsecase) Edit(ctx context.Context, role *pb.RoleRequest) (id string, err error) {
 	rpo := &model.Role{}
-	if err = copier.Copy(&rpo, &role); err != nil {
-		return
-	}
+	_ = copier.Copy(&rpo, &role)
 	rpo.ID = cast.ToUint(role.Id)
-	var rrs []*model.RoleResource
-	for _, rr := range role.RoleResources {
-		rrs = append(rrs, &model.RoleResource{
-			RoleID:     cast.ToUint64(rr.RoleId),
-			ResourceID: cast.ToUint64(rr.ResourceId),
-			Type:       model.ResourceType(rr.ResourceType),
-		})
+	rMenus, rRoutes := r.buildResources(ctx, role)
+	if len(rMenus) > 0 {
+		if err = r.roleResourceRepo.UpdateByRoleID(ctx, uint64(rpo.ID), rMenus); err != nil {
+			return
+		}
 	}
-	if len(rrs) > 0 {
-		err = r.roleResourceRepo.UpdateByRoleID(ctx, uint64(rpo.ID), rrs)
-		if err != nil {
+	if len(rRoutes) > 0 {
+		if err = r.roleRouterRepo.Update(ctx, rRoutes); err != nil {
 			return
 		}
 	}
@@ -99,12 +112,13 @@ func (r *RoleUsecase) Edit(ctx context.Context, role *pb.RoleRequest) (id string
 
 func (r *RoleUsecase) Remove(ctx context.Context, ids []uint) (err error) {
 	return r.tx.ExecTx(ctx, func(ctx context.Context) error {
-		err = r.roleRepo.DeleteByIDs(ctx, ids)
-		if err != nil {
+		if err = r.roleRepo.DeleteByIDs(ctx, ids); err != nil {
 			return err
 		}
-		err = r.roleResourceRepo.DeleteByRoleIDs(ctx, xcast.ToUint64Slice(ids))
-		if err != nil {
+		if err = r.roleResourceRepo.DeleteByRoleIDs(ctx, xcast.ToUint64Slice(ids)); err != nil {
+			return err
+		}
+		if err = r.roleRouterRepo.ClearByRoleIDs(ctx, xcast.ToStringSlice(ids)); err != nil {
 			return err
 		}
 		return r.roleUserRepo.DeleteByRoleIDs(ctx, xcast.ToUint64Slice(ids))
@@ -120,9 +134,9 @@ func (r *RoleUsecase) Get(ctx context.Context, id uint) (role *pb.RoleReply, err
 	return r.buildRoleReply(ctx, rpo)
 }
 
-func (r *RoleUsecase) List(ctx context.Context, limit, offset int) (list *pb.ListRoleReply, err error) {
+func (r *RoleUsecase) Page(ctx context.Context, limit, offset int) (list *pb.ListRoleReply, err error) {
 	list = &pb.ListRoleReply{}
-	roles, total, err := r.roleRepo.List(ctx, limit, offset)
+	roles, total, err := r.roleRepo.SelectPage(ctx, limit, offset)
 	if err != nil {
 		return
 	}
@@ -132,7 +146,7 @@ func (r *RoleUsecase) List(ctx context.Context, limit, offset int) (list *pb.Lis
 		if err != nil {
 			return
 		}
-		list.Roles = append(list.Roles, rr)
+		list.List = append(list.List, rr)
 	}
 	list.Total = uint32(total)
 	return

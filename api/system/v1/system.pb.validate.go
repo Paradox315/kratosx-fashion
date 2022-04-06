@@ -1611,6 +1611,40 @@ func (m *RoleRequest) validate(all bool) error {
 
 	}
 
+	for idx, item := range m.GetRoleRouters() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RoleRequestValidationError{
+						field:  fmt.Sprintf("RoleRouters[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RoleRequestValidationError{
+						field:  fmt.Sprintf("RoleRouters[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return RoleRequestValidationError{
+					field:  fmt.Sprintf("RoleRouters[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return RoleRequestMultiError(errors)
 	}
@@ -2267,144 +2301,6 @@ var _ interface {
 	ErrorName() string
 } = CaptchaReplyValidationError{}
 
-// Validate checks the field values on RoutePolicyRequest with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *RoutePolicyRequest) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on RoutePolicyRequest with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// RoutePolicyRequestMultiError, or nil if none found.
-func (m *RoutePolicyRequest) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *RoutePolicyRequest) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for Id
-
-	for idx, item := range m.GetRouters() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, RoutePolicyRequestValidationError{
-						field:  fmt.Sprintf("Routers[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, RoutePolicyRequestValidationError{
-						field:  fmt.Sprintf("Routers[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return RoutePolicyRequestValidationError{
-					field:  fmt.Sprintf("Routers[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if len(errors) > 0 {
-		return RoutePolicyRequestMultiError(errors)
-	}
-
-	return nil
-}
-
-// RoutePolicyRequestMultiError is an error wrapping multiple validation errors
-// returned by RoutePolicyRequest.ValidateAll() if the designated constraints
-// aren't met.
-type RoutePolicyRequestMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m RoutePolicyRequestMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m RoutePolicyRequestMultiError) AllErrors() []error { return m }
-
-// RoutePolicyRequestValidationError is the validation error returned by
-// RoutePolicyRequest.Validate if the designated constraints aren't met.
-type RoutePolicyRequestValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e RoutePolicyRequestValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e RoutePolicyRequestValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e RoutePolicyRequestValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e RoutePolicyRequestValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e RoutePolicyRequestValidationError) ErrorName() string {
-	return "RoutePolicyRequestValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e RoutePolicyRequestValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sRoutePolicyRequest.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = RoutePolicyRequestValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = RoutePolicyRequestValidationError{}
-
 // Validate checks the field values on UserReply with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -2580,7 +2476,7 @@ func (m *ListUserReply) validate(all bool) error {
 
 	var errors []error
 
-	for idx, item := range m.GetUsers() {
+	for idx, item := range m.GetList() {
 		_, _ = idx, item
 
 		if all {
@@ -2588,7 +2484,7 @@ func (m *ListUserReply) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, ListUserReplyValidationError{
-						field:  fmt.Sprintf("Users[%v]", idx),
+						field:  fmt.Sprintf("List[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -2596,7 +2492,7 @@ func (m *ListUserReply) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, ListUserReplyValidationError{
-						field:  fmt.Sprintf("Users[%v]", idx),
+						field:  fmt.Sprintf("List[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -2605,7 +2501,7 @@ func (m *ListUserReply) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ListUserReplyValidationError{
-					field:  fmt.Sprintf("Users[%v]", idx),
+					field:  fmt.Sprintf("List[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -2859,7 +2755,7 @@ func (m *ListRoleReply) validate(all bool) error {
 
 	var errors []error
 
-	for idx, item := range m.GetRoles() {
+	for idx, item := range m.GetList() {
 		_, _ = idx, item
 
 		if all {
@@ -2867,7 +2763,7 @@ func (m *ListRoleReply) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, ListRoleReplyValidationError{
-						field:  fmt.Sprintf("Roles[%v]", idx),
+						field:  fmt.Sprintf("List[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -2875,7 +2771,7 @@ func (m *ListRoleReply) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, ListRoleReplyValidationError{
-						field:  fmt.Sprintf("Roles[%v]", idx),
+						field:  fmt.Sprintf("List[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -2884,7 +2780,7 @@ func (m *ListRoleReply) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ListRoleReplyValidationError{
-					field:  fmt.Sprintf("Roles[%v]", idx),
+					field:  fmt.Sprintf("List[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -3105,6 +3001,278 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = MenuReplyValidationError{}
+
+// Validate checks the field values on ListMenuReply with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ListMenuReply) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListMenuReply with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ListMenuReplyMultiError, or
+// nil if none found.
+func (m *ListMenuReply) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListMenuReply) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetList() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListMenuReplyValidationError{
+						field:  fmt.Sprintf("List[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListMenuReplyValidationError{
+						field:  fmt.Sprintf("List[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListMenuReplyValidationError{
+					field:  fmt.Sprintf("List[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Total
+
+	if len(errors) > 0 {
+		return ListMenuReplyMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListMenuReplyMultiError is an error wrapping multiple validation errors
+// returned by ListMenuReply.ValidateAll() if the designated constraints
+// aren't met.
+type ListMenuReplyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListMenuReplyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListMenuReplyMultiError) AllErrors() []error { return m }
+
+// ListMenuReplyValidationError is the validation error returned by
+// ListMenuReply.Validate if the designated constraints aren't met.
+type ListMenuReplyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListMenuReplyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListMenuReplyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListMenuReplyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListMenuReplyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListMenuReplyValidationError) ErrorName() string { return "ListMenuReplyValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ListMenuReplyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListMenuReply.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListMenuReplyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListMenuReplyValidationError{}
+
+// Validate checks the field values on ListRouterReply with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ListRouterReply) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListRouterReply with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListRouterReplyMultiError, or nil if none found.
+func (m *ListRouterReply) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListRouterReply) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetList() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListRouterReplyValidationError{
+						field:  fmt.Sprintf("List[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListRouterReplyValidationError{
+						field:  fmt.Sprintf("List[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListRouterReplyValidationError{
+					field:  fmt.Sprintf("List[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Total
+
+	if len(errors) > 0 {
+		return ListRouterReplyMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListRouterReplyMultiError is an error wrapping multiple validation errors
+// returned by ListRouterReply.ValidateAll() if the designated constraints
+// aren't met.
+type ListRouterReplyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListRouterReplyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListRouterReplyMultiError) AllErrors() []error { return m }
+
+// ListRouterReplyValidationError is the validation error returned by
+// ListRouterReply.Validate if the designated constraints aren't met.
+type ListRouterReplyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListRouterReplyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListRouterReplyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListRouterReplyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListRouterReplyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListRouterReplyValidationError) ErrorName() string { return "ListRouterReplyValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ListRouterReplyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListRouterReply.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListRouterReplyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListRouterReplyValidationError{}
 
 // Validate checks the field values on RegisterReply with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -3598,10 +3766,6 @@ func (m *UserRoleID) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Id
-
-	// no validation rules for UserId
-
 	// no validation rules for RoleId
 
 	if len(errors) > 0 {
@@ -3807,10 +3971,6 @@ func (m *RoleResource) validate(all bool) error {
 	}
 
 	var errors []error
-
-	// no validation rules for Id
-
-	// no validation rules for RoleId
 
 	// no validation rules for ResourceId
 
@@ -4585,8 +4745,6 @@ func (m *Router) validate(all bool) error {
 
 	// no validation rules for Name
 
-	// no validation rules for Owned
-
 	if len(errors) > 0 {
 		return RouterMultiError(errors)
 	}
@@ -4690,7 +4848,7 @@ func (m *RouterGroup) validate(all bool) error {
 
 	// no validation rules for Name
 
-	// no validation rules for Owned
+	// no validation rules for Methods
 
 	for idx, item := range m.GetRouter() {
 		_, _ = idx, item

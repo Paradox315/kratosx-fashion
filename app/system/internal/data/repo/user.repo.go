@@ -80,10 +80,10 @@ func (u *userRepo) SelectPasswordByEmail(ctx context.Context, email string) (*mo
 	return user, nil
 }
 
-func (u *userRepo) List(ctx context.Context, limit, offset int, opt *biz.SQLOption) (users []*model.User, total int64, err error) {
+func (u *userRepo) SelectPage(ctx context.Context, limit, offset int, opt *biz.SQLOption) (users []*model.User, total int64, err error) {
 	tx := u.dao.DB.Model(&model.User{})
 	if err = tx.Count(&total).Error; err != nil {
-		err = errors.Wrap(err, "userRepo.List")
+		err = errors.Wrap(err, "userRepo.SelectPage")
 		u.log.WithContext(ctx).Error(err)
 		return
 	}
@@ -95,7 +95,7 @@ func (u *userRepo) List(ctx context.Context, limit, offset int, opt *biz.SQLOpti
 	}
 	err = tx.WithContext(ctx).Where("status = ?", model.UserStatusNormal).Limit(limit).Offset(offset).Find(&users).Error
 	if err != nil {
-		err = errors.Wrap(err, "userRepo.List")
+		err = errors.Wrap(err, "userRepo.SelectPage")
 		u.log.WithContext(ctx).Error(err)
 		return
 	}

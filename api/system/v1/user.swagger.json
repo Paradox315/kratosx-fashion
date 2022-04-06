@@ -307,7 +307,7 @@
     "v1ListUserReply": {
       "type": "object",
       "properties": {
-        "users": {
+        "list": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1UserReply"

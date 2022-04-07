@@ -33,9 +33,7 @@ func NewUserUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, roleRepo RoleR
 	}
 }
 func (u *UserUsecase) buildUserDo(ctx context.Context, upo *model.User) (user User, err error) {
-	if err = copier.Copy(&user, &upo); err != nil {
-		return
-	}
+	_ = copier.Copy(&user, &upo)
 	urs, err := u.userRoleRepo.SelectAllByUserID(ctx, uint64(upo.ID))
 	if err != nil {
 		err = errors.Wrap(err, "userUsecase.buildUserDto.SelectAllByUserID")
@@ -66,7 +64,7 @@ func (u *UserUsecase) buildUserDo(ctx context.Context, upo *model.User) (user Us
 	return
 }
 func (u *UserUsecase) validateUser(ctx context.Context, user *pb.UserRequest) (err error) {
-	if len(user.Username) != 0 && u.userRepo.ExistByUserName(ctx, user.Username) {
+	if len(user.Username) != 0 && u.userRepo.ExistByUsername(ctx, user.Username) {
 		err = api.ErrorUserAlreadyExists("用户名已存在")
 		return
 	}
@@ -117,6 +115,7 @@ func (u *UserUsecase) Save(ctx context.Context, user *pb.UserRequest) (id string
 }
 
 func (u *UserUsecase) Edit(ctx context.Context, user *pb.UserRequest) (id string, err error) {
+	id = user.Id
 	uid := cast.ToUint64(user.Id)
 	var urs []*model.UserRole
 	for _, ur := range user.UserRoles {
@@ -129,22 +128,24 @@ func (u *UserUsecase) Edit(ctx context.Context, user *pb.UserRequest) (id string
 			RoleID: rid,
 		})
 	}
-	if len(urs) > 0 {
-		err = u.userRoleRepo.UpdateByUserID(ctx, uid, urs)
-		if err != nil {
-			err = errors.Wrap(err, "useUsecase.Edit.UpdateByUserID")
-			u.log.WithContext(ctx).Error(err)
-			return
-		}
-	}
 	upo := &model.User{}
 	if err = u.validateUser(ctx, user); err != nil {
 		return
 	}
 	_ = copier.Copy(&upo, &user)
 	upo.ID = uint(uid)
-	err = u.userRepo.Update(ctx, upo)
-	id = user.Id
+	upo.Password = ""
+	err = u.tx.ExecTx(ctx, func(ctx context.Context) error {
+		if len(urs) > 0 {
+			err = u.userRoleRepo.UpdateByUserID(ctx, uid, urs)
+			if err != nil {
+				err = errors.Wrap(err, "useUsecase.Edit.UpdateByUserID")
+				u.log.WithContext(ctx).Error(err)
+				return err
+			}
+		}
+		return u.userRepo.Update(ctx, upo)
+	})
 	return
 }
 
@@ -153,7 +154,7 @@ func (u *UserUsecase) Remove(ctx context.Context, uids []uint) (err error) {
 		return
 	}
 	return u.tx.ExecTx(ctx, func(ctx context.Context) error {
-		err = u.userRoleRepo.DeleteByUserIDs(ctx, xcast.ToUint64Slice[uint](uids))
+		err = u.userRoleRepo.DeleteByUserIDs(ctx, xcast.ToUint64Slice(uids))
 		if err != nil {
 			return err
 		}
@@ -192,7 +193,7 @@ func (u *UserUsecase) EditStatus(ctx context.Context, uid uint, status model.Use
 }
 
 func (u *UserUsecase) EditPassword(ctx context.Context, oldpwd, newpwd string, uid uint) error {
-	user, err := u.userRepo.Select(ctx, uid)
+	user, err := u.userRepo.SelectPasswordByUID(ctx, uid)
 	if err != nil {
 		err = errors.Wrap(err, "userUsecase.EditPassword.Select")
 		u.log.WithContext(ctx).Error(err)

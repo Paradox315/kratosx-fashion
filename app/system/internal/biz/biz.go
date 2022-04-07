@@ -29,6 +29,7 @@ type Transaction interface {
 type UserRepo interface {
 	Select(context.Context, uint) (*model.User, error)
 	SelectByUsername(context.Context, string) (*model.User, error)
+	SelectPasswordByUID(context.Context, uint) (*model.User, error)
 	SelectPasswordByName(context.Context, string) (*model.User, error)
 	SelectPasswordByMobile(context.Context, string) (*model.User, error)
 	SelectPasswordByEmail(context.Context, string) (*model.User, error)
@@ -37,7 +38,7 @@ type UserRepo interface {
 	Update(context.Context, *model.User) error
 	UpdateStatus(context.Context, uint, model.UserStatus) error
 	DeleteByIDs(context.Context, []uint) error
-	ExistByUserName(context.Context, string) bool
+	ExistByUsername(context.Context, string) bool
 	ExistByEmail(context.Context, string) bool
 	ExistByMobile(context.Context, string) bool
 }

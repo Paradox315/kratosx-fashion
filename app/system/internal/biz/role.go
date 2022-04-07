@@ -3,7 +3,7 @@ package biz
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/data/model"
@@ -32,11 +32,14 @@ func NewRoleUsecase(roleRepo RoleRepo, roleUserRepo UserRoleRepo, roleRouterRepo
 }
 
 func (r *RoleUsecase) buildRoleReply(ctx context.Context, rpo *model.Role) (role *pb.RoleReply, err error) {
-	role = &pb.RoleReply{}
-	_ = copier.Copy(&role, &rpo)
-	var (
-		rMenus []*model.RoleResource
-	)
+	role = &pb.RoleReply{
+		Id:          cast.ToString(rpo.ID),
+		Name:        rpo.Name,
+		Description: rpo.Description,
+		CreatedAt:   rpo.CreatedAt.Format(timeFormat),
+		UpdatedAt:   rpo.UpdatedAt.Format(timeFormat),
+	}
+	var rMenus []*model.RoleResource
 	rMenus, err = r.roleResourceRepo.SelectByRoleID(ctx, uint64(rpo.ID))
 	for _, rm := range rMenus {
 		role.RoleResources = append(role.RoleResources, &pb.RoleResource{
@@ -44,9 +47,6 @@ func (r *RoleUsecase) buildRoleReply(ctx context.Context, rpo *model.Role) (role
 			ResourceType: uint32(rm.Type),
 		})
 	}
-	role.Id = cast.ToString(rpo.ID)
-	role.CreatedAt = rpo.CreatedAt.Format(timeFormat)
-	role.UpdatedAt = rpo.UpdatedAt.Format(timeFormat)
 	return
 }
 
@@ -69,12 +69,14 @@ func (r *RoleUsecase) buildResources(ctx context.Context, role *pb.RoleRequest) 
 }
 
 func (r *RoleUsecase) Save(ctx context.Context, role *pb.RoleRequest) (id string, err error) {
-	rpo := &model.Role{}
-	_ = copier.Copy(&rpo, &role)
+	rpo := &model.Role{
+		Name:        role.Name,
+		Description: role.Description,
+	}
 	if err = r.roleRepo.Insert(ctx, rpo); err != nil {
 		return
 	}
-	id = strconv.Itoa(int(rpo.ID))
+	id = cast.ToString(rpo.ID)
 	role.Id = id
 	rMenus, rRoutes := r.buildResources(ctx, role)
 	if len(rMenus) > 0 {
@@ -91,22 +93,27 @@ func (r *RoleUsecase) Save(ctx context.Context, role *pb.RoleRequest) (id string
 }
 
 func (r *RoleUsecase) Edit(ctx context.Context, role *pb.RoleRequest) (id string, err error) {
-	rpo := &model.Role{}
-	_ = copier.Copy(&rpo, &role)
+	id = role.Id
+	rpo := &model.Role{
+		Name:        role.Name,
+		Description: role.Description,
+	}
 	rpo.ID = cast.ToUint(role.Id)
 	rMenus, rRoutes := r.buildResources(ctx, role)
-	if len(rMenus) > 0 {
-		if err = r.roleResourceRepo.UpdateByRoleID(ctx, uint64(rpo.ID), rMenus); err != nil {
-			return
+
+	err = r.tx.ExecTx(ctx, func(ctx context.Context) error {
+		if len(rMenus) > 0 {
+			if err = r.roleResourceRepo.UpdateByRoleID(ctx, uint64(rpo.ID), rMenus); err != nil {
+				return err
+			}
 		}
-	}
-	if len(rRoutes) > 0 {
-		if err = r.roleRouterRepo.Update(ctx, rRoutes); err != nil {
-			return
+		if len(rRoutes) > 0 {
+			if err = r.roleRouterRepo.Update(ctx, rRoutes); err != nil {
+				return err
+			}
 		}
-	}
-	err = r.roleRepo.Update(ctx, rpo)
-	id = role.Id
+		return r.roleRepo.Update(ctx, rpo)
+	})
 	return
 }
 
@@ -129,6 +136,8 @@ func (r *RoleUsecase) Get(ctx context.Context, id uint) (role *pb.RoleReply, err
 	role = &pb.RoleReply{}
 	rpo, err := r.roleRepo.Select(ctx, id)
 	if err != nil {
+		err = errors.Wrap(err, "roleUseCase.Get.Select")
+		r.log.WithContext(ctx).Error(err)
 		return
 	}
 	return r.buildRoleReply(ctx, rpo)

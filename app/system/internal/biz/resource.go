@@ -5,7 +5,6 @@ import (
 	"github.com/casbin/casbin/v2/util"
 	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	pb "kratosx-fashion/api/system/v1"
@@ -84,9 +83,10 @@ func (r *ResourceUsecase) buildRouters(ctx context.Context, rpos []model.Router)
 	return
 }
 func (r *ResourceUsecase) buildMenuPO(ctx context.Context, menu *pb.MenuRequest) (mpo *model.ResourceMenu, err error) {
-	mpo = &model.ResourceMenu{}
-	if err = copier.Copy(&mpo, &menu); err != nil {
-		return
+	mpo = &model.ResourceMenu{
+		Name:      menu.Name,
+		Path:      menu.Path,
+		Component: menu.Component,
 	}
 	if len(menu.Id) > 0 && menu.Id != "0" {
 		mpo.ID = cast.ToUint(menu.Id)
@@ -100,9 +100,6 @@ func (r *ResourceUsecase) buildMenuPO(ctx context.Context, menu *pb.MenuRequest)
 	}
 	mpo.Icon = menu.Meta.Icon
 	mpo.Order = menu.Meta.Order
-	if menu.ParentId == "" {
-		mpo.ParentID = 0
-	}
 	if menu.Hidden {
 		mpo.Hidden = 1
 	}
@@ -161,10 +158,22 @@ func (r *ResourceUsecase) buildMenuChild(ctx context.Context, menu *Menu, menuMa
 }
 
 func (r *ResourceUsecase) buildMenuDTO(ctx context.Context, mpo *model.ResourceMenu) (menu Menu, err error) {
-	_ = copier.Copy(&menu, &mpo)
-	menu.ParentId = cast.ToString(mpo.ParentID)
+	menu = Menu{
+		Id:        cast.ToString(mpo.ID),
+		ParentId:  cast.ToString(mpo.ParentID),
+		Path:      mpo.Path,
+		Name:      mpo.Name,
+		Component: mpo.Component,
+		Hidden:    mpo.Hidden == model.HiddenStatusShow,
+		Keepalive: mpo.Keepalive == model.KeepAliveStatusOpen,
+		CreatedAt: mpo.CreatedAt.Format(timeFormat),
+		UpdatedAt: mpo.UpdatedAt.Format(timeFormat),
+		Actions:   nil,
+	}
 	rrs, err := r.roleResourceRepo.SelectByResourceID(ctx, uint64(mpo.ID))
 	if err != nil {
+		err = errors.Wrap(err, "failed to select role resource")
+		r.log.WithContext(ctx).Error(err)
 		return
 	}
 	var roles []string
@@ -178,11 +187,6 @@ func (r *ResourceUsecase) buildMenuDTO(ctx context.Context, mpo *model.ResourceM
 		Icon:        mpo.Icon,
 		Order:       mpo.Order,
 	}
-	menu.Id = cast.ToString(mpo.ID)
-	menu.Keepalive = mpo.Keepalive == model.KeepAliveStatusOpen
-	menu.Hidden = mpo.Hidden == model.HiddenStatusShow
-	menu.CreatedAt = mpo.CreatedAt.Format(timeFormat)
-	menu.UpdatedAt = mpo.UpdatedAt.Format(timeFormat)
 	if len(mpo.Actions) == 0 {
 		return
 	}

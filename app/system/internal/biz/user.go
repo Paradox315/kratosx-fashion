@@ -2,6 +2,7 @@ package biz
 
 import (
 	"context"
+	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	"kratosx-fashion/app/system/internal/data/model"
@@ -18,20 +19,46 @@ import (
 type UserUsecase struct {
 	userRepo     UserRepo
 	userRoleRepo UserRoleRepo
+	logRepo      LoginLogRepo
 	roleRepo     RoleRepo
 	tx           Transaction
 	log          *log.Helper
 }
 
-func NewUserUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, roleRepo RoleRepo, tx Transaction, logger log.Logger) *UserUsecase {
+func NewUserUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, roleRepo RoleRepo, logRepo LoginLogRepo, tx Transaction, logger log.Logger) *UserUsecase {
 	return &UserUsecase{
 		userRepo:     userRepo,
 		userRoleRepo: userRoleRepo,
 		roleRepo:     roleRepo,
+		logRepo:      logRepo,
 		tx:           tx,
 		log:          log.NewHelper(log.With(logger, "biz", "user")),
 	}
 }
+func (u *UserUsecase) buildLog(ctx context.Context, lpo *model.LoginLog) (log *pb.LoginLog, err error) {
+	log = &pb.LoginLog{
+		Ip:         lpo.Ip,
+		Time:       lpo.CreatedAt.Format(timeFormat),
+		Agent:      lpo.Agent,
+		Os:         lpo.OS,
+		Device:     lpo.Device,
+		DeviceType: uint32(lpo.DeviceType),
+		LoginType:  uint32(lpo.LoginType),
+	}
+	var loc Location
+	if err = encoding.GetCodec("json").Unmarshal([]byte(lpo.Location), &loc); err != nil {
+		return
+	}
+	log.Country = loc.Country
+	log.Region = loc.Region
+	log.City = loc.City
+	log.Position = &pb.LoginLog_Position{
+		Lat: loc.Position["lat"],
+		Lng: loc.Position["lng"],
+	}
+	return
+}
+
 func (u *UserUsecase) buildUserDo(ctx context.Context, upo *model.User) (user User, err error) {
 	_ = copier.Copy(&user, &upo)
 	urs, err := u.userRoleRepo.SelectAllByUserID(ctx, uint64(upo.ID))
@@ -63,6 +90,7 @@ func (u *UserUsecase) buildUserDo(ctx context.Context, upo *model.User) (user Us
 	user.Gender = upo.Gender.String()
 	return
 }
+
 func (u *UserUsecase) validateUser(ctx context.Context, user *pb.UserRequest) (err error) {
 	if len(user.Username) != 0 && u.userRepo.ExistByUsername(ctx, user.Username) {
 		err = api.ErrorUserAlreadyExists("用户名已存在")
@@ -204,4 +232,22 @@ func (u *UserUsecase) EditPassword(ctx context.Context, oldpwd, newpwd string, u
 	}
 	user.Password = cypher.BcryptMake(newpwd)
 	return u.userRepo.Update(ctx, user)
+}
+
+func (u *UserUsecase) LogPage(ctx context.Context, uid uint64, limit, offset int) (list *pb.ListLoginLogReply, err error) {
+	logs, total, err := u.logRepo.SelectPageByUserID(ctx, uid, limit, offset)
+	if err != nil {
+		return
+	}
+	list = &pb.ListLoginLogReply{}
+	for _, l := range logs {
+		var logDto *pb.LoginLog
+		logDto, err = u.buildLog(ctx, l)
+		if err != nil {
+			return
+		}
+		list.List = append(list.List, logDto)
+	}
+	list.Total = uint32(total)
+	return
 }

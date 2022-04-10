@@ -63,8 +63,8 @@ func (j *JwtRepo) Create(ctx context.Context, user biz.JwtUser) (*biz.Token, err
 		Username: user.GetUsername(),
 		Nickname: user.GetNickname(),
 		RoleIDs:  user.GetRoleIDs(),
+		UID:      user.GetUid(),
 		StandardClaims: jwt.StandardClaims{
-			Subject:   user.GetUid(),
 			Id:        jti.String(),
 			Issuer:    j.cfg.Issuer,
 			NotBefore: time.Now().Unix() - 1000,

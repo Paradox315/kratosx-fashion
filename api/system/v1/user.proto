@@ -52,6 +52,12 @@ service User {
 		};
 	}
 
+	rpc InitUserInfo (EmptyRequest) returns (UserState){
+		option (google.api.http) = {
+			get: "/init/info"
+		};
+	}
+
 	rpc ListUser (ListSearchRequest) returns (ListUserReply){
 		option (google.api.http) = {
 			post: "/list"
@@ -59,4 +65,9 @@ service User {
 		};
 	}
 
+	rpc ListLoginLog(ListRequest) returns (ListLoginLogReply){
+		option (google.api.http) = {
+			get: "/log/list/{page_num}/{page_size}"
+		};
+	}
 }

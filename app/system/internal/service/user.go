@@ -8,10 +8,10 @@ import (
 	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/app/system/internal/data/model"
+	"kratosx-fashion/pkg/ctxutil"
 	"kratosx-fashion/pkg/option"
 	"kratosx-fashion/pkg/pagination"
 	"kratosx-fashion/pkg/xcast"
-	"strconv"
 	"strings"
 )
 
@@ -27,6 +27,20 @@ func NewUserService(uc *biz.UserUsecase, logger log.Logger) *UserService {
 		uc:  uc,
 		log: log.NewHelper(log.With(logger, "service", "user")),
 	}
+}
+func (s *UserService) InitUserInfo(ctx context.Context, req *pb.EmptyRequest) (*pb.UserState, error) {
+	uid := ctxutil.GetUid(ctx)
+	user, err := s.uc.Get(ctx, cast.ToUint(uid))
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.UserState{}
+	_ = copier.Copy(&resp, &user)
+	resp.RegisterDate = user.CreatedAt
+	for _, role := range user.UserRoles {
+		resp.Roles = append(resp.Roles, role.ID)
+	}
+	return resp, nil
 }
 
 func (s *UserService) CreateUser(ctx context.Context, req *pb.UserRequest) (*pb.IDReply, error) {
@@ -72,8 +86,7 @@ func (s *UserService) DeleteUser(ctx context.Context, req *pb.IDsRequest) (*pb.E
 	return &pb.EmptyReply{}, nil
 }
 func (s *UserService) GetUser(ctx context.Context, req *pb.IDRequest) (*pb.UserReply, error) {
-	uid, _ := strconv.ParseUint(req.Id, 10, 64)
-	user, err := s.uc.Get(ctx, uint(uid))
+	user, err := s.uc.Get(ctx, cast.ToUint(req.Id))
 	if err != nil {
 		return nil, err
 	}
@@ -107,4 +120,9 @@ func (s *UserService) ListUser(ctx context.Context, req *pb.ListSearchRequest) (
 		list.List = append(list.List, uReply)
 	}
 	return
+}
+func (s *UserService) ListLoginLog(ctx context.Context, req *pb.ListRequest) (list *pb.ListLoginLogReply, err error) {
+	limit, offset := pagination.Parse(req.PageNum, req.PageSize)
+	uid := ctxutil.GetUid(ctx)
+	return s.uc.LogPage(ctx, cast.ToUint64(uid), limit, offset)
 }

@@ -31,6 +31,8 @@ type UserXHTTPServer interface {
 	CreateUser(context.Context, *UserRequest) (*IDReply, error)
 	DeleteUser(context.Context, *IDsRequest) (*EmptyReply, error)
 	GetUser(context.Context, *IDRequest) (*UserReply, error)
+	InitUserInfo(context.Context, *EmptyRequest) (*UserState, error)
+	ListLoginLog(context.Context, *ListRequest) (*ListLoginLogReply, error)
 	ListUser(context.Context, *ListSearchRequest) (*ListUserReply, error)
 	UpdatePassword(context.Context, *PasswordRequest) (*IDReply, error)
 	UpdateUser(context.Context, *UserRequest) (*IDReply, error)
@@ -51,7 +53,9 @@ func RegisterUserXHTTPServer(s *xhttp.Server, srv UserXHTTPServer) {
 		api.Put("/status", _User_UpdateUserStatus0_XHTTP_Handler(srv)).Name("User-UpdateUserStatus.0-XHTTP_Handler")
 		api.Delete("/:ids", _User_DeleteUser0_XHTTP_Handler(srv)).Name("User-DeleteUser.0-XHTTP_Handler")
 		api.Get("/:id", _User_GetUser0_XHTTP_Handler(srv)).Name("User-GetUser.0-XHTTP_Handler")
+		api.Get("/init/info", _User_InitUserInfo0_XHTTP_Handler(srv)).Name("User-InitUserInfo.0-XHTTP_Handler")
 		api.Post("/list", _User_ListUser0_XHTTP_Handler(srv)).Name("User-ListUser.0-XHTTP_Handler")
+		api.Get("/log/list/:page_num/:page_size", _User_ListLoginLog0_XHTTP_Handler(srv)).Name("User-ListLoginLog.0-XHTTP_Handler")
 	})
 }
 
@@ -145,6 +149,21 @@ func _User_GetUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	}
 }
 
+func _User_InitUserInfo0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var in EmptyRequest
+		if err := binding.BindQuery(c, &in); err != nil {
+			return apistate.Error[any]().WithError(err).Send(c)
+		}
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.InitUserInfo(ctx, &in)
+		if err != nil {
+			return apistate.Error[any]().WithError(err).Send(c)
+		}
+		return apistate.Success[*UserState]().WithData(reply).Send(c)
+	}
+}
+
 func _User_ListUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var in ListSearchRequest
@@ -157,5 +176,20 @@ func _User_ListUser0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
 			return apistate.Error[any]().WithError(err).Send(c)
 		}
 		return apistate.Success[*ListUserReply]().WithData(reply).Send(c)
+	}
+}
+
+func _User_ListLoginLog0_XHTTP_Handler(srv UserXHTTPServer) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var in ListRequest
+		if err := binding.BindParams(c, &in); err != nil {
+			return apistate.Error[any]().WithError(err).Send(c)
+		}
+		ctx := transport.NewFiberContext(context.Background(), c)
+		reply, err := srv.ListLoginLog(ctx, &in)
+		if err != nil {
+			return apistate.Error[any]().WithError(err).Send(c)
+		}
+		return apistate.Success[*ListLoginLogReply]().WithData(reply).Send(c)
 	}
 }

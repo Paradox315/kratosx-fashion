@@ -178,38 +178,46 @@ func (m *RegisterRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if err := m._validateEmail(m.GetEmail()); err != nil {
-		err = RegisterRequestValidationError{
-			field:  "Email",
-			reason: "value must be a valid email address",
-			cause:  err,
+	if m.GetEmail() != "" {
+
+		if err := m._validateEmail(m.GetEmail()); err != nil {
+			err = RegisterRequestValidationError{
+				field:  "Email",
+				reason: "value must be a valid email address",
+				cause:  err,
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
+
 	}
 
-	if utf8.RuneCountInString(m.GetMobile()) > 11 {
-		err := RegisterRequestValidationError{
-			field:  "Mobile",
-			reason: "value length must be at most 11 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	if m.GetMobile() != "" {
 
-	if !_RegisterRequest_Mobile_Pattern.MatchString(m.GetMobile()) {
-		err := RegisterRequestValidationError{
-			field:  "Mobile",
-			reason: "value does not match regex pattern \"^1(3|4|5|6|7|8|9)\\\\d{9}$\"",
+		if utf8.RuneCountInString(m.GetMobile()) > 11 {
+			err := RegisterRequestValidationError{
+				field:  "Mobile",
+				reason: "value length must be at most 11 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		if !all {
-			return err
+
+		if !_RegisterRequest_Mobile_Pattern.MatchString(m.GetMobile()) {
+			err := RegisterRequestValidationError{
+				field:  "Mobile",
+				reason: "value does not match regex pattern \"^1(3|4|5|6|7|8|9)\\\\d{9}$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		errors = append(errors, err)
+
 	}
 
 	if utf8.RuneCountInString(m.GetCaptcha()) > 6 {
@@ -2454,6 +2462,123 @@ var _ interface {
 	ErrorName() string
 } = UserReplyValidationError{}
 
+// Validate checks the field values on UserState with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *UserState) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UserState with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in UserStateMultiError, or nil
+// if none found.
+func (m *UserState) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UserState) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for Username
+
+	// no validation rules for Avatar
+
+	// no validation rules for Email
+
+	// no validation rules for Mobile
+
+	// no validation rules for Nickname
+
+	// no validation rules for Gender
+
+	// no validation rules for Status
+
+	// no validation rules for RegisterDate
+
+	if len(errors) > 0 {
+		return UserStateMultiError(errors)
+	}
+
+	return nil
+}
+
+// UserStateMultiError is an error wrapping multiple validation errors returned
+// by UserState.ValidateAll() if the designated constraints aren't met.
+type UserStateMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UserStateMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UserStateMultiError) AllErrors() []error { return m }
+
+// UserStateValidationError is the validation error returned by
+// UserState.Validate if the designated constraints aren't met.
+type UserStateValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UserStateValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UserStateValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UserStateValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UserStateValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UserStateValidationError) ErrorName() string { return "UserStateValidationError" }
+
+// Error satisfies the builtin error interface
+func (e UserStateValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUserState.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UserStateValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UserStateValidationError{}
+
 // Validate checks the field values on ListUserReply with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -2589,6 +2714,292 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListUserReplyValidationError{}
+
+// Validate checks the field values on LoginLog with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *LoginLog) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on LoginLog with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in LoginLogMultiError, or nil
+// if none found.
+func (m *LoginLog) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *LoginLog) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Ip
+
+	// no validation rules for Country
+
+	// no validation rules for Region
+
+	// no validation rules for City
+
+	if all {
+		switch v := interface{}(m.GetPosition()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, LoginLogValidationError{
+					field:  "Position",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, LoginLogValidationError{
+					field:  "Position",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPosition()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return LoginLogValidationError{
+				field:  "Position",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Time
+
+	// no validation rules for Name
+
+	// no validation rules for Os
+
+	// no validation rules for Device
+
+	// no validation rules for DeviceType
+
+	// no validation rules for LoginType
+
+	if len(errors) > 0 {
+		return LoginLogMultiError(errors)
+	}
+
+	return nil
+}
+
+// LoginLogMultiError is an error wrapping multiple validation errors returned
+// by LoginLog.ValidateAll() if the designated constraints aren't met.
+type LoginLogMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m LoginLogMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m LoginLogMultiError) AllErrors() []error { return m }
+
+// LoginLogValidationError is the validation error returned by
+// LoginLog.Validate if the designated constraints aren't met.
+type LoginLogValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e LoginLogValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e LoginLogValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e LoginLogValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e LoginLogValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e LoginLogValidationError) ErrorName() string { return "LoginLogValidationError" }
+
+// Error satisfies the builtin error interface
+func (e LoginLogValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLoginLog.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = LoginLogValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = LoginLogValidationError{}
+
+// Validate checks the field values on ListLoginLogReply with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ListLoginLogReply) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListLoginLogReply with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListLoginLogReplyMultiError, or nil if none found.
+func (m *ListLoginLogReply) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListLoginLogReply) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetList() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListLoginLogReplyValidationError{
+						field:  fmt.Sprintf("List[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListLoginLogReplyValidationError{
+						field:  fmt.Sprintf("List[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListLoginLogReplyValidationError{
+					field:  fmt.Sprintf("List[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Total
+
+	if len(errors) > 0 {
+		return ListLoginLogReplyMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListLoginLogReplyMultiError is an error wrapping multiple validation errors
+// returned by ListLoginLogReply.ValidateAll() if the designated constraints
+// aren't met.
+type ListLoginLogReplyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListLoginLogReplyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListLoginLogReplyMultiError) AllErrors() []error { return m }
+
+// ListLoginLogReplyValidationError is the validation error returned by
+// ListLoginLogReply.Validate if the designated constraints aren't met.
+type ListLoginLogReplyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListLoginLogReplyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListLoginLogReplyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListLoginLogReplyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListLoginLogReplyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListLoginLogReplyValidationError) ErrorName() string {
+	return "ListLoginLogReplyValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListLoginLogReplyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListLoginLogReply.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListLoginLogReplyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListLoginLogReplyValidationError{}
 
 // Validate checks the field values on RoleReply with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -4960,6 +5371,112 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RouterGroupValidationError{}
+
+// Validate checks the field values on LoginLog_Position with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *LoginLog_Position) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on LoginLog_Position with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// LoginLog_PositionMultiError, or nil if none found.
+func (m *LoginLog_Position) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *LoginLog_Position) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Lat
+
+	// no validation rules for Lng
+
+	if len(errors) > 0 {
+		return LoginLog_PositionMultiError(errors)
+	}
+
+	return nil
+}
+
+// LoginLog_PositionMultiError is an error wrapping multiple validation errors
+// returned by LoginLog_Position.ValidateAll() if the designated constraints
+// aren't met.
+type LoginLog_PositionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m LoginLog_PositionMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m LoginLog_PositionMultiError) AllErrors() []error { return m }
+
+// LoginLog_PositionValidationError is the validation error returned by
+// LoginLog_Position.Validate if the designated constraints aren't met.
+type LoginLog_PositionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e LoginLog_PositionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e LoginLog_PositionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e LoginLog_PositionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e LoginLog_PositionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e LoginLog_PositionValidationError) ErrorName() string {
+	return "LoginLog_PositionValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e LoginLog_PositionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLoginLog_Position.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = LoginLog_PositionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = LoginLog_PositionValidationError{}
 
 // Validate checks the field values on QueryOption_Interval with the rules
 // defined in the proto definition for this message. If any rules are

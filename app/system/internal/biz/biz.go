@@ -29,10 +29,9 @@ type Transaction interface {
 type UserRepo interface {
 	Select(context.Context, uint) (*model.User, error)
 	SelectByUsername(context.Context, string) (*model.User, error)
+	SelectByMobile(context.Context, string) (*model.User, error)
+	SelectByEmail(context.Context, string) (*model.User, error)
 	SelectPasswordByUID(context.Context, uint) (*model.User, error)
-	SelectPasswordByName(context.Context, string) (*model.User, error)
-	SelectPasswordByMobile(context.Context, string) (*model.User, error)
-	SelectPasswordByEmail(context.Context, string) (*model.User, error)
 	SelectPage(context.Context, int, int, *SQLOption) ([]*model.User, int64, error)
 	Insert(context.Context, *model.User) error
 	Update(context.Context, *model.User) error
@@ -57,8 +56,8 @@ type UserRoleRepo interface {
 
 type LoginLogRepo interface {
 	Select(context.Context, uint) (*model.LoginLog, error)
-	SelectLocation(context.Context, string) (*Location, error)
-	SelectAgent(context.Context, string) (*Agent, error)
+	SelectLocation(context.Context, string) (Location, error)
+	SelectAgent(context.Context, string) (Agent, error)
 	SelectPageByUserID(context.Context, uint64, int, int) ([]*model.LoginLog, int64, error)
 	Insert(context.Context, *model.LoginLog) error
 	Delete(context.Context, uint) error

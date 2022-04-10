@@ -286,12 +286,6 @@
     "v1RoleResource": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string"
-        },
-        "roleId": {
-          "type": "string"
-        },
         "resourceId": {
           "type": "string"
         },

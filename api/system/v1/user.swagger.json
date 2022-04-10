@@ -78,6 +78,28 @@
         ]
       }
     },
+    "/init/info": {
+      "get": {
+        "operationId": "User_InitUserInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UserState"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      }
+    },
     "/list": {
       "post": {
         "operationId": "User_ListUser",
@@ -103,6 +125,44 @@
             "schema": {
               "$ref": "#/definitions/v1ListSearchRequest"
             }
+          }
+        ],
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/log/list/{pageNum}/{pageSize}": {
+      "get": {
+        "operationId": "User_ListLoginLog",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListLoginLogReply"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pageNum",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "pageSize",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -236,6 +296,19 @@
     }
   },
   "definitions": {
+    "LoginLogPosition": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "format": "float"
+        },
+        "lng": {
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
     "QueryOptionInterval": {
       "type": "object",
       "properties": {
@@ -285,6 +358,21 @@
         }
       }
     },
+    "v1ListLoginLogReply": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1LoginLog"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "v1ListSearchRequest": {
       "type": "object",
       "properties": {
@@ -314,6 +402,46 @@
           }
         },
         "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "v1LoginLog": {
+      "type": "object",
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/definitions/LoginLogPosition"
+        },
+        "time": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "device": {
+          "type": "string"
+        },
+        "deviceType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "loginType": {
           "type": "integer",
           "format": "int64"
         }
@@ -466,14 +594,47 @@
     "v1UserRoleID": {
       "type": "object",
       "properties": {
+        "roleId": {
+          "type": "string"
+        }
+      }
+    },
+    "v1UserState": {
+      "type": "object",
+      "properties": {
         "id": {
           "type": "string"
         },
-        "userId": {
+        "username": {
           "type": "string"
         },
-        "roleId": {
+        "avatar": {
           "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "mobile": {
+          "type": "string"
+        },
+        "nickname": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "registerDate": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }

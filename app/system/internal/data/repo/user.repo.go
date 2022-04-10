@@ -49,7 +49,7 @@ func (u *userRepo) SelectByUsername(ctx context.Context, username string) (*mode
 
 func (u *userRepo) SelectPasswordByUID(ctx context.Context, uid uint) (*model.User, error) {
 	ur := u.baseRepo.User
-	user, err := ur.WithContext(ctx).Where(ur.ID.Eq(uid)).Select(ur.Password).First()
+	user, err := ur.WithContext(ctx).Where(ur.ID.Eq(uid)).First()
 	if err != nil {
 		err = errors.Wrap(err, "userRepo.SelectPasswordByUID")
 		u.log.WithContext(ctx).Error(err)
@@ -58,20 +58,9 @@ func (u *userRepo) SelectPasswordByUID(ctx context.Context, uid uint) (*model.Us
 	return user, nil
 }
 
-func (u *userRepo) SelectPasswordByName(ctx context.Context, username string) (*model.User, error) {
+func (u *userRepo) SelectByMobile(ctx context.Context, mobile string) (*model.User, error) {
 	ur := u.baseRepo.User
-	user, err := ur.WithContext(ctx).Where(ur.Username.Eq(username)).Select(ur.Password).First()
-	if err != nil {
-		err = errors.Wrap(err, "userRepo.SelectPasswordByName")
-		u.log.WithContext(ctx).Error(err)
-		return nil, err
-	}
-	return user, nil
-}
-
-func (u *userRepo) SelectPasswordByMobile(ctx context.Context, mobile string) (*model.User, error) {
-	ur := u.baseRepo.User
-	user, err := ur.WithContext(ctx).Where(ur.Mobile.Eq(mobile)).Select(ur.Password).First()
+	user, err := ur.WithContext(ctx).Where(ur.Mobile.Eq(mobile)).First()
 	if err != nil {
 		err = errors.Wrap(err, "userRepo.SelectPasswordByMobile")
 		u.log.WithContext(ctx).Error(err)
@@ -80,9 +69,9 @@ func (u *userRepo) SelectPasswordByMobile(ctx context.Context, mobile string) (*
 	return user, nil
 }
 
-func (u *userRepo) SelectPasswordByEmail(ctx context.Context, email string) (*model.User, error) {
+func (u *userRepo) SelectByEmail(ctx context.Context, email string) (*model.User, error) {
 	ur := u.baseRepo.User
-	user, err := ur.WithContext(ctx).Where(ur.Email.Eq(email)).Select(ur.Password).First()
+	user, err := ur.WithContext(ctx).Where(ur.Email.Eq(email)).First()
 	if err != nil {
 		err = errors.Wrap(err, "userRepo.SelectPasswordByEmail")
 		u.log.WithContext(ctx).Error(err)

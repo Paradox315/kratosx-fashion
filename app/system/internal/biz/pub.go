@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	"kratosx-fashion/app/system/internal/data/model"
+	"kratosx-fashion/pkg/ctxutil"
 	"kratosx-fashion/pkg/cypher"
 	"os"
 	"path"
@@ -41,6 +42,42 @@ func NewPublicUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, logRepo Logi
 		disk:         disk,
 		log:          log.NewHelper(log.With(logger, "biz", "public")),
 	}
+}
+func (p *PublicUsecase) buildLog(ctx context.Context, uid uint64) (log *model.LoginLog, err error) {
+	fc, ok := transport.FromFiberContext(ctx)
+	if !ok {
+		err = kerrors.InternalServer("CONTEXT PARSE", "find context error")
+		return
+	}
+	agent, err := p.logRepo.SelectAgent(ctx, fc.Get("User-Agent"))
+	if err != nil {
+		err = errors.Wrap(err, "PublicUsecase.Login.SelectAgent")
+		p.log.WithContext(ctx).Error(err)
+		return
+	}
+
+	loc, err := p.logRepo.SelectLocation(ctx, fc.IP())
+	if err != nil {
+		err = errors.Wrap(err, "PublicUsecase.Login.SelectLocation")
+		p.log.WithContext(ctx).Error(err)
+		return
+	}
+
+	bytes, err := encoding.GetCodec("json").Marshal(&loc)
+	if err != nil {
+		return
+	}
+	log = &model.LoginLog{
+		UserID:     uid,
+		Ip:         fc.IP(),
+		Location:   string(bytes),
+		LoginType:  model.LoginType_Login,
+		Agent:      agent.Name,
+		OS:         agent.OS,
+		Device:     agent.Device,
+		DeviceType: agent.DeviceType,
+	}
+	return
 }
 func (p *PublicUsecase) buildUserDto(ctx context.Context, upo *model.User) (user User, err error) {
 	_ = copier.Copy(&user, &upo)
@@ -108,7 +145,7 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 			return
 		}
 	}
-	upo, err := p.userRepo.SelectPasswordByName(ctx, loginSession.Username)
+	upo, err := p.userRepo.SelectByUsername(ctx, loginSession.Username)
 	if err != nil || !cypher.BcryptCheck(loginSession.Password, upo.Password) {
 		err = api.ErrorUserInvalid("用户名或密码错误")
 		return
@@ -126,37 +163,11 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 		p.log.WithContext(ctx).Error(err)
 		return
 	}
-	fc, ok := transport.FromFiberContext(ctx)
-	if !ok {
-		err = kerrors.InternalServer("CONTEXT PARSE", "find context error")
-		return
-	}
-	loc, err := p.logRepo.SelectLocation(ctx, fc.IP())
-	if err != nil {
-		err = errors.Wrap(err, "PublicUsecase.Login.SelectLocation")
-		p.log.WithContext(ctx).Error(err)
-		return
-	}
-	agent, err := p.logRepo.SelectAgent(ctx, fc.Get("User-Agent"))
-	if err != nil {
-		err = errors.Wrap(err, "PublicUsecase.Login.SelectAgent")
-		p.log.WithContext(ctx).Error(err)
-		return
-	}
-	bytes, err := encoding.GetCodec("json").Marshal(loc)
+	loginLog, err := p.buildLog(ctx, uint64(upo.ID))
 	if err != nil {
 		return
 	}
-	if err = p.logRepo.Insert(ctx, &model.LoginLog{
-		UserID:     uint64(upo.ID),
-		Ip:         fc.IP(),
-		Location:   string(bytes),
-		LoginType:  model.LoginType_Login,
-		Agent:      fc.Get("User-Agent"),
-		OS:         agent.OS,
-		Device:     agent.Device,
-		DeviceType: agent.DeviceType,
-	}); err != nil {
+	if err = p.logRepo.Insert(ctx, loginLog); err != nil {
 		return
 	}
 
@@ -168,37 +179,12 @@ func (p *PublicUsecase) Generate(ctx context.Context) (c Captcha, err error) {
 }
 
 func (p *PublicUsecase) Logout(ctx context.Context, token string) (err error) {
-	fc, ok := transport.FromFiberContext(ctx)
-	if !ok {
-		err = kerrors.InternalServer("CONTEXT PARSE", "find context error")
-		return
-	}
-	loc, err := p.logRepo.SelectLocation(ctx, fc.IP())
+	uid := ctxutil.GetUid(ctx)
+	loginLog, err := p.buildLog(ctx, cast.ToUint64(uid))
 	if err != nil {
-		p.log.WithContext(ctx).Error(err)
 		return
 	}
-	agent, err := p.logRepo.SelectAgent(ctx, fc.Get("User-Agent"))
-	if err != nil {
-		p.log.WithContext(ctx).Error(err)
-		return
-	}
-	bytes, err := encoding.GetCodec("json").Marshal(loc)
-	if err != nil {
-		p.log.WithContext(ctx).Error(err)
-		return
-	}
-	uid := fc.Locals("user_id")
-	if err = p.logRepo.Insert(ctx, &model.LoginLog{
-		UserID:     cast.ToUint64(uid),
-		Ip:         fc.IP(),
-		Location:   string(bytes),
-		LoginType:  model.LoginType_Logout,
-		Agent:      fc.Get("User-Agent"),
-		OS:         agent.OS,
-		Device:     agent.Device,
-		DeviceType: agent.DeviceType,
-	}); err != nil {
+	if err = p.logRepo.Insert(ctx, loginLog); err != nil {
 		return
 	}
 	return p.jwtRepo.JoinInBlackList(ctx, token)

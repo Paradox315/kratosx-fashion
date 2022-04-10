@@ -99,10 +99,10 @@ func (j *JWTService) MiddlewareFunc() fiber.Handler {
 					}
 				}
 			}
-			c.Locals("user_id", claims.Id)
-			c.Locals("user_name", claims.Username)
+			c.Locals("uid", claims.UID)
+			c.Locals("username", claims.Username)
 			c.Locals("roles", claims.RoleIDs)
-			c.Locals("nick_name", claims.Nickname)
+			c.Locals("nickname", claims.Nickname)
 			c.Locals("token", jwtToken)
 			return nil
 		}

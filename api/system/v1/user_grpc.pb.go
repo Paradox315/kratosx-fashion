@@ -28,7 +28,9 @@ type UserClient interface {
 	UpdateUserStatus(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*IDReply, error)
 	DeleteUser(ctx context.Context, in *IDsRequest, opts ...grpc.CallOption) (*EmptyReply, error)
 	GetUser(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*UserReply, error)
+	InitUserInfo(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*UserState, error)
 	ListUser(ctx context.Context, in *ListSearchRequest, opts ...grpc.CallOption) (*ListUserReply, error)
+	ListLoginLog(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListLoginLogReply, error)
 }
 
 type userClient struct {
@@ -93,9 +95,27 @@ func (c *userClient) GetUser(ctx context.Context, in *IDRequest, opts ...grpc.Ca
 	return out, nil
 }
 
+func (c *userClient) InitUserInfo(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*UserState, error) {
+	out := new(UserState)
+	err := c.cc.Invoke(ctx, "/api.system.v1.User/InitUserInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userClient) ListUser(ctx context.Context, in *ListSearchRequest, opts ...grpc.CallOption) (*ListUserReply, error) {
 	out := new(ListUserReply)
 	err := c.cc.Invoke(ctx, "/api.system.v1.User/ListUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) ListLoginLog(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListLoginLogReply, error) {
+	out := new(ListLoginLogReply)
+	err := c.cc.Invoke(ctx, "/api.system.v1.User/ListLoginLog", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +132,9 @@ type UserServer interface {
 	UpdateUserStatus(context.Context, *StatusRequest) (*IDReply, error)
 	DeleteUser(context.Context, *IDsRequest) (*EmptyReply, error)
 	GetUser(context.Context, *IDRequest) (*UserReply, error)
+	InitUserInfo(context.Context, *EmptyRequest) (*UserState, error)
 	ListUser(context.Context, *ListSearchRequest) (*ListUserReply, error)
+	ListLoginLog(context.Context, *ListRequest) (*ListLoginLogReply, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -138,8 +160,14 @@ func (UnimplementedUserServer) DeleteUser(context.Context, *IDsRequest) (*EmptyR
 func (UnimplementedUserServer) GetUser(context.Context, *IDRequest) (*UserReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
+func (UnimplementedUserServer) InitUserInfo(context.Context, *EmptyRequest) (*UserState, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InitUserInfo not implemented")
+}
 func (UnimplementedUserServer) ListUser(context.Context, *ListSearchRequest) (*ListUserReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUser not implemented")
+}
+func (UnimplementedUserServer) ListLoginLog(context.Context, *ListRequest) (*ListLoginLogReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListLoginLog not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
@@ -262,6 +290,24 @@ func _User_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _User_InitUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EmptyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).InitUserInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.system.v1.User/InitUserInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).InitUserInfo(ctx, req.(*EmptyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _User_ListUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListSearchRequest)
 	if err := dec(in); err != nil {
@@ -276,6 +322,24 @@ func _User_ListUser_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServer).ListUser(ctx, req.(*ListSearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_ListLoginLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).ListLoginLog(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.system.v1.User/ListLoginLog",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).ListLoginLog(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -312,8 +376,16 @@ var User_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _User_GetUser_Handler,
 		},
 		{
+			MethodName: "InitUserInfo",
+			Handler:    _User_InitUserInfo_Handler,
+		},
+		{
 			MethodName: "ListUser",
 			Handler:    _User_ListUser_Handler,
+		},
+		{
+			MethodName: "ListLoginLog",
+			Handler:    _User_ListLoginLog_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

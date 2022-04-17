@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/pkg/errors"
-	"gorm.io/gorm"
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/app/system/internal/data"
 	"kratosx-fashion/app/system/internal/data/linq"
@@ -142,39 +141,17 @@ func (u *userRepo) DeleteByIDs(ctx context.Context, ids []uint) error {
 	return nil
 }
 
-func (u *userRepo) ExistByUsername(ctx context.Context, username string) bool {
+func (u *userRepo) ExistByUsername(ctx context.Context, username string) (int64, error) {
 	ur := u.baseRepo.User
-	_, err := ur.WithContext(ctx).Where(ur.Username.Eq(username)).First()
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return false
-	} else if err != nil {
-		u.log.WithContext(ctx).Error("userRepo.ExistByUsername error", err)
-		return false
-	}
-	return true
+	return ur.WithContext(ctx).Where(ur.Username.Eq(username)).Count()
 }
 
-func (u *userRepo) ExistByEmail(ctx context.Context, email string) bool {
+func (u *userRepo) ExistByEmail(ctx context.Context, email string) (int64, error) {
 	ur := u.baseRepo.User
-	_, err := ur.WithContext(ctx).Where(ur.Email.Eq(email)).First()
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return false
-	} else if err != nil {
-		u.log.WithContext(ctx).Error("userRepo.ExistByEmail error", err)
-		return false
-	}
-
-	return true
+	return ur.WithContext(ctx).Where(ur.Email.Eq(email)).Count()
 }
 
-func (u *userRepo) ExistByMobile(ctx context.Context, mobile string) bool {
+func (u *userRepo) ExistByMobile(ctx context.Context, mobile string) (int64, error) {
 	ur := u.baseRepo.User
-	_, err := ur.WithContext(ctx).Where(ur.Mobile.Eq(mobile)).First()
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return false
-	} else if err != nil {
-		u.log.WithContext(ctx).Error("userRepo.ExistByMobile error", err)
-		return false
-	}
-	return true
+	return ur.WithContext(ctx).Where(ur.Mobile.Eq(mobile)).Count()
 }

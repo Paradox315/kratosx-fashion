@@ -713,43 +713,11 @@ func (m *UserRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for Nickname
+
 	// no validation rules for Gender
 
 	// no validation rules for Status
-
-	for idx, item := range m.GetUserRoles() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, UserRequestValidationError{
-						field:  fmt.Sprintf("UserRoles[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, UserRequestValidationError{
-						field:  fmt.Sprintf("UserRoles[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return UserRequestValidationError{
-					field:  fmt.Sprintf("UserRoles[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
 
 	if len(errors) > 0 {
 		return UserRequestMultiError(errors)
@@ -1217,6 +1185,8 @@ func (m *PasswordRequest) validate(all bool) error {
 	// no validation rules for OldPassword
 
 	// no validation rules for NewPassword
+
+	// no validation rules for ConfirmPassword
 
 	if len(errors) > 0 {
 		return PasswordRequestMultiError(errors)
@@ -1791,10 +1761,6 @@ func (m *MenuRequest) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for Hidden
-
-	// no validation rules for Keepalive
-
 	for idx, item := range m.GetActions() {
 		_, _ = idx, item
 
@@ -2345,13 +2311,15 @@ func (m *UserReply) validate(all bool) error {
 
 	// no validation rules for Gender
 
+	// no validation rules for Creator
+
 	// no validation rules for Status
 
 	// no validation rules for CreatedAt
 
 	// no validation rules for UpdatedAt
 
-	for idx, item := range m.GetUserRoles() {
+	for idx, item := range m.GetRoles() {
 		_, _ = idx, item
 
 		if all {
@@ -2359,7 +2327,7 @@ func (m *UserReply) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, UserReplyValidationError{
-						field:  fmt.Sprintf("UserRoles[%v]", idx),
+						field:  fmt.Sprintf("Roles[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -2367,7 +2335,7 @@ func (m *UserReply) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, UserReplyValidationError{
-						field:  fmt.Sprintf("UserRoles[%v]", idx),
+						field:  fmt.Sprintf("Roles[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -2376,7 +2344,7 @@ func (m *UserReply) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return UserReplyValidationError{
-					field:  fmt.Sprintf("UserRoles[%v]", idx),
+					field:  fmt.Sprintf("Roles[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -2737,6 +2705,8 @@ func (m *LoginLog) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for Id
+
 	// no validation rules for Ip
 
 	// no validation rules for Country
@@ -2776,7 +2746,7 @@ func (m *LoginLog) validate(all bool) error {
 
 	// no validation rules for Time
 
-	// no validation rules for Name
+	// no validation rules for Agent
 
 	// no validation rules for Os
 
@@ -4155,107 +4125,6 @@ var _ interface {
 	ErrorName() string
 } = RouterReplyValidationError{}
 
-// Validate checks the field values on UserRoleID with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *UserRoleID) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on UserRoleID with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in UserRoleIDMultiError, or
-// nil if none found.
-func (m *UserRoleID) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *UserRoleID) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for RoleId
-
-	if len(errors) > 0 {
-		return UserRoleIDMultiError(errors)
-	}
-
-	return nil
-}
-
-// UserRoleIDMultiError is an error wrapping multiple validation errors
-// returned by UserRoleID.ValidateAll() if the designated constraints aren't met.
-type UserRoleIDMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m UserRoleIDMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m UserRoleIDMultiError) AllErrors() []error { return m }
-
-// UserRoleIDValidationError is the validation error returned by
-// UserRoleID.Validate if the designated constraints aren't met.
-type UserRoleIDValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e UserRoleIDValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e UserRoleIDValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e UserRoleIDValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e UserRoleIDValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e UserRoleIDValidationError) ErrorName() string { return "UserRoleIDValidationError" }
-
-// Error satisfies the builtin error interface
-func (e UserRoleIDValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sUserRoleID.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = UserRoleIDValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = UserRoleIDValidationError{}
-
 // Validate checks the field values on UserRole with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -4281,8 +4150,6 @@ func (m *UserRole) validate(all bool) error {
 	// no validation rules for Id
 
 	// no validation rules for Name
-
-	// no validation rules for Description
 
 	if len(errors) > 0 {
 		return UserRoleMultiError(errors)
@@ -4628,10 +4495,6 @@ func (m *Menu) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for Hidden
-
-	// no validation rules for Keepalive
-
 	for idx, item := range m.GetChildren() {
 		_, _ = idx, item
 
@@ -4906,13 +4769,19 @@ func (m *MenuMeta) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Locale
-
 	// no validation rules for RequireAuth
 
 	// no validation rules for Icon
 
+	// no validation rules for Locale
+
 	// no validation rules for Order
+
+	// no validation rules for HideInMenu
+
+	// no validation rules for NoAffix
+
+	// no validation rules for IgnoreCache
 
 	if len(errors) > 0 {
 		return MenuMetaMultiError(errors)

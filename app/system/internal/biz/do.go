@@ -55,9 +55,10 @@ type User struct {
 	Nickname  string     `json:"nickname"`
 	Gender    string     `json:"gender"`
 	Status    uint32     `json:"status"`
+	Creator   string     `json:"creator"`
 	CreatedAt string     `json:"created_at"`
 	UpdatedAt string     `json:"updated_at"`
-	UserRoles []UserRole `json:"user_roles"`
+	Roles     []UserRole `json:"roles"`
 }
 
 func (u User) GetUid() string {
@@ -69,8 +70,8 @@ func (u User) GetUsername() string {
 }
 
 func (u User) GetRoleIDs() (rids []string) {
-	for _, role := range u.UserRoles {
-		rids = append(rids, role.ID)
+	for _, role := range u.Roles {
+		rids = append(rids, role.Id)
 	}
 	return
 }
@@ -80,9 +81,8 @@ func (u User) GetNickname() string {
 }
 
 type UserRole struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Id   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type UploadInfo struct {
@@ -109,8 +109,6 @@ type Menu struct {
 	Name      string       `json:"name"`
 	Component string       `json:"component"`
 	Meta      *MenuMeta    `json:"meta"`
-	Hidden    bool         `json:"hidden"`
-	Keepalive bool         `json:"keepalive"`
 	Children  []Menu       `json:"children"`
 	CreatedAt string       `json:"created_at"`
 	UpdatedAt string       `json:"updated_at"`
@@ -118,11 +116,14 @@ type Menu struct {
 }
 
 type MenuMeta struct {
-	Locale      string   `json:"locale"`
-	RequireAuth bool     `json:"require_auth"`
 	Roles       []string `json:"roles"`
+	RequireAuth bool     `json:"require_auth"`
 	Icon        string   `json:"icon"`
+	Locale      string   `json:"locale"`
 	Order       uint32   `json:"order"`
+	HideInMenu  bool     `json:"hide_in_menu"`
+	NoAffix     bool     `json:"no_affix"`
+	IgnoreCache bool     `json:"ignore_cache"`
 }
 
 type MenuAction struct {

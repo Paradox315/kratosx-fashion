@@ -37,9 +37,9 @@ type UserRepo interface {
 	Update(context.Context, *model.User) error
 	UpdateStatus(context.Context, uint, model.UserStatus) error
 	DeleteByIDs(context.Context, []uint) error
-	ExistByUsername(context.Context, string) bool
-	ExistByEmail(context.Context, string) bool
-	ExistByMobile(context.Context, string) bool
+	ExistByUsername(context.Context, string) (int64, error)
+	ExistByEmail(context.Context, string) (int64, error)
+	ExistByMobile(context.Context, string) (int64, error)
 }
 
 type UserRoleRepo interface {

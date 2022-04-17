@@ -107,6 +107,18 @@ func ErrorPasswordInvalid(format string, args ...interface{}) *errors.Error {
 	return errors.New(400, ErrorReason_PASSWORD_INVALID.String(), fmt.Sprintf(format, args...))
 }
 
+func IsPasswordNotMatch(err error) bool {
+	if err == nil {
+		return false
+	}
+	e := errors.FromError(err)
+	return e.Reason == ErrorReason_PASSWORD_NOT_MATCH.String() && e.Code == 400
+}
+
+func ErrorPasswordNotMatch(format string, args ...interface{}) *errors.Error {
+	return errors.New(400, ErrorReason_PASSWORD_NOT_MATCH.String(), fmt.Sprintf(format, args...))
+}
+
 func IsCaptchaInvalid(err error) bool {
 	if err == nil {
 		return false

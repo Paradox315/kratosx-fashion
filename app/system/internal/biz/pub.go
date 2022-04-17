@@ -43,7 +43,7 @@ func NewPublicUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, logRepo Logi
 		log:          log.NewHelper(log.With(logger, "biz", "public")),
 	}
 }
-func (p *PublicUsecase) buildLog(ctx context.Context, uid uint64) (log *model.LoginLog, err error) {
+func (p *PublicUsecase) buildLog(ctx context.Context, uid uint64, typ model.LoginType) (log *model.LoginLog, err error) {
 	fc, ok := transport.FromFiberContext(ctx)
 	if !ok {
 		err = kerrors.InternalServer("CONTEXT PARSE", "find context error")
@@ -71,7 +71,7 @@ func (p *PublicUsecase) buildLog(ctx context.Context, uid uint64) (log *model.Lo
 		UserID:     uid,
 		Ip:         fc.IP(),
 		Location:   string(bytes),
-		LoginType:  model.LoginType_Login,
+		LoginType:  typ,
 		Agent:      agent.Name,
 		OS:         agent.OS,
 		Device:     agent.Device,
@@ -92,7 +92,7 @@ func (p *PublicUsecase) buildUserDto(ctx context.Context, upo *model.User) (user
 		rids = append(rids, uint(ur.RoleID))
 	}
 	for _, rid := range rids {
-		user.UserRoles = append(user.UserRoles, UserRole{ID: strconv.FormatUint(uint64(rid), 10)})
+		user.Roles = append(user.Roles, UserRole{Id: strconv.FormatUint(uint64(rid), 10)})
 	}
 	user.Id = cast.ToString(upo.ID)
 	user.CreatedAt = upo.CreatedAt.Format(timeFormat)
@@ -107,21 +107,38 @@ func (p *PublicUsecase) Register(ctx context.Context, regInfo RegisterInfo, c Ca
 			return
 		}
 	}
-	var user model.User
-	if p.userRepo.ExistByUsername(ctx, regInfo.Username) {
-		err = api.ErrorUserAlreadyExists("用户名已存在")
-		return
+	var (
+		user model.User
+		cnt  int64
+	)
+	if len(regInfo.Username) > 0 {
+		cnt, err = p.userRepo.ExistByUsername(ctx, regInfo.Username)
+		if err != nil {
+			return
+		}
+		if cnt > 0 {
+			err = api.ErrorUserAlreadyExists("用户名已存在")
+			return
+		}
 	}
 
 	if len(regInfo.Email) > 0 {
-		if p.userRepo.ExistByEmail(ctx, regInfo.Email) {
+		cnt, err = p.userRepo.ExistByEmail(ctx, regInfo.Email)
+		if err != nil {
+			return
+		}
+		if cnt > 0 {
 			err = api.ErrorEmailAlreadyExists("邮箱已存在")
 			return
 		}
 	}
 
 	if len(regInfo.Mobile) > 0 {
-		if p.userRepo.ExistByMobile(ctx, regInfo.Mobile) {
+		cnt, err = p.userRepo.ExistByMobile(ctx, regInfo.Mobile)
+		if err != nil {
+			return
+		}
+		if cnt > 0 {
 			err = api.ErrorMobileAlreadyExists("手机号已存在")
 			return
 		}
@@ -163,7 +180,7 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 		p.log.WithContext(ctx).Error(err)
 		return
 	}
-	loginLog, err := p.buildLog(ctx, uint64(upo.ID))
+	loginLog, err := p.buildLog(ctx, uint64(upo.ID), model.LoginType_Login)
 	if err != nil {
 		return
 	}
@@ -180,7 +197,7 @@ func (p *PublicUsecase) Generate(ctx context.Context) (c Captcha, err error) {
 
 func (p *PublicUsecase) Logout(ctx context.Context, token string) (err error) {
 	uid := ctxutil.GetUid(ctx)
-	loginLog, err := p.buildLog(ctx, cast.ToUint64(uid))
+	loginLog, err := p.buildLog(ctx, cast.ToUint64(uid), model.LoginType_Logout)
 	if err != nil {
 		return
 	}

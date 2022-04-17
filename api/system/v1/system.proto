@@ -51,9 +51,10 @@ message UserRequest {
     pattern:   "^1(3|4|5|6|7|8|9)\\d{9}$",
     max_len: 11,
   }];
-  uint32 gender = 7;
-  uint32 status = 8 ;
-  repeated UserRoleID user_roles = 9;
+  string nickname = 7;
+  uint32 gender = 8;
+  uint32 status = 9 ;
+  repeated string roles = 10;
 }
 
 message IDRequest {
@@ -73,6 +74,7 @@ message PasswordRequest {
   string id = 1;
   string old_password = 2;
   string new_password = 3;
+  string confirm_password = 4;
 }
 
 message ListRequest {
@@ -101,8 +103,6 @@ message MenuRequest {
   string name = 4;
   string component = 5;
   MenuMeta meta = 6;
-  bool hidden = 7;
-  bool keepalive = 8;
   repeated MenuAction actions = 9;
 }
 
@@ -130,10 +130,11 @@ message UserReply {
   string mobile = 5;
   string nickname = 6;
   string gender = 7;
-  uint32 status = 8;
-  string created_at = 9;
-  string updated_at = 10;
-  repeated UserRole user_roles = 11;
+  string creator=8;
+  uint32 status = 9;
+  string created_at = 10;
+  string updated_at = 11;
+  repeated UserRole roles = 12;
 }
 
 message UserState {
@@ -155,21 +156,22 @@ message ListUserReply {
 }
 
 message LoginLog {
-  string ip = 1;
-  string country = 2;
-  string region = 3;
-  string city = 4;
+  string id=1;
+  string ip = 2;
+  string country = 3;
+  string region = 4;
+  string city = 5;
   message Position{
     float lat = 1;
     float lng = 2;
   }
-  Position position = 5;
-  string time = 6;
-  string agent = 7;
-  string os = 8;
-  string device = 9;
-  uint32 device_type = 10;
-  uint32 login_type = 11;
+  Position position = 6;
+  string time = 7;
+  string agent = 8;
+  string os = 9;
+  string device = 10;
+  uint32 device_type = 11;
+  uint32 login_type = 12;
 }
 message ListLoginLogReply{
   repeated LoginLog list = 1;
@@ -223,14 +225,9 @@ message RouterReply{
   repeated RouterGroup routers = 1;
 }
 
-message UserRoleID{
-  string role_id = 1;
-}
-
 message UserRole{
   string id = 1;
   string name = 2;
-  string description = 3;
 }
 
 message RoleResource{
@@ -251,8 +248,6 @@ message Menu {
   string name = 4;
   string component = 5;
   MenuMeta meta = 6;
-  bool hidden = 7;
-  bool keepalive = 8;
   repeated Menu children = 9;
   string created_at = 10;
   string updated_at = 11;
@@ -265,11 +260,14 @@ message MenuAction{
 }
 
 message MenuMeta{
-  string locale = 1;
+  repeated string roles = 1;
   bool require_auth = 2;
-  repeated string roles = 3;
-  string icon = 4;
-  uint32 order = 5;
+  string icon = 3;
+  string locale = 4;
+  uint32 order=5;
+  bool hide_in_menu=6;
+  bool no_affix = 7;
+  bool ignore_cache = 8;
 }
 
 message QueryOption{

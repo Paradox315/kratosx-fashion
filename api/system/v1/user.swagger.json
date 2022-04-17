@@ -410,6 +410,9 @@
     "v1LoginLog": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "ip": {
           "type": "string"
         },
@@ -428,7 +431,7 @@
         "time": {
           "type": "string"
         },
-        "name": {
+        "agent": {
           "type": "string"
         },
         "os": {
@@ -457,6 +460,9 @@
           "type": "string"
         },
         "newPassword": {
+          "type": "string"
+        },
+        "confirmPassword": {
           "type": "string"
         }
       }
@@ -522,6 +528,9 @@
         "gender": {
           "type": "string"
         },
+        "creator": {
+          "type": "string"
+        },
         "status": {
           "type": "integer",
           "format": "int64"
@@ -532,7 +541,7 @@
         "updatedAt": {
           "type": "string"
         },
-        "userRoles": {
+        "roles": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1UserRole"
@@ -561,6 +570,9 @@
         "mobile": {
           "type": "string"
         },
+        "nickname": {
+          "type": "string"
+        },
         "gender": {
           "type": "integer",
           "format": "int64"
@@ -569,10 +581,10 @@
           "type": "integer",
           "format": "int64"
         },
-        "userRoles": {
+        "roles": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1UserRoleID"
+            "type": "string"
           }
         }
       }
@@ -584,17 +596,6 @@
           "type": "string"
         },
         "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        }
-      }
-    },
-    "v1UserRoleID": {
-      "type": "object",
-      "properties": {
-        "roleId": {
           "type": "string"
         }
       }

@@ -37,8 +37,8 @@ func (s *UserService) InitUserInfo(ctx context.Context, req *pb.EmptyRequest) (*
 	resp := &pb.UserState{}
 	_ = copier.Copy(&resp, &user)
 	resp.RegisterDate = user.CreatedAt
-	for _, role := range user.UserRoles {
-		resp.Roles = append(resp.Roles, role.ID)
+	for _, role := range user.Roles {
+		resp.Roles = append(resp.Roles, role.Id)
 	}
 	return resp, nil
 }
@@ -62,7 +62,7 @@ func (s *UserService) UpdateUser(ctx context.Context, req *pb.UserRequest) (*pb.
 	}, nil
 }
 func (s *UserService) UpdatePassword(ctx context.Context, req *pb.PasswordRequest) (*pb.IDReply, error) {
-	err := s.uc.EditPassword(ctx, req.OldPassword, req.NewPassword, cast.ToUint(req.Id))
+	err := s.uc.EditPassword(ctx, req.OldPassword, req.NewPassword, req.ConfirmPassword, cast.ToUint(req.Id))
 	if err != nil {
 		return nil, err
 	}

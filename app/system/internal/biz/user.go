@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	"kratosx-fashion/app/system/internal/data/model"
+	"kratosx-fashion/pkg/ctxutil"
 	"kratosx-fashion/pkg/cypher"
 	"kratosx-fashion/pkg/xcast"
 	"strconv"
@@ -37,6 +38,7 @@ func NewUserUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, roleRepo RoleR
 }
 func (u *UserUsecase) buildLog(ctx context.Context, lpo *model.LoginLog) (log *pb.LoginLog, err error) {
 	log = &pb.LoginLog{
+		Id:         cast.ToString(lpo.ID),
 		Ip:         lpo.Ip,
 		Time:       lpo.CreatedAt.Format(timeFormat),
 		Agent:      lpo.Agent,
@@ -78,10 +80,9 @@ func (u *UserUsecase) buildUserDo(ctx context.Context, upo *model.User) (user Us
 		return
 	}
 	for _, role := range roles {
-		user.UserRoles = append(user.UserRoles, UserRole{
-			ID:          strconv.FormatUint(uint64(role.ID), 10),
-			Name:        role.Name,
-			Description: role.Description,
+		user.Roles = append(user.Roles, UserRole{
+			Id:   strconv.FormatUint(uint64(role.ID), 10),
+			Name: role.Name,
 		})
 	}
 	user.Id = cast.ToString(upo.ID)
@@ -92,17 +93,50 @@ func (u *UserUsecase) buildUserDo(ctx context.Context, upo *model.User) (user Us
 }
 
 func (u *UserUsecase) validateUser(ctx context.Context, user *pb.UserRequest) (err error) {
-	if len(user.Username) != 0 && u.userRepo.ExistByUsername(ctx, user.Username) {
-		err = api.ErrorUserAlreadyExists("用户名已存在")
-		return
+	var cnt int64
+	if len(user.Username) > 0 {
+		cnt, err = u.userRepo.ExistByUsername(ctx, user.Username)
+		if err != nil {
+			return
+		}
+		if len(user.Id) > 0 && cnt > 1 {
+			err = api.ErrorUserAlreadyExists("用户名已存在")
+			return
+		}
+		if len(user.Id) == 0 && cnt > 0 {
+			err = api.ErrorUserAlreadyExists("用户名已存在")
+			return
+		}
 	}
-	if len(user.Email) != 0 && u.userRepo.ExistByEmail(ctx, user.Email) {
-		err = api.ErrorEmailAlreadyExists("邮箱已存在")
-		return
+
+	if len(user.Email) > 0 {
+		cnt, err = u.userRepo.ExistByEmail(ctx, user.Email)
+		if err != nil {
+			return
+		}
+		if len(user.Id) > 0 && cnt > 1 {
+			err = api.ErrorUserAlreadyExists("邮箱已存在")
+			return
+		}
+		if len(user.Id) == 0 && cnt > 0 {
+			err = api.ErrorEmailAlreadyExists("邮箱已存在")
+			return
+		}
 	}
-	if len(user.Mobile) != 0 && u.userRepo.ExistByMobile(ctx, user.Mobile) {
-		err = api.ErrorMobileAlreadyExists("手机号已存在")
-		return
+
+	if len(user.Mobile) > 0 {
+		cnt, err = u.userRepo.ExistByMobile(ctx, user.Mobile)
+		if err != nil {
+			return
+		}
+		if len(user.Id) > 0 && cnt > 1 {
+			err = api.ErrorUserAlreadyExists("手机号已存在")
+			return
+		}
+		if len(user.Id) == 0 && cnt > 0 {
+			err = api.ErrorMobileAlreadyExists("手机号已存在")
+			return
+		}
 	}
 	return
 }
@@ -112,6 +146,7 @@ func (u *UserUsecase) Save(ctx context.Context, user *pb.UserRequest) (id string
 	if err = u.validateUser(ctx, user); err != nil {
 		return
 	}
+	upo.Creator = ctxutil.GetUsername(ctx)
 	_ = copier.Copy(&upo, &user)
 	upo.Password = cypher.BcryptMake(user.Password)
 	if err = u.userRepo.Insert(ctx, upo); err != nil {
@@ -120,8 +155,8 @@ func (u *UserUsecase) Save(ctx context.Context, user *pb.UserRequest) (id string
 	uid := upo.ID
 	id = cast.ToString(uid)
 	var urs []*model.UserRole
-	for _, ur := range user.UserRoles {
-		rid := cast.ToUint64(ur.RoleId)
+	for _, ridstr := range user.Roles {
+		rid := cast.ToUint64(ridstr)
 		if uid == 0 || rid == 0 {
 			continue
 		}
@@ -146,8 +181,8 @@ func (u *UserUsecase) Edit(ctx context.Context, user *pb.UserRequest) (id string
 	id = user.Id
 	uid := cast.ToUint64(user.Id)
 	var urs []*model.UserRole
-	for _, ur := range user.UserRoles {
-		rid, _ := strconv.ParseUint(ur.RoleId, 10, 64)
+	for _, ridstr := range user.Roles {
+		rid := cast.ToUint64(ridstr)
 		if uid == 0 || rid == 0 {
 			continue
 		}
@@ -220,7 +255,7 @@ func (u *UserUsecase) EditStatus(ctx context.Context, uid uint, status model.Use
 	return u.userRepo.UpdateStatus(ctx, uid, status)
 }
 
-func (u *UserUsecase) EditPassword(ctx context.Context, oldpwd, newpwd string, uid uint) error {
+func (u *UserUsecase) EditPassword(ctx context.Context, oldpwd, newpwd, confirmPwd string, uid uint) error {
 	user, err := u.userRepo.SelectPasswordByUID(ctx, uid)
 	if err != nil {
 		err = errors.Wrap(err, "userUsecase.EditPassword.Select")
@@ -229,6 +264,9 @@ func (u *UserUsecase) EditPassword(ctx context.Context, oldpwd, newpwd string, u
 	}
 	if !cypher.BcryptCheck(oldpwd, user.Password) {
 		return api.ErrorPasswordInvalid("密码错误")
+	}
+	if newpwd != confirmPwd {
+		return api.ErrorPasswordNotMatch("密码不匹配")
 	}
 	user.Password = cypher.BcryptMake(newpwd)
 	return u.userRepo.Update(ctx, user)

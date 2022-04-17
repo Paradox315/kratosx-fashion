@@ -88,23 +88,22 @@ func (r *ResourceUsecase) buildMenuPO(ctx context.Context, menu *pb.MenuRequest)
 		Path:      menu.Path,
 		Component: menu.Component,
 	}
-	if len(menu.Id) > 0 && menu.Id != "0" {
-		mpo.ID = cast.ToUint(menu.Id)
-	}
-	if len(menu.ParentId) > 0 && menu.ParentId != "0" {
-		mpo.ParentID = cast.ToUint(menu.ParentId)
-	}
+	mpo.ID = cast.ToUint(menu.Id)
+	mpo.ParentID = cast.ToUint(menu.ParentId)
 	mpo.Locale = menu.Meta.Locale
+	mpo.Icon = menu.Meta.Icon
+	mpo.Order = menu.Meta.Order
+	if menu.Meta.HideInMenu {
+		mpo.HideInMenu = 1
+	}
+	if menu.Meta.IgnoreCache {
+		mpo.IgnoreCache = 1
+	}
 	if menu.Meta.RequireAuth {
 		mpo.RequireAuth = 1
 	}
-	mpo.Icon = menu.Meta.Icon
-	mpo.Order = menu.Meta.Order
-	if menu.Hidden {
-		mpo.Hidden = 1
-	}
-	if menu.Keepalive {
-		mpo.Keepalive = 1
+	if menu.Meta.NoAffix {
+		mpo.NoAffix = 1
 	}
 	if len(menu.Actions) == 0 {
 		return
@@ -164,8 +163,6 @@ func (r *ResourceUsecase) buildMenuDTO(ctx context.Context, mpo *model.ResourceM
 		Path:      mpo.Path,
 		Name:      mpo.Name,
 		Component: mpo.Component,
-		Hidden:    mpo.Hidden == model.HiddenStatusShow,
-		Keepalive: mpo.Keepalive == model.KeepAliveStatusOpen,
 		CreatedAt: mpo.CreatedAt.Format(timeFormat),
 		UpdatedAt: mpo.UpdatedAt.Format(timeFormat),
 		Actions:   nil,
@@ -181,11 +178,14 @@ func (r *ResourceUsecase) buildMenuDTO(ctx context.Context, mpo *model.ResourceM
 		roles = append(roles, cast.ToString(rr.RoleID))
 	}
 	menu.Meta = &MenuMeta{
-		Locale:      mpo.Locale,
-		RequireAuth: mpo.RequireAuth == model.RequireAuthStatusOpen,
 		Roles:       roles,
+		RequireAuth: mpo.RequireAuth == 1,
 		Icon:        mpo.Icon,
+		Locale:      mpo.Locale,
 		Order:       mpo.Order,
+		HideInMenu:  mpo.HideInMenu == 1,
+		NoAffix:     mpo.NoAffix == 1,
+		IgnoreCache: mpo.IgnoreCache == 1,
 	}
 	if len(mpo.Actions) == 0 {
 		return

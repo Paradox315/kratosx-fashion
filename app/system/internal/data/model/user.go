@@ -25,8 +25,8 @@ func (s UserStatus) String() string {
 
 const (
 	GenderUnknown GenderStatus = iota
-	GenderFemale
 	GenderMale
+	GenderFemale
 )
 
 func (g GenderStatus) String() string {

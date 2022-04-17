@@ -94,7 +94,6 @@ func (j *JWTService) MiddlewareFunc() fiber.Handler {
 					} else {
 						tokenData, _ := j.jwtRepo.Create(ctx, user)
 						c.Set("new-token", tokenData.AccessToken)
-						c.Set("new-expires-at", cast.ToString(tokenData.ExpiresAt))
 						_ = j.jwtRepo.JoinInBlackList(ctx, jwtToken)
 					}
 				}

@@ -377,12 +377,6 @@
         "meta": {
           "$ref": "#/definitions/v1MenuMeta"
         },
-        "hidden": {
-          "type": "boolean"
-        },
-        "keepalive": {
-          "type": "boolean"
-        },
         "children": {
           "type": "array",
           "items": {
@@ -417,24 +411,33 @@
     "v1MenuMeta": {
       "type": "object",
       "properties": {
-        "locale": {
-          "type": "string"
-        },
-        "requireAuth": {
-          "type": "boolean"
-        },
         "roles": {
           "type": "array",
           "items": {
             "type": "string"
           }
         },
+        "requireAuth": {
+          "type": "boolean"
+        },
         "icon": {
+          "type": "string"
+        },
+        "locale": {
           "type": "string"
         },
         "order": {
           "type": "integer",
           "format": "int64"
+        },
+        "hideInMenu": {
+          "type": "boolean"
+        },
+        "noAffix": {
+          "type": "boolean"
+        },
+        "ignoreCache": {
+          "type": "boolean"
         }
       }
     },
@@ -469,12 +472,6 @@
         },
         "meta": {
           "$ref": "#/definitions/v1MenuMeta"
-        },
-        "hidden": {
-          "type": "boolean"
-        },
-        "keepalive": {
-          "type": "boolean"
         },
         "actions": {
           "type": "array",

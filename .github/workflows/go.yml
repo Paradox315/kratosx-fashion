@@ -18,8 +18,14 @@ jobs:
       with:
         go-version: 1.18
 
+    - name: System Init
+      run: cd app/system && make init
+
+    - name: System Generate
+      run: cd app/system && make all
+
     - name: System Build
-      run: cd app/system && go build -v ./...
+      run: cd app/system && make build
 
     - name: System Test
       run: cd app/system && go test -v ./...

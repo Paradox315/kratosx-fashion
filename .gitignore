@@ -35,3 +35,8 @@ log/
 .vscode/
 .idea/
 *.swp
+
+# Generated files
+*.pb.go
+*.validate.go
+*.swagger.json

@@ -92,7 +92,7 @@ func (u *userRepo) SelectPage(ctx context.Context, limit, offset int, opt *biz.S
 	if opt != nil && len(opt.Order) > 0 {
 		tx = tx.Order(opt.Order)
 	}
-	err = tx.WithContext(ctx).Where("status = ?", model.UserStatusNormal).Limit(limit).Offset(offset).Find(&users).Error
+	err = tx.WithContext(ctx).Limit(limit).Offset(offset).Find(&users).Error
 	if err != nil {
 		err = errors.Wrap(err, "userRepo.SelectPage")
 		u.log.WithContext(ctx).Error(err)

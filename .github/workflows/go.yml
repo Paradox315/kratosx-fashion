@@ -30,8 +30,8 @@ jobs:
     - name: System Build
       run: cd app/system && make build
 
-    - name: System Test
-      run: cd app/system && go test -v ./...
+#    - name: System Test
+#      run: cd app/system && go test -v ./...
 
     - name: Run Revive Action by pulling pre-built image
       uses: docker://morphy/revive-action:v2

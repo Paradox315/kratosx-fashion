@@ -36,7 +36,7 @@ func initApp(confServer *conf.Server, registry *conf.Registry, storage *conf.Sto
 	ip2locationDB := data.NewIPLocationDB(confData, logLogger)
 	loginLogRepo := repo.NewLoginLogRepo(dataData, logLogger, ip2locationDB)
 	transaction := data.NewTransaction(dataData)
-	userUsecase := biz.NewUserUsecase(userRepo, userRoleRepo, roleRepo, loginLogRepo, transaction, logLogger)
+	userUsecase := biz.NewUserUsecase(jwtRepo, userRepo, userRoleRepo, roleRepo, loginLogRepo, transaction, logLogger)
 	jwtService := middleware.NewJwtService(jwtRepo, userUsecase, client, logLogger)
 	syncedEnforcer := data.NewCasbin(confData, db, logLogger)
 	casbinAuth := middleware.NewCasbinAuth(syncedEnforcer, logLogger)

@@ -88,7 +88,6 @@ type RoleResourceRepo interface {
 type ResourceMenuRepo interface {
 	Select(context.Context, uint) (*model.ResourceMenu, error)
 	SelectAll(context.Context) ([]*model.ResourceMenu, error)
-	SelectPage(context.Context, int, int) ([]*model.ResourceMenu, int64, error)
 	SelectByIDs(context.Context, []uint) ([]*model.ResourceMenu, error)
 	SelectPageByIDs(context.Context, []uint, int, int) ([]*model.ResourceMenu, int64, error)
 	Insert(context.Context, ...*model.ResourceMenu) error

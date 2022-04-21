@@ -97,9 +97,9 @@ func (s *ResourceService) GetRouteTreeByRole(ctx context.Context, req *pb.IDRequ
 	}
 	resp := &pb.RouterReply{}
 	for _, route := range tree {
-		routeResp := &pb.RouterGroup{}
+		routeResp := &pb.Router{}
 		_ = copier.Copy(&routeResp, &route)
-		resp.Routers = append(resp.Routers, routeResp)
+		resp.RoleRouters = append(resp.RoleRouters, routeResp)
 	}
 	return resp, nil
 }
@@ -110,7 +110,7 @@ func (s *ResourceService) ListMenu(ctx context.Context, req *pb.ListRequest) (*p
 		return nil, err
 	}
 	resp := &pb.ListMenuReply{}
-	resp.Total = uint32(total)
+	resp.Total = total
 	for _, menu := range menus {
 		menuResp := &pb.Menu{}
 		_ = copier.Copy(&menuResp, &menu)

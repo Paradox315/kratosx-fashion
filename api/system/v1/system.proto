@@ -184,7 +184,6 @@ message RoleReply {
   string description = 3;
   string created_at = 4;
   string updated_at = 5;
-  repeated RoleResource role_resources = 6;
 }
 
 message ListRoleReply {
@@ -223,6 +222,7 @@ message UploadReply {
 
 message RouterReply{
   repeated RouterGroup routers = 1;
+  repeated Router role_routers = 2;
 }
 
 message UserRole{
@@ -294,6 +294,6 @@ message Router{
 message RouterGroup{
   string path = 1;
   string name = 2;
-  string methods = 3;
-  repeated Router router = 4;
+  string method = 3;
+  repeated Router children = 4;
 }

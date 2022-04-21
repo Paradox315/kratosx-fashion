@@ -2,7 +2,6 @@ package biz
 
 import (
 	"context"
-	"github.com/casbin/casbin/v2/util"
 	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/pkg/errors"
@@ -33,10 +32,6 @@ func NewResourceUsecase(menuRepo ResourceMenuRepo, routeRepo ResourceRouterRepo,
 	}
 }
 
-func match(r model.Router, p model.ResourceRouter) bool {
-	return (util.KeyMatch(r.Path, p.Path) || util.KeyMatch2(r.Path, p.Path)) && util.RegexMatch(r.Method, p.Method)
-}
-
 func longestCommonPrefix(rs []model.Router, group string) (prefix string) {
 	if len(rs) == 0 {
 		return ""
@@ -63,10 +58,10 @@ func (r *ResourceUsecase) buildRouters(ctx context.Context, rpos []model.Router)
 	}
 	for group, children := range routerMap {
 		routers = append(routers, RouterGroup{
-			Path:   longestCommonPrefix(children, group),
-			Name:   group,
-			Router: children,
-			Methods: func(routers []model.Router) string {
+			Path:     longestCommonPrefix(children, group),
+			Name:     group,
+			Children: children,
+			Method: func(routers []model.Router) string {
 				var methods []string
 				visited := make(map[string]bool)
 				for _, route := range routers {
@@ -126,7 +121,7 @@ func (r *ResourceUsecase) buildMenuPO(ctx context.Context, menu *pb.MenuRequest)
 func (r *ResourceUsecase) buildTree(ctx context.Context, mpos []*model.ResourceMenu) (menus []Menu, err error) {
 	for _, mpo := range mpos {
 		var menu Menu
-		menu, err = r.buildMenuDTO(ctx, mpo)
+		menu, err = r.buildMenuDO(ctx, mpo)
 		if err != nil {
 			return
 		}
@@ -156,7 +151,7 @@ func (r *ResourceUsecase) buildMenuChild(ctx context.Context, menu *Menu, menuMa
 	return
 }
 
-func (r *ResourceUsecase) buildMenuDTO(ctx context.Context, mpo *model.ResourceMenu) (menu Menu, err error) {
+func (r *ResourceUsecase) buildMenuDO(ctx context.Context, mpo *model.ResourceMenu) (menu Menu, err error) {
 	menu = Menu{
 		Id:        cast.ToString(mpo.ID),
 		ParentId:  cast.ToString(mpo.ParentID),
@@ -243,18 +238,32 @@ func (r *ResourceUsecase) RoleMenuTree(ctx context.Context, rid uint) (menus []M
 	if err != nil {
 		return
 	}
-	return r.buildTree(ctx, mpos)
+	for _, mpo := range mpos {
+		var menu Menu
+		menu, err = r.buildMenuDO(ctx, mpo)
+		if err != nil {
+			return
+		}
+		menus = append(menus, menu)
+	}
+	return
 }
 
-func (r *ResourceUsecase) MenuPage(ctx context.Context, limit, offset int) (menus []Menu, total int64, err error) {
-	mpos, total, err := r.menuRepo.SelectPage(ctx, limit, offset)
+func (r *ResourceUsecase) MenuPage(ctx context.Context, limit, offset int) (list []Menu, total uint32, err error) {
+	mpos, err := r.menuRepo.SelectAll(ctx)
 	if err != nil {
 		return
 	}
-	menus, err = r.buildTree(ctx, mpos)
+	list, err = r.buildTree(ctx, mpos)
 	if err != nil {
 		return
 	}
+	if offset > len(list)-1 {
+		return nil, 0, err
+	}
+	total = uint32(len(list))
+	end := math.Min(limit+offset, len(list))
+	list = list[offset:end]
 	return
 }
 
@@ -269,25 +278,17 @@ func (r *ResourceUsecase) RouterTree(ctx context.Context) (groups []RouterGroup,
 	return
 }
 
-func (r *ResourceUsecase) RoleRouterTree(ctx context.Context, rids ...string) (groups []RouterGroup, err error) {
-	var filtered []model.Router
-	allRoutes, err := r.routeRepo.SelectAll(ctx)
+func (r *ResourceUsecase) RoleRouterTree(ctx context.Context, rids ...string) (routers []model.Router, err error) {
+	roleRouters, err := r.routeRepo.SelectByRoleIDs(ctx, rids)
 	if err != nil {
 		return
 	}
-	myRoutes, err := r.routeRepo.SelectByRoleIDs(ctx, rids)
-	if err != nil {
-		return
+	for _, rr := range roleRouters {
+		routers = append(routers, model.Router{
+			Method: rr.Method,
+			Path:   rr.Path,
+		})
 	}
-	for _, route := range allRoutes {
-		for _, myRoute := range myRoutes {
-			if !match(route, myRoute) {
-				continue
-			}
-			filtered = append(filtered, route)
-		}
-	}
-	groups = r.buildRouters(ctx, filtered)
 	return
 }
 

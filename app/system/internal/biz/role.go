@@ -8,7 +8,6 @@ import (
 	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/xcast"
-	"strconv"
 )
 
 type RoleUsecase struct {
@@ -38,14 +37,6 @@ func (r *RoleUsecase) buildRoleReply(ctx context.Context, rpo *model.Role) (role
 		Description: rpo.Description,
 		CreatedAt:   rpo.CreatedAt.Format(timeFormat),
 		UpdatedAt:   rpo.UpdatedAt.Format(timeFormat),
-	}
-	var rMenus []*model.RoleResource
-	rMenus, err = r.roleResourceRepo.SelectByRoleID(ctx, uint64(rpo.ID))
-	for _, rm := range rMenus {
-		role.RoleResources = append(role.RoleResources, &pb.RoleResource{
-			ResourceId:   strconv.FormatUint(rm.ResourceID, 10),
-			ResourceType: uint32(rm.Type),
-		})
 	}
 	return
 }

@@ -3,6 +3,8 @@ package biz
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/encoding"
+	kerrors "github.com/go-kratos/kratos/v2/errors"
+	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	"kratosx-fashion/app/system/internal/data/model"
@@ -18,6 +20,7 @@ import (
 )
 
 type UserUsecase struct {
+	jwtRepo      JwtRepo
 	userRepo     UserRepo
 	userRoleRepo UserRoleRepo
 	logRepo      LoginLogRepo
@@ -26,8 +29,9 @@ type UserUsecase struct {
 	log          *log.Helper
 }
 
-func NewUserUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, roleRepo RoleRepo, logRepo LoginLogRepo, tx Transaction, logger log.Logger) *UserUsecase {
+func NewUserUsecase(jwtRepo JwtRepo, userRepo UserRepo, userRoleRepo UserRoleRepo, roleRepo RoleRepo, logRepo LoginLogRepo, tx Transaction, logger log.Logger) *UserUsecase {
 	return &UserUsecase{
+		jwtRepo:      jwtRepo,
 		userRepo:     userRepo,
 		userRoleRepo: userRoleRepo,
 		roleRepo:     roleRepo,
@@ -269,7 +273,15 @@ func (u *UserUsecase) EditPassword(ctx context.Context, oldpwd, newpwd, confirmP
 		return api.ErrorPasswordNotMatch("密码不匹配")
 	}
 	user.Password = cypher.BcryptMake(newpwd)
-	return u.userRepo.Update(ctx, user)
+
+	if err = u.userRepo.Update(ctx, user); err != nil {
+		return err
+	}
+	c, ok := transport.FromFiberContext(ctx)
+	if !ok {
+		return kerrors.InternalServer("CONTEXT PARSE", "find context error")
+	}
+	return u.jwtRepo.JoinInBlackList(ctx, c.Locals("token").(string))
 }
 
 func (u *UserUsecase) LogPage(ctx context.Context, uid uint64, limit, offset int) (list *pb.ListLoginLogReply, err error) {

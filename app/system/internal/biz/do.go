@@ -96,10 +96,10 @@ type SQLOption struct {
 }
 
 type RouterGroup struct {
-	Path    string         `json:"path"`
-	Name    string         `json:"name"`
-	Methods string         `json:"methods"`
-	Router  []model.Router `json:"router"`
+	Path     string         `json:"path"`
+	Name     string         `json:"name"`
+	Method   string         `json:"method"`
+	Children []model.Router `json:"children"`
 }
 
 type Menu struct {

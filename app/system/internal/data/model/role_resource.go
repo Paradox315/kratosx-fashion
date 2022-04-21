@@ -4,6 +4,19 @@ import "gorm.io/gorm"
 
 type ResourceType uint8
 
+const (
+	ResourceTypeMenu ResourceType = iota
+)
+
+func (t ResourceType) String() string {
+	switch t {
+	case ResourceTypeMenu:
+		return "menu"
+	default:
+		return "unknown"
+	}
+}
+
 // RoleResource
 // 角色资源关联表
 type RoleResource struct {

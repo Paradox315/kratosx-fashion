@@ -28,22 +28,14 @@ const (
 	authorizationKey string = "Authorization"
 
 	// reason holds the error reason.
-	reason string = "UNAUTHORIZED"
-
-	// jwtBlacklistKey holds the key used to store the JWT Token in the redis.
-	jwtBlacklistKey = "jwt:blacklist:%s"
+	jwtReason string = "JWT_AUTH_ERROR"
 
 	// jwtBlacklistGracePeriod holds the grace period for the JWT Token in the redis.
-	jwtBlacklistGracePeriod = time.Second * 1
+	jwtBlacklistGracePeriod = time.Second * 6
 )
 
 var (
-	ErrMissingJwtToken        = errors.Unauthorized(reason, "JWT token is missing")
-	ErrTokenInvalid           = errors.Unauthorized(reason, "Token is invalid")
-	ErrTokenExpired           = errors.Unauthorized(reason, "JWT token has expired")
-	ErrTokenParseFail         = errors.Unauthorized(reason, "Fail to parse JWT token ")
-	ErrUnSupportSigningMethod = errors.Unauthorized(reason, "Wrong signing method")
-	ErrParseClaimsFail        = errors.Unauthorized(reason, "Fail to parse claims")
+	ErrMissingJwtToken = errors.Unauthorized(jwtReason, "JWT token is missing")
 )
 
 type JWTService struct {
@@ -87,7 +79,7 @@ func (j *JWTService) MiddlewareFunc() fiber.Handler {
 			if claims.ExpiresAt-time.Now().Unix() < jwtBlacklistGracePeriod.Milliseconds() {
 				if j.lock.Get() {
 					var user biz.JwtUser
-					user, err = j.uc.Get(ctx, cast.ToUint(claims.Id))
+					user, err = j.uc.Get(ctx, cast.ToUint(claims.UID))
 					if err != nil {
 						j.log.WithContext(ctx).Error("get user info error", err)
 						j.lock.Release()

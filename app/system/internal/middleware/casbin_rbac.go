@@ -13,6 +13,8 @@ import (
 
 var _ kmw.FiberMiddleware = (*CasbinAuth)(nil)
 
+const casbinReason = "CASBIN_RBAC_ERROR"
+
 type CasbinAuth struct {
 	once sync.Once
 	e    *casbin.SyncedEnforcer
@@ -25,16 +27,21 @@ func (c *CasbinAuth) MiddlewareFunc() fiber.Handler {
 			return ctx.Next()
 		}
 		// 获取请求的URI
-		obj := ctx.OriginalURL()
+		obj := ctx.Path()
 		// 获取请求方法
 		act := ctx.Method()
 		// 获取用户的角色
 		rids := ctx.Locals("roles").([]string)
+		checked := false
 		for _, rid := range rids {
-			success, _ := c.e.Enforce(rid, obj, act)
-			if !success {
-				return apistate.Error[any]().WithError(errors.Unauthorized("authorizer", "权限不足")).Send(ctx)
+			success, e := c.e.Enforce(rid, obj, act)
+			if success && e == nil {
+				checked = true
+				break
 			}
+		}
+		if !checked {
+			return apistate.Error[any]().WithError(errors.Unauthorized(casbinReason, "权限不足")).Send(ctx)
 		}
 		return ctx.Next()
 	}

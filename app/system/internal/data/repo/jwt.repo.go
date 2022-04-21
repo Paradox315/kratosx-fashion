@@ -25,17 +25,13 @@ const (
 	bearerWord string = "Bearer"
 
 	// reason holds the error reason.
-	reason string = "UNAUTHORIZED"
+	reason string = "JWT_AUTH_ERROR"
 
 	// jwtBlacklistKey holds the key used to store the JWT Token in the redis.
 	jwtBlacklistKey = "jwt:blacklist:%s"
-
-	// jwtBlacklistGracePeriod holds the grace period for the JWT Token in the redis.
-	jwtBlacklistGracePeriod = time.Second * 1
 )
 
 var (
-	ErrMissingJwtToken        = kerrors.Unauthorized(reason, "JWT token is missing")
 	ErrTokenInvalid           = kerrors.Unauthorized(reason, "Token is invalid")
 	ErrTokenExpired           = kerrors.Unauthorized(reason, "JWT token has expired")
 	ErrTokenParseFail         = kerrors.Unauthorized(reason, "Fail to parse JWT token ")

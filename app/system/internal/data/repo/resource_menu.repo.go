@@ -57,17 +57,6 @@ func (r *ResourceMenuRepo) SelectAll(ctx context.Context) ([]*model.ResourceMenu
 	return menus, nil
 }
 
-func (r *ResourceMenuRepo) SelectPage(ctx context.Context, limit, offset int) (menus []*model.ResourceMenu, total int64, err error) {
-	rr := r.baseRepo.ResourceMenu
-	menus, total, err = rr.WithContext(ctx).Where(rr.ParentID.Eq(0)).FindByPage(offset, limit)
-	if err != nil {
-		err = errors.Wrap(err, "resource_menu.repo.SelectPage")
-		r.log.WithContext(ctx).Error(err)
-		return
-	}
-	return
-}
-
 func (r *ResourceMenuRepo) SelectPageByIDs(ctx context.Context, ids []uint, limit, offset int) (menus []*model.ResourceMenu, total int64, err error) {
 	rr := r.baseRepo.ResourceMenu
 	menus, total, err = rr.WithContext(ctx).Where(rr.ID.In(ids...), rr.ParentID.Eq(0)).FindByPage(offset, limit)

@@ -37,8 +37,9 @@ func newResourceMenu(db *gorm.DB) resourceMenu {
 	_resourceMenu.RequireAuth = field.NewUint8(tableName, "require_auth")
 	_resourceMenu.Icon = field.NewString(tableName, "icon")
 	_resourceMenu.Order = field.NewUint32(tableName, "order")
-	_resourceMenu.Hidden = field.NewUint8(tableName, "hidden")
-	_resourceMenu.KeepAlive = field.NewUint8(tableName, "keep_alive")
+	_resourceMenu.HideInMenu = field.NewUint8(tableName, "hide_in_menu")
+	_resourceMenu.NoAffix = field.NewUint8(tableName, "no_affix")
+	_resourceMenu.IgnoreCache = field.NewUint8(tableName, "ignore_cache")
 	_resourceMenu.Actions = field.NewString(tableName, "actions")
 
 	_resourceMenu.fillFieldMap()
@@ -62,8 +63,9 @@ type resourceMenu struct {
 	RequireAuth field.Uint8
 	Icon        field.String
 	Order       field.Uint32
-	Hidden      field.Uint8
-	KeepAlive   field.Uint8
+	HideInMenu  field.Uint8
+	NoAffix     field.Uint8
+	IgnoreCache field.Uint8
 	Actions     field.String
 
 	fieldMap map[string]field.Expr
@@ -93,8 +95,9 @@ func (r *resourceMenu) updateTableName(table string) *resourceMenu {
 	r.RequireAuth = field.NewUint8(table, "require_auth")
 	r.Icon = field.NewString(table, "icon")
 	r.Order = field.NewUint32(table, "order")
-	r.Hidden = field.NewUint8(table, "hidden")
-	r.KeepAlive = field.NewUint8(table, "keep_alive")
+	r.HideInMenu = field.NewUint8(table, "hide_in_menu")
+	r.NoAffix = field.NewUint8(table, "no_affix")
+	r.IgnoreCache = field.NewUint8(table, "ignore_cache")
 	r.Actions = field.NewString(table, "actions")
 
 	r.fillFieldMap()
@@ -118,7 +121,7 @@ func (r *resourceMenu) GetFieldByName(fieldName string) (field.OrderExpr, bool) 
 }
 
 func (r *resourceMenu) fillFieldMap() {
-	r.fieldMap = make(map[string]field.Expr, 15)
+	r.fieldMap = make(map[string]field.Expr, 16)
 	r.fieldMap["id"] = r.ID
 	r.fieldMap["created_at"] = r.CreatedAt
 	r.fieldMap["updated_at"] = r.UpdatedAt
@@ -131,8 +134,9 @@ func (r *resourceMenu) fillFieldMap() {
 	r.fieldMap["require_auth"] = r.RequireAuth
 	r.fieldMap["icon"] = r.Icon
 	r.fieldMap["order"] = r.Order
-	r.fieldMap["hidden"] = r.Hidden
-	r.fieldMap["keep_alive"] = r.KeepAlive
+	r.fieldMap["hide_in_menu"] = r.HideInMenu
+	r.fieldMap["no_affix"] = r.NoAffix
+	r.fieldMap["ignore_cache"] = r.IgnoreCache
 	r.fieldMap["actions"] = r.Actions
 }
 

@@ -50,13 +50,13 @@ func (r *RoleResourceRepo) SelectByRoleID(ctx context.Context, rid uint64, resou
 		return nil, err
 	}
 	var result []*model.RoleResource
-	visited := make(map[uint64]bool)
+	visited := make(map[string]struct{})
 	for _, e := range list {
 		if _, ok := visited[e.ResourceID]; ok {
 			continue
 		}
 		result = append(result, e)
-		visited[e.ResourceID] = true
+		visited[e.ResourceID] = struct{}{}
 	}
 	return result, nil
 }
@@ -101,7 +101,7 @@ func (r *RoleResourceRepo) DeleteByRoleIDs(ctx context.Context, rids []uint64) e
 	return nil
 }
 
-func (r *RoleResourceRepo) DeleteByResourceIDs(ctx context.Context, resIDs []uint64, resourceType model.ResourceType) error {
+func (r *RoleResourceRepo) DeleteByResourceIDs(ctx context.Context, resIDs []string, resourceType model.ResourceType) error {
 	rr := r.baseRepo.RoleResource
 	if _, err := rr.WithContext(ctx).Where(rr.ResourceID.In(resIDs...), rr.Type.Eq(uint8(resourceType))).Delete(); err != nil {
 		err = errors.Wrap(err, "role_resource.repo.DeleteByResourceIDs")
@@ -118,7 +118,7 @@ func (r *RoleResourceRepo) UpdateByRoleID(ctx context.Context, rid uint64, rrs [
 	})
 }
 
-func (r *RoleResourceRepo) SelectByResourceID(ctx context.Context, rid uint64, resourceType ...model.ResourceType) ([]*model.RoleResource, error) {
+func (r *RoleResourceRepo) SelectByResourceID(ctx context.Context, rid string, resourceType ...model.ResourceType) ([]*model.RoleResource, error) {
 	rr := r.baseRepo.RoleResource
 	if len(resourceType) == 0 {
 		return rr.WithContext(ctx).Where(rr.ResourceID.Eq(rid)).Find()

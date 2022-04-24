@@ -45,7 +45,7 @@ func (r *RoleUsecase) buildResources(ctx context.Context, role *pb.RoleRequest) 
 	for _, rm := range role.RoleResources {
 		menus = append(menus, &model.RoleResource{
 			RoleID:     cast.ToUint64(role.Id),
-			ResourceID: cast.ToUint64(rm.ResourceId),
+			ResourceID: rm.ResourceId,
 			Type:       model.ResourceType(rm.ResourceType),
 		})
 	}
@@ -69,9 +69,9 @@ func (r *RoleUsecase) Save(ctx context.Context, role *pb.RoleRequest) (id string
 	}
 	id = cast.ToString(rpo.ID)
 	role.Id = id
-	rMenus, rRoutes := r.buildResources(ctx, role)
-	if len(rMenus) > 0 {
-		if err = r.roleResourceRepo.Insert(ctx, rMenus...); err != nil {
+	resources, rRoutes := r.buildResources(ctx, role)
+	if len(resources) > 0 {
+		if err = r.roleResourceRepo.Insert(ctx, resources...); err != nil {
 			return
 		}
 	}
@@ -90,11 +90,11 @@ func (r *RoleUsecase) Edit(ctx context.Context, role *pb.RoleRequest) (id string
 		Description: role.Description,
 	}
 	rpo.ID = cast.ToUint(role.Id)
-	rMenus, rRoutes := r.buildResources(ctx, role)
+	resources, rRoutes := r.buildResources(ctx, role)
 
 	err = r.tx.ExecTx(ctx, func(ctx context.Context) error {
-		if len(rMenus) > 0 {
-			if err = r.roleResourceRepo.UpdateByRoleID(ctx, uint64(rpo.ID), rMenus); err != nil {
+		if len(resources) > 0 {
+			if err = r.roleResourceRepo.UpdateByRoleID(ctx, uint64(rpo.ID), resources); err != nil {
 				return err
 			}
 		}

@@ -40,6 +40,7 @@ func initApp(confServer *conf.Server, registry *conf.Registry, storage *conf.Sto
 	jwtService := middleware.NewJwtService(jwtRepo, userUsecase, client, logLogger)
 	syncedEnforcer := data.NewCasbin(confData, db, logLogger)
 	casbinAuth := middleware.NewCasbinAuth(syncedEnforcer, logLogger)
+	globalMiddleware := middleware.NewGlobalMiddleware(logLogger)
 	captchaRepo := repo.NewCaptchaRepo(logLogger)
 	storageStorage := infra.NewStorage(storage)
 	publicUsecase := biz.NewPublicUsecase(userRepo, userRoleRepo, loginLogRepo, captchaRepo, jwtRepo, storageStorage, logLogger)
@@ -52,7 +53,7 @@ func initApp(confServer *conf.Server, registry *conf.Registry, storage *conf.Sto
 	resourceMenuRepo := repo.NewResourceMenuRepo(dataData, logLogger)
 	resourceUsecase := biz.NewResourceUsecase(resourceMenuRepo, resourceRouterRepo, roleResourceRepo, transaction, logLogger)
 	resourceService := service.NewResourceService(resourceUsecase, logLogger)
-	xhttpServer := server.NewHTTPServer(confServer, jwtService, casbinAuth, pubService, userService, roleService, resourceService, client, logLogger)
+	xhttpServer := server.NewHTTPServer(confServer, jwtService, casbinAuth, globalMiddleware, pubService, userService, roleService, resourceService, logLogger)
 	registrar := infra.NewRegistrar(registry)
 	app := newApp(logLogger, xhttpServer, registrar)
 	return app, func() {

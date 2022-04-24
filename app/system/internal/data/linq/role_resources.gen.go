@@ -30,7 +30,7 @@ func newRoleResource(db *gorm.DB) roleResource {
 	_roleResource.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_roleResource.DeletedAt = field.NewField(tableName, "deleted_at")
 	_roleResource.RoleID = field.NewUint64(tableName, "role_id")
-	_roleResource.ResourceID = field.NewUint64(tableName, "resource_id")
+	_roleResource.ResourceID = field.NewString(tableName, "resource_id")
 	_roleResource.Type = field.NewUint8(tableName, "type")
 
 	_roleResource.fillFieldMap()
@@ -47,7 +47,7 @@ type roleResource struct {
 	UpdatedAt  field.Time
 	DeletedAt  field.Field
 	RoleID     field.Uint64
-	ResourceID field.Uint64
+	ResourceID field.String
 	Type       field.Uint8
 
 	fieldMap map[string]field.Expr
@@ -70,7 +70,7 @@ func (r *roleResource) updateTableName(table string) *roleResource {
 	r.UpdatedAt = field.NewTime(table, "updated_at")
 	r.DeletedAt = field.NewField(table, "deleted_at")
 	r.RoleID = field.NewUint64(table, "role_id")
-	r.ResourceID = field.NewUint64(table, "resource_id")
+	r.ResourceID = field.NewString(table, "resource_id")
 	r.Type = field.NewUint8(table, "type")
 
 	r.fillFieldMap()

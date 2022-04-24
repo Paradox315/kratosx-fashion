@@ -3,7 +3,15 @@ package ctxutil
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/transport"
+	"github.com/gofiber/fiber/v2"
 )
+
+func GetFiberCtx(ctx context.Context) (*fiber.Ctx, bool) {
+	if c, ok := transport.FromFiberContext(ctx); ok {
+		return c, true
+	}
+	return nil, false
+}
 
 func GetUid(ctx context.Context) (uid string) {
 	if c, ok := transport.FromFiberContext(ctx); ok {

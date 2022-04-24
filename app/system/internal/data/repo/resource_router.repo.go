@@ -2,21 +2,25 @@ package repo
 
 import (
 	"context"
+	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
+	"kratosx-fashion/pkg/ctxutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/app/system/internal/data"
 	"kratosx-fashion/app/system/internal/data/model"
 
 	"github.com/casbin/casbin/v2"
-	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/gofiber/fiber/v2"
 
 	kerrors "github.com/go-kratos/kratos/v2/errors"
 )
+
+const routerAll = "router:all"
 
 type ResourceRouterRepo struct {
 	dao   *data.Data
@@ -40,24 +44,27 @@ func parseGroup(name string) string {
 }
 
 func (r *ResourceRouterRepo) SelectAll(ctx context.Context) (rs []model.Router, err error) {
-	var routers [][]*fiber.Route
-	bytes, err := r.dao.RDB.Get(ctx, "system:routers").Bytes()
-	if err != nil {
-		err = errors.Wrap(err, "ResourceRouterRepo.SelectAll")
+	bytes, err := r.dao.RDB.WithContext(ctx).Get(ctx, routerAll).Bytes()
+	if err == nil {
+		_ = codec.Unmarshal(bytes, &rs)
+		return
+	}
+	if err != redis.Nil {
+		err = errors.Wrap(err, "redis.Get")
 		r.log.WithContext(ctx).Error(err)
 		return
 	}
-	if err = encoding.GetCodec("json").Unmarshal(bytes, &routers); err != nil {
-		err = errors.Wrap(err, "ResourceRouterRepo.SelectAll")
-		r.log.WithContext(ctx).Error(err)
-		return
+	var routers [][]*fiber.Route
+	if fiberCtx, ok := ctxutil.GetFiberCtx(ctx); !ok {
+		return nil, errors.New("get fiber context failed")
+	} else {
+		routers = fiberCtx.App().Stack()
 	}
 	for _, router := range routers {
 		for _, ro := range router {
 			if ro.Name == "" {
 				continue
 			}
-
 			switch ro.Method {
 			case http.MethodHead, http.MethodOptions, http.MethodTrace, http.MethodConnect, http.MethodPatch:
 				continue
@@ -71,6 +78,8 @@ func (r *ResourceRouterRepo) SelectAll(ctx context.Context) (rs []model.Router, 
 			})
 		}
 	}
+	bytes, _ = codec.Marshal(&rs)
+	err = r.dao.RDB.Set(ctx, routerAll, bytes, time.Hour*1).Err()
 	return
 }
 

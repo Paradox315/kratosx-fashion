@@ -15,5 +15,5 @@ type ResourceMenu struct {
 	HideInMenu  uint8  `gorm:"default:0;type:tinyint(1);not null;comment:是否在菜单中隐藏"`    // 是否在菜单中隐藏
 	NoAffix     uint8  `gorm:"default:0;type:tinyint(1);not null;comment:是否不附加到菜单"`    // 是否不附加到菜单
 	IgnoreCache uint8  `gorm:"default:0;type:tinyint(1);not null;comment:是否忽略缓存"`      // 是否忽略缓存
-	Actions     string `gorm:"size:1024;default:'';not null;comment:前端动作按钮列表，json存储"`  //动作按钮
+	Actions     string `gorm:"size:128;default:'';not null;comment:前端动作按钮ID"`          //动作按钮
 }

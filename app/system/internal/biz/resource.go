@@ -5,10 +5,12 @@ import (
 	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"github.com/spf13/cast"
 	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/math"
+	"strconv"
 	"strings"
 )
 
@@ -127,18 +129,12 @@ func (r *ResourceUsecase) buildTree(ctx context.Context, mpos []*model.ResourceM
 		}
 		menus = append(menus, menu)
 	}
-	menuMap := r.groupMenu(ctx, menus)
+	menuMap := lo.GroupBy(menus, func(menu Menu) string {
+		return cast.ToString(menu.ParentId)
+	})
 	menus = menuMap["0"]
 	for i := 0; i < len(menus); i++ {
 		r.buildMenuChild(ctx, &menus[i], menuMap)
-	}
-	return
-}
-
-func (r *ResourceUsecase) groupMenu(ctx context.Context, menus []Menu) (menuMap map[string][]Menu) {
-	menuMap = make(map[string][]Menu)
-	for _, menu := range menus {
-		menuMap[menu.ParentId] = append(menuMap[menu.ParentId], menu)
 	}
 	return
 }
@@ -162,7 +158,7 @@ func (r *ResourceUsecase) buildMenuDO(ctx context.Context, mpo *model.ResourceMe
 		UpdatedAt: mpo.UpdatedAt.Format(timeFormat),
 		Actions:   nil,
 	}
-	rrs, err := r.roleResourceRepo.SelectByResourceID(ctx, uint64(mpo.ID))
+	rrs, err := r.roleResourceRepo.SelectByResourceID(ctx, strconv.FormatUint(uint64(mpo.ID), 10))
 	if err != nil {
 		err = errors.Wrap(err, "failed to select role resource")
 		r.log.WithContext(ctx).Error(err)
@@ -226,13 +222,13 @@ func (r *ResourceUsecase) MenuTree(ctx context.Context) (menus []Menu, err error
 }
 
 func (r *ResourceUsecase) RoleMenuTree(ctx context.Context, rid uint) (menus []Menu, err error) {
-	rMenus, err := r.roleResourceRepo.SelectByRoleID(ctx, uint64(rid))
+	rMenus, err := r.roleResourceRepo.SelectByRoleID(ctx, uint64(rid), model.ResourceTypeMenu)
 	if err != nil {
 		return
 	}
 	var mids []uint
 	for _, menu := range rMenus {
-		mids = append(mids, uint(menu.ResourceID))
+		mids = append(mids, cast.ToUint(menu.ResourceID))
 	}
 	mpos, err := r.menuRepo.SelectByIDs(ctx, mids)
 	if err != nil {

@@ -58,6 +58,10 @@ type Data struct {
 // NewData .
 func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client) (*Data, func(), error) {
 	cleanup := func() {
+		if err := rdb.Del(context.Background(), "router:all").Err(); err != nil {
+			log.NewHelper(logger).Error("delete router cache error", zap.Error(err))
+		}
+		log.NewHelper(logger).Info("delete router cache success")
 		if err := rdb.Close(); err != nil {
 			log.NewHelper(logger).Fatal("redis close error", zap.Error(err))
 		}

@@ -2,10 +2,12 @@ package biz
 
 import (
 	"context"
+	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/ctxutil"
 	"kratosx-fashion/pkg/cypher"
+	"kratosx-fashion/pkg/xsync"
 	"os"
 	"path"
 	"strconv"
@@ -30,9 +32,10 @@ type PublicUsecase struct {
 	jwtRepo      JwtRepo
 	disk         storage.Storage
 	log          *log.Helper
+	lock         xsync.XMutex
 }
 
-func NewPublicUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, logRepo LoginLogRepo, captchaRepo CaptchaRepo, jwtRepo JwtRepo, disk storage.Storage, logger log.Logger) *PublicUsecase {
+func NewPublicUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, logRepo LoginLogRepo, captchaRepo CaptchaRepo, jwtRepo JwtRepo, disk storage.Storage, rdb *redis.Client, logger log.Logger) *PublicUsecase {
 	return &PublicUsecase{
 		userRepo:     userRepo,
 		userRoleRepo: userRoleRepo,
@@ -41,6 +44,7 @@ func NewPublicUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, logRepo Logi
 		jwtRepo:      jwtRepo,
 		disk:         disk,
 		log:          log.NewHelper(log.With(logger, "biz", "public")),
+		lock:         xsync.Lock("refresh_token_lock", 60, rdb),
 	}
 }
 func (p *PublicUsecase) buildLog(ctx context.Context, uid uint64, typ model.LoginType) (log *model.LoginLog, err error) {
@@ -79,7 +83,7 @@ func (p *PublicUsecase) buildLog(ctx context.Context, uid uint64, typ model.Logi
 	}
 	return
 }
-func (p *PublicUsecase) buildUserDto(ctx context.Context, upo *model.User) (user User, err error) {
+func (p *PublicUsecase) buildUserDo(ctx context.Context, upo *model.User) (user User, err error) {
 	_ = copier.Copy(&user, &upo)
 	urs, err := p.userRoleRepo.SelectAllByUserID(ctx, uint64(upo.ID))
 	if err != nil {
@@ -155,7 +159,7 @@ func (p *PublicUsecase) Register(ctx context.Context, regInfo RegisterInfo, c Ca
 	return
 }
 
-func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c Captcha) (token *Token, uid string, err error) {
+func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c Captcha) (token *Token, err error) {
 	if os.Getenv("env") != "dev" {
 		if !p.captchaRepo.Verify(ctx, c) {
 			err = api.ErrorCaptchaInvalid("验证码错误")
@@ -171,7 +175,7 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 		err = api.ErrorUserInvalid("用户已被禁用")
 		return
 	}
-	user, err := p.buildUserDto(ctx, upo)
+	user, err := p.buildUserDo(ctx, upo)
 	if err != nil {
 		return
 	}
@@ -188,6 +192,32 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 		return
 	}
 
+	return
+}
+
+func (p *PublicUsecase) Refresh(ctx context.Context, refreshToken string) (token *Token, err error) {
+	claims, err := p.jwtRepo.ParseToken(ctx, refreshToken)
+	if err != nil {
+		return
+	}
+	// 生成新的token
+	if p.lock.Get() {
+		var upo *model.User
+		upo, err = p.userRepo.Select(ctx, cast.ToUint(claims.UID))
+		if err != nil {
+			p.lock.Release()
+			return
+		}
+		var user User
+		user, err = p.buildUserDo(ctx, upo)
+		if err != nil {
+			p.lock.Release()
+			return
+		}
+		token, _ = p.jwtRepo.Create(ctx, user)
+		// 将refreshToken注销
+		_ = p.jwtRepo.JoinInBlackList(ctx, refreshToken)
+	}
 	return
 }
 

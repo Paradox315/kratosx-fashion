@@ -6,7 +6,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"kratosx-fashion/pkg/logutil"
 )
@@ -24,14 +23,7 @@ func NewGlobalMiddleware(logger log.Logger) *GlobalMiddleware {
 func (m GlobalMiddleware) Get() []fiber.Handler {
 	return []fiber.Handler{
 		recover.New(),
-		cors.New(cors.Config{
-			AllowOrigins:     "*",
-			AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH",
-			AllowHeaders:     "",
-			AllowCredentials: true,
-			ExposeHeaders:    "new-token",
-		}),
-		csrf.New(),
+		cors.New(),
 		compress.New(),
 		fiberzap.New(fiberzap.Config{
 			Logger: m.log.(*logutil.Logger).GetZap(),

@@ -4,18 +4,13 @@ import (
 	"context"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
+	kmw "github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
-	"github.com/go-redis/redis/v8"
-	"github.com/spf13/cast"
+	"github.com/gofiber/fiber/v2"
 	"kratosx-fashion/app/system/internal/biz"
-	"kratosx-fashion/pkg/xsync"
 	"os"
 	"strings"
 	"sync"
-	"time"
-
-	kmw "github.com/go-kratos/kratos/v2/middleware"
-	"github.com/gofiber/fiber/v2"
 )
 
 var _ kmw.FiberMiddleware = (*JWTService)(nil)
@@ -29,9 +24,6 @@ const (
 
 	// reason holds the error reason.
 	jwtReason string = "JWT_AUTH_ERROR"
-
-	// jwtBlacklistGracePeriod holds the grace period for the JWT Token in the redis.
-	jwtBlacklistGracePeriod = time.Second * 6
 )
 
 var (
@@ -40,20 +32,14 @@ var (
 
 type JWTService struct {
 	jwtRepo biz.JwtRepo
-	uc      *biz.UserUsecase
 	once    sync.Once
-	rdb     *redis.Client
 	log     *log.Helper
-	lock    xsync.XMutex
 }
 
-func NewJwtService(jwtRepo biz.JwtRepo, uc *biz.UserUsecase, rdb *redis.Client, logger log.Logger) *JWTService {
+func NewJwtService(jwtRepo biz.JwtRepo, logger log.Logger) *JWTService {
 	j := &JWTService{
 		jwtRepo: jwtRepo,
-		uc:      uc,
-		rdb:     rdb,
 		log:     log.NewHelper(logger),
-		lock:    xsync.Lock("refresh_token_lock", 2000, rdb),
 	}
 	j.once.Do(func() {
 		kmw.RegisterMiddleware(j)
@@ -75,20 +61,6 @@ func (j *JWTService) MiddlewareFunc() fiber.Handler {
 			claims, err := j.jwtRepo.ParseToken(ctx, jwtToken)
 			if err != nil {
 				return err
-			}
-			if claims.ExpiresAt-time.Now().Unix() < jwtBlacklistGracePeriod.Milliseconds() {
-				if j.lock.Get() {
-					var user biz.JwtUser
-					user, err = j.uc.Get(ctx, cast.ToUint(claims.UID))
-					if err != nil {
-						j.log.WithContext(ctx).Error("get user info error", err)
-						j.lock.Release()
-					} else {
-						tokenData, _ := j.jwtRepo.Create(ctx, user)
-						c.Set("new-token", tokenData.AccessToken)
-						_ = j.jwtRepo.JoinInBlackList(ctx, jwtToken)
-					}
-				}
 			}
 			c.Locals("uid", claims.UID)
 			c.Locals("username", claims.Username)

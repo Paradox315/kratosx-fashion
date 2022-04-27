@@ -31,6 +31,13 @@ service Pub {
 		};
 	}
 
+	rpc RefreshToken(RefreshRequest) returns (RefreshReply){
+		option (google.api.http) = {
+			post: "/refresh_token"
+			body: "*"
+		};
+	}
+
 	// @Auth
 	rpc Logout(EmptyRequest) returns (EmptyReply){
 		option (google.api.http) = {

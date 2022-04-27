@@ -7,6 +7,7 @@ import (
 	"kratosx-fashion/app/system/internal/conf"
 	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/logutil"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis/extra/redisotel"
@@ -126,6 +127,12 @@ func NewRedis(c *conf.Data, logger log.Logger) *redis.Client {
 		ReadTimeout:  c.Redis.ReadTimeout.AsDuration(),
 		DialTimeout:  c.Redis.DialTimeout.AsDuration(),
 	})
+	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancelFunc()
+	err := rdb.Ping(timeout).Err()
+	if err != nil {
+		log.NewHelper(logger).Fatal("redis connect error: %v", err)
+	}
 	rdb.AddHook(redisotel.TracingHook{})
 	return rdb
 }

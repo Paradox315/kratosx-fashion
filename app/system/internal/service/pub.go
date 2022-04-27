@@ -68,19 +68,28 @@ func (s *PubService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Login
 		Captcha:   req.Captcha,
 		CaptchaId: req.CaptchaId,
 	}
-	token, uid, err := s.uc.Login(ctx, u, c)
+	token, err := s.uc.Login(ctx, u, c)
 	if err != nil {
 		return nil, err
 	}
 	return &pb.LoginReply{
-		Token: &pb.Token{
-			AccessToken: token.AccessToken,
-			ExpiresAt:   token.ExpiresAt,
-			TokenType:   token.TokenType,
-		},
-		UserId:   uid,
-		Username: req.Username,
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		ExpiresAt:    token.ExpiresAt,
+		TokenType:    token.TokenType,
 	}, err
+}
+func (s *PubService) RefreshToken(ctx context.Context, req *pb.RefreshRequest) (*pb.RefreshReply, error) {
+	token, err := s.uc.Refresh(ctx, req.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.RefreshReply{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		ExpiresAt:    token.ExpiresAt,
+		TokenType:    token.TokenType,
+	}, nil
 }
 func (s *PubService) Logout(ctx context.Context, req *pb.EmptyRequest) (*pb.EmptyReply, error) {
 	c, ok := transport.FromFiberContext(ctx)

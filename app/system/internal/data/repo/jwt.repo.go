@@ -53,8 +53,7 @@ func NewJwtRepo(dao *data.Data, cfg *conf.JWT, logger log.Logger) biz.JwtRepo {
 	}
 }
 func (j *JwtRepo) Create(ctx context.Context, user biz.JwtUser) (*biz.Token, error) {
-	jti, _ := uuid.NewUUID()
-	exp := time.Now().Unix() + j.cfg.Ttl.Seconds
+	jti, _ := uuid.NewRandom()
 	claims := model.CustomClaims{
 		Username: user.GetUsername(),
 		Nickname: user.GetNickname(),
@@ -65,24 +64,39 @@ func (j *JwtRepo) Create(ctx context.Context, user biz.JwtUser) (*biz.Token, err
 			Issuer:    j.cfg.Issuer,
 			NotBefore: time.Now().Unix() - 1000,
 			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: exp,
+			ExpiresAt: time.Now().Unix() + j.cfg.Ttl.Seconds,
 		},
 	}
-	token := jwt.NewWithClaims(
+	accessToken := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
 		claims,
 	)
-
-	tokenStr, err := token.SignedString([]byte(j.cfg.Secret))
+	accessTokenStr, err := accessToken.SignedString([]byte(j.cfg.Secret))
+	if err != nil {
+		err = errors.Wrap(err, "jwt.SignedString")
+		j.log.WithContext(ctx).Error("Failed to sign token: %s", err.Error())
+		return nil, err
+	}
+	jti, _ = uuid.NewRandom()
+	claims.Id = jti.String()
+	claims.ExpiresAt = time.Now().Unix() + j.cfg.RefreshTtl.Seconds
+	claims.IssuedAt = time.Now().Unix()
+	claims.NotBefore = time.Now().Unix() - 1000
+	refreshToken := jwt.NewWithClaims(
+		jwt.SigningMethodHS256,
+		claims,
+	)
+	refreshTokenStr, err := refreshToken.SignedString([]byte(j.cfg.Secret))
 	if err != nil {
 		err = errors.Wrap(err, "jwt.SignedString")
 		j.log.WithContext(ctx).Error("Failed to sign token: %s", err.Error())
 		return nil, err
 	}
 	return &biz.Token{
-		AccessToken: tokenStr,
-		ExpiresAt:   exp,
-		TokenType:   bearerWord,
+		AccessToken:  accessTokenStr,
+		RefreshToken: refreshTokenStr,
+		ExpiresAt:    time.Now().Unix() + j.cfg.RefreshTtl.Seconds,
+		TokenType:    bearerWord,
 	}, nil
 }
 

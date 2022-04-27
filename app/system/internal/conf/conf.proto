@@ -72,6 +72,7 @@ message JWT {
   string secret = 1;
   string issuer = 2;
   google.protobuf.Duration ttl = 3;
+  google.protobuf.Duration refresh_ttl = 4;
 }
 message Registry {
   message Consul {

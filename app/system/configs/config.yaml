@@ -34,3 +34,4 @@ jwt:
   secret: MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC7VJTUt9Us8cKj
   issuer: paradox
   ttl: 86400s
+  refresh_ttl: 604800s

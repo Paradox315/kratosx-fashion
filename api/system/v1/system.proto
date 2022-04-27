@@ -40,7 +40,9 @@ message LoginRequest {
   string captcha = 3 [(validate.rules).string.max_len = 6];
   string captcha_id = 4;
 }
-
+message RefreshRequest {
+  string refresh_token = 1 ;
+}
 message UserRequest {
   string id = 1;
   string username = 2 [(validate.rules).string.pattern = "^[a-zA-Z][a-zA-Z0-9_]{4,15}$"];
@@ -211,9 +213,17 @@ message RegisterReply {
 }
 
 message LoginReply {
-  Token token = 1;
-  string user_id = 2;
-  string username = 3;
+  string access_token = 1;
+  string refresh_token = 2;
+  int64 expires_at = 3;
+  string token_type = 4;
+}
+
+message RefreshReply{
+  string access_token = 1;
+  string refresh_token = 2;
+  int64 expires_at = 3;
+  string token_type = 4;
 }
 
 message UploadReply {
@@ -233,12 +243,6 @@ message UserRole{
 message RoleResource{
   string resource_id = 1;
   uint32 resource_type = 2;
-}
-
-message Token{
-  string access_token = 1;
-  int64 expires_at = 2;
-  string token_type = 3;
 }
 
 message Menu {

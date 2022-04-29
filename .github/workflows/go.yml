@@ -17,6 +17,13 @@ jobs:
       uses: actions/setup-go@v3
       with:
         go-version: 1.18
+    - name: Set up MySQL
+      uses: actions/setup-mysql@v1
+      with:
+        mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
+        mysql database: 'violet_test' # Optional, default value is "test". The specified database which will be create
+        mysql root password: '123456' # Required if "mysql user" is empty, default is empty. The root superuser password
+
 
     - name: Install Protoc
       uses: arduino/setup-protoc@v1

@@ -108,7 +108,7 @@ func (r *ResourceMenuRepo) Update(ctx context.Context, menu *model.ResourceMenu)
 		r.log.WithContext(ctx).Error(err)
 		return err
 	}
-	return nil
+	return r.dao.RDB.WithContext(ctx).Del(ctx, menuAll).Err()
 }
 
 func (r *ResourceMenuRepo) DeleteByIDs(ctx context.Context, ids []uint) error {
@@ -128,5 +128,5 @@ func (r *ResourceMenuRepo) DeleteByIDs(ctx context.Context, ids []uint) error {
 		r.log.WithContext(ctx).Error(err)
 		return err
 	}
-	return nil
+	return r.dao.RDB.WithContext(ctx).Del(ctx, menuAll).Err()
 }

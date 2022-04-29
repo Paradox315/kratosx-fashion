@@ -35,9 +35,11 @@ func NewUserRepo(data *data.Data, logger log.Logger) biz.UserRepo {
 		sf:       &singleflight.Group[*model.User]{},
 	}
 }
+
 func (u *userRepo) deleteAllUserKeys(ctx context.Context) error {
 	return u.dao.RDB.Del(ctx, userKey, userKeyByName, userKeyByEmail, userKeyByMobile).Err()
 }
+
 func (u *userRepo) Select(ctx context.Context, id uint) (*model.User, error) {
 	result, err, _ := u.sf.Do(fmt.Sprintf(userKey, id), func() (*model.User, error) {
 		bytes, err := u.dao.RDB.Get(ctx, fmt.Sprintf(userKey, id)).Bytes()
@@ -194,7 +196,7 @@ func (u *userRepo) Insert(ctx context.Context, user *model.User) error {
 		u.log.WithContext(ctx).Error(err)
 		return err
 	}
-	return u.deleteAllUserKeys(ctx)
+	return nil
 }
 
 func (u *userRepo) Update(ctx context.Context, user *model.User) error {

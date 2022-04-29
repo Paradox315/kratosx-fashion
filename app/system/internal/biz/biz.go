@@ -43,13 +43,9 @@ type UserRepo interface {
 }
 
 type UserRoleRepo interface {
-	Select(context.Context, uint) (*model.UserRole, error)
-	SelectAll(context.Context) ([]*model.UserRole, error)
 	SelectAllByUserID(context.Context, uint64) ([]*model.UserRole, error)
 	Insert(context.Context, ...*model.UserRole) error
-	Update(context.Context, *model.UserRole) error
 	UpdateByUserID(context.Context, uint64, []*model.UserRole) error
-	Delete(context.Context, uint) error
 	DeleteByUserIDs(context.Context, []uint64) error
 	DeleteByRoleIDs(context.Context, []uint64) error
 }

@@ -84,7 +84,7 @@ func NewLogger(conf *conf.Logger) log.Logger {
 // getEncoderConfig 获取zapcore.EncoderConfig
 func getEncoderConfig(conf *conf.Logger) (config zapcore.EncoderConfig) {
 	config = zapcore.EncoderConfig{
-		MessageKey:     "msg",
+		MessageKey:     "message",
 		LevelKey:       "level",
 		TimeKey:        "time",
 		NameKey:        "logger",
@@ -129,6 +129,6 @@ func getEncoderCore(conf *conf.Logger, fileName string, level zapcore.LevelEnabl
 func CustomTimeEncoder(conf *conf.Logger) zapcore.TimeEncoder {
 	return func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 		enc.AppendString(
-			t.Format("[" + strings.ToUpper(conf.Prefix) + "]" + "\t" + "2006/01/02 - 15:04:05.000"))
+			t.Format("2006/01/02 - 15:04:05.000" + "\t" + "[" + strings.ToUpper(conf.Prefix) + "]"))
 	}
 }

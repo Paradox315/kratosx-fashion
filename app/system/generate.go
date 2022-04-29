@@ -1,18 +1,22 @@
 package main
 
 import (
+	"flag"
 	"gorm.io/driver/mysql"
 	"gorm.io/gen"
 	"gorm.io/gorm"
 	"kratosx-fashion/app/system/internal/data/model"
 )
 
+var outPath = flag.String("output", "./internal/data/linq", "output path")
+
 //go:generate
+//go:generate go run generate.go -output=./internal/data/linq
 func main() {
 	// specify the output directory (default: "./query")
 	// ### if you want to query without context constrain, set mode gen.WithoutContext ###
 	g := gen.NewGenerator(gen.Config{
-		OutPath: "./internal/data/linq",
+		OutPath: *outPath,
 		/* Mode: gen.WithoutContext|gen.WithDefaultQuery*/
 		//if you want the nullable field generation property to be pointer type, set FieldNullable true
 		/* FieldNullable: true,*/

@@ -11,6 +11,8 @@ option java_package = "api.system.v1";
 
 // 菜单服务
 // @Auth
+// @Cache
+// @Limit
 service Resource {
   rpc CreateMenu (MenuRequest) returns (IDReply){
     option (google.api.http) = {

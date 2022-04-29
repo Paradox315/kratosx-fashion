@@ -11,6 +11,8 @@ option java_package = "api.system.v1";
 
 // 用户服务
 // @Auth
+// @Cache
+// @Limit
 service User {
 	rpc CreateUser (UserRequest) returns (IDReply){
 		option (google.api.http) = {

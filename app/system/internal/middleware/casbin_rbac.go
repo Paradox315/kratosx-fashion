@@ -21,6 +21,17 @@ type CasbinAuth struct {
 	log  *log.Helper
 }
 
+func NewCasbinAuth(e *casbin.SyncedEnforcer, logger log.Logger) *CasbinAuth {
+	c := &CasbinAuth{
+		e:   e,
+		log: log.NewHelper(log.With(logger, "middleware", "authorizer")),
+	}
+	c.once.Do(func() {
+		kmw.RegisterMiddleware(c)
+	})
+	return c
+}
+
 func (c *CasbinAuth) MiddlewareFunc() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		if os.Getenv("env") == "dev" {
@@ -49,15 +60,4 @@ func (c *CasbinAuth) MiddlewareFunc() fiber.Handler {
 
 func (c *CasbinAuth) Name() string {
 	return kmw.AuthorizerCfg
-}
-
-func NewCasbinAuth(e *casbin.SyncedEnforcer, logger log.Logger) *CasbinAuth {
-	c := &CasbinAuth{
-		e:   e,
-		log: log.NewHelper(log.With(logger, "middleware", "authorizer")),
-	}
-	c.once.Do(func() {
-		kmw.RegisterMiddleware(c)
-	})
-	return c
 }

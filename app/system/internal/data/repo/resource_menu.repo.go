@@ -4,18 +4,17 @@ import (
 	"context"
 	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 	"kratosx-fashion/app/system/internal/biz"
 	"kratosx-fashion/app/system/internal/data"
 	"kratosx-fashion/app/system/internal/data/linq"
 	"kratosx-fashion/app/system/internal/data/model"
+	"marwan.io/singleflight"
 	"time"
 )
 
 const (
 	menuAll = "menu:all"
-	menuId  = "menu:%d"
 )
 
 var codec = encoding.GetCodec("json")
@@ -24,6 +23,7 @@ type ResourceMenuRepo struct {
 	dao      *data.Data
 	log      *log.Helper
 	baseRepo *linq.Query
+	sf       *singleflight.Group[[]*model.ResourceMenu]
 }
 
 func NewResourceMenuRepo(dao *data.Data, logger log.Logger) biz.ResourceMenuRepo {
@@ -31,6 +31,7 @@ func NewResourceMenuRepo(dao *data.Data, logger log.Logger) biz.ResourceMenuRepo
 		dao:      dao,
 		log:      log.NewHelper(log.With(logger, "repo", "resource_menu")),
 		baseRepo: linq.Use(dao.DB),
+		sf:       &singleflight.Group[[]*model.ResourceMenu]{},
 	}
 }
 
@@ -56,38 +57,28 @@ func (r *ResourceMenuRepo) SelectByIDs(ctx context.Context, ids []uint) ([]*mode
 	return menus, nil
 }
 
-func (r *ResourceMenuRepo) SelectAll(ctx context.Context) (menus []*model.ResourceMenu, err error) {
-	bytes, err := r.dao.RDB.WithContext(ctx).Get(ctx, menuAll).Bytes()
-	if err == nil {
-		_ = codec.Unmarshal(bytes, &menus)
+func (r *ResourceMenuRepo) SelectAll(ctx context.Context) ([]*model.ResourceMenu, error) {
+	result, err, _ := r.sf.Do("resource_menu:all", func() (menus []*model.ResourceMenu, err error) {
+		bytes, err := r.dao.RDB.WithContext(ctx).Get(ctx, menuAll).Bytes()
+		if err == nil {
+			_ = codec.Unmarshal(bytes, &menus)
+			return
+		}
+		rr := r.baseRepo.ResourceMenu
+		menus, err = rr.WithContext(ctx).Find()
+		if err != nil {
+			err = errors.Wrap(err, "resource_menu.repo.SelectAll")
+			r.log.WithContext(ctx).Error(err)
+			return nil, err
+		}
+		bytes, _ = codec.Marshal(menus)
+		err = r.dao.RDB.Set(ctx, menuAll, bytes, time.Hour*1).Err()
 		return
-	}
-	if err != redis.Nil {
-		err = errors.Wrap(err, "redis.Get")
-		r.log.WithContext(ctx).Error(err)
-		return
-	}
-	rr := r.baseRepo.ResourceMenu
-	menus, err = rr.WithContext(ctx).Find()
+	})
 	if err != nil {
-		err = errors.Wrap(err, "resource_menu.repo.SelectAll")
-		r.log.WithContext(ctx).Error(err)
 		return nil, err
 	}
-	bytes, _ = codec.Marshal(menus)
-	err = r.dao.RDB.Set(ctx, menuAll, bytes, time.Hour*1).Err()
-	return menus, nil
-}
-
-func (r *ResourceMenuRepo) SelectPageByIDs(ctx context.Context, ids []uint, limit, offset int) (menus []*model.ResourceMenu, total int64, err error) {
-	rr := r.baseRepo.ResourceMenu
-	menus, total, err = rr.WithContext(ctx).Where(rr.ID.In(ids...), rr.ParentID.Eq(0)).FindByPage(offset, limit)
-	if err != nil {
-		err = errors.Wrap(err, "resource_menu.repo.SelectPageByIDs")
-		r.log.WithContext(ctx).Error(err)
-		return
-	}
-	return
+	return result, nil
 }
 
 func (r *ResourceMenuRepo) Insert(ctx context.Context, menu ...*model.ResourceMenu) error {

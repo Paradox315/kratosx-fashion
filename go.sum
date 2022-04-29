@@ -12,8 +12,8 @@ github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/Paradox315/kratos/contrib/registry/consul/v2 v2.0.0-20220216150651-8573d06d9606 h1:CqBwRsIXlQg3UlxjStbpHnDeAknL36478/hFJnTf//U=
 github.com/Paradox315/kratos/contrib/registry/consul/v2 v2.0.0-20220216150651-8573d06d9606/go.mod h1:Nx0RWQg9QjKCsFCAepz3w0HQ7IUUaYMCnkBXE0HqZX4=
-github.com/Paradox315/kratos/v2 v2.3.5 h1:bfJdHA7e1T6j9tq9z5eRpixWtKsVUoYD5NiuvpTXYC4=
-github.com/Paradox315/kratos/v2 v2.3.5/go.mod h1:LXr9dxVTYeP4+eZQbY312boTIyDK4B1YKI+DY89kc4o=
+github.com/Paradox315/kratos/v2 v2.3.6 h1:bjogsPL/fd6DTAlXTX8FnXxchgaYg28KdyM1ra8MAB8=
+github.com/Paradox315/kratos/v2 v2.3.6/go.mod h1:LXr9dxVTYeP4+eZQbY312boTIyDK4B1YKI+DY89kc4o=
 github.com/StackExchange/wmi v1.2.1/go.mod h1:rcmrprowKIVzvc+NUiLncP2uuArMWLCbu9SBzvHz7e8=
 github.com/aliyun/aliyun-oss-go-sdk v2.2.1+incompatible h1:uuJIwCFhbZy+zdvLy5zrcIToPEQP0s5CFOZ0Zj03O/w=
 github.com/aliyun/aliyun-oss-go-sdk v2.2.1+incompatible/go.mod h1:T/Aws4fEfogEE9v+HPhhw+CntffsBHJ8nXQCwKr0/g8=
@@ -718,6 +718,8 @@ gorm.io/plugin/dbresolver v1.1.0/go.mod h1:tpImigFAEejCALOttyhWqsy4vfa2Uh/vAUVnL
 honnef.co/go/tools v0.0.0-20190102054323-c2f93a96b099/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.0-20190523083050-ea95bdfd59fc/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.1-2019.2.3/go.mod h1:a3bituU0lyd329TUQxRnasdCoJDkEUEAqEt0JzvZhAg=
+marwan.io/singleflight v0.0.1 h1:pxfbV4JZQSvpt0JF+p7fKobmXnoai7+BkcotXXM6J+o=
+marwan.io/singleflight v0.0.1/go.mod h1:p9OjTOjazm9/KhTaZX3Z2Uw3bMgW7J9DuYrEVzGR+C8=
 moul.io/zapgorm2 v1.1.3 h1:PP9224dk0l2f56KE1anr3vcS2HzKV9PusKUE6UT9ncI=
 moul.io/zapgorm2 v1.1.3/go.mod h1:HTO6sXgHhQD0s2D9HA4xcnJ+qxFRFwsCUxIeFDnKtq0=
 rsc.io/pdf v0.1.1/go.mod h1:n8OzWcQ6Sp37PL01nO98y4iUCRdTGarVfzxY20ICaU4=

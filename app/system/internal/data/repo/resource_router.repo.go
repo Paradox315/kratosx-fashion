@@ -2,9 +2,9 @@ package repo
 
 import (
 	"context"
-	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 	"kratosx-fashion/pkg/ctxutil"
+	"marwan.io/singleflight"
 	"net/http"
 	"strings"
 	"time"
@@ -26,6 +26,7 @@ type ResourceRouterRepo struct {
 	dao   *data.Data
 	cRepo *casbin.SyncedEnforcer
 	log   *log.Helper
+	sf    *singleflight.Group[[]model.Router]
 }
 
 func NewResourceRouterRepo(dao *data.Data, logger log.Logger, casbinRepo *casbin.SyncedEnforcer) biz.ResourceRouterRepo {
@@ -33,6 +34,7 @@ func NewResourceRouterRepo(dao *data.Data, logger log.Logger, casbinRepo *casbin
 		dao:   dao,
 		cRepo: casbinRepo,
 		log:   log.NewHelper(log.With(logger, "repo", "resource_router")),
+		sf:    &singleflight.Group[[]model.Router]{},
 	}
 }
 
@@ -43,44 +45,45 @@ func parseGroup(name string) string {
 	return strings.Split(name, "-")[0]
 }
 
-func (r *ResourceRouterRepo) SelectAll(ctx context.Context) (rs []model.Router, err error) {
-	bytes, err := r.dao.RDB.WithContext(ctx).Get(ctx, routerAll).Bytes()
-	if err == nil {
-		_ = codec.Unmarshal(bytes, &rs)
-		return
-	}
-	if err != redis.Nil {
-		err = errors.Wrap(err, "redis.Get")
-		r.log.WithContext(ctx).Error(err)
-		return
-	}
-	var routers [][]*fiber.Route
-	if fiberCtx, ok := ctxutil.GetFiberCtx(ctx); !ok {
-		return nil, errors.New("get fiber context failed")
-	} else {
-		routers = fiberCtx.App().Stack()
-	}
-	for _, router := range routers {
-		for _, ro := range router {
-			if ro.Name == "" {
-				continue
-			}
-			switch ro.Method {
-			case http.MethodHead, http.MethodOptions, http.MethodTrace, http.MethodConnect, http.MethodPatch:
-				continue
-			}
-			rs = append(rs, model.Router{
-				Method: "(" + ro.Method + ")",
-				Path:   ro.Path,
-				Name:   ro.Name,
-				Params: ro.Params,
-				Group:  parseGroup(ro.Name),
-			})
+func (r *ResourceRouterRepo) SelectAll(ctx context.Context) ([]model.Router, error) {
+	result, err, _ := r.sf.Do(routerAll, func() (rs []model.Router, err error) {
+		bytes, err := r.dao.RDB.WithContext(ctx).Get(ctx, routerAll).Bytes()
+		if err == nil {
+			_ = codec.Unmarshal(bytes, &rs)
+			return
 		}
+		var routers [][]*fiber.Route
+		if fiberCtx, ok := ctxutil.GetFiberCtx(ctx); !ok {
+			return nil, errors.New("get fiber context failed")
+		} else {
+			routers = fiberCtx.App().Stack()
+		}
+		for _, router := range routers {
+			for _, ro := range router {
+				if ro.Name == "" {
+					continue
+				}
+				switch ro.Method {
+				case http.MethodHead, http.MethodOptions, http.MethodTrace, http.MethodConnect, http.MethodPatch:
+					continue
+				}
+				rs = append(rs, model.Router{
+					Method: "(" + ro.Method + ")",
+					Path:   ro.Path,
+					Name:   ro.Name,
+					Params: ro.Params,
+					Group:  parseGroup(ro.Name),
+				})
+			}
+		}
+		bytes, _ = codec.Marshal(&rs)
+		err = r.dao.RDB.Set(ctx, routerAll, bytes, time.Hour*1).Err()
+		return
+	})
+	if err != nil {
+		return nil, err
 	}
-	bytes, _ = codec.Marshal(&rs)
-	err = r.dao.RDB.Set(ctx, routerAll, bytes, time.Hour*1).Err()
-	return
+	return result, nil
 }
 
 func (r *ResourceRouterRepo) SelectByRoleIDs(ctx context.Context, rids []string) (rrs []model.ResourceRouter, err error) {

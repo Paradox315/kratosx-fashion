@@ -11,6 +11,8 @@ option java_package = "api.system.v1";
 
 // 角色服务
 // @Auth
+// @Cache
+// @Limit
 service Role {
 	rpc CreateRole (RoleRequest) returns (IDReply){
 		option (google.api.http) = {

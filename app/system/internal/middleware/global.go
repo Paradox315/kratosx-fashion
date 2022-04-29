@@ -6,8 +6,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"kratosx-fashion/pkg/logutil"
+	"strings"
 )
 
 type GlobalMiddleware struct {
@@ -20,13 +23,35 @@ func NewGlobalMiddleware(logger log.Logger) *GlobalMiddleware {
 	}
 }
 
-func (m GlobalMiddleware) Get() []fiber.Handler {
+func (m *GlobalMiddleware) Install() []fiber.Handler {
 	return []fiber.Handler{
 		recover.New(),
-		cors.New(),
-		compress.New(),
+		csrf.New(),
+		cors.New(cors.Config{
+			Next: func(c *fiber.Ctx) bool {
+				return strings.Contains(c.Path(), "system/v1/pub")
+			},
+			AllowOrigins: "*",
+			AllowMethods: strings.Join([]string{
+				fiber.MethodGet,
+				fiber.MethodPost,
+				fiber.MethodHead,
+				fiber.MethodPut,
+				fiber.MethodDelete,
+				fiber.MethodPatch,
+			}, ","),
+			AllowHeaders:     "",
+			AllowCredentials: true,
+			ExposeHeaders:    "",
+			MaxAge:           0,
+		}),
+		compress.New(compress.Config{
+			Level: compress.LevelBestSpeed,
+		}),
+		requestid.New(),
 		fiberzap.New(fiberzap.Config{
 			Logger: m.log.(*logutil.Logger).GetZap(),
+			Fields: []string{"latency", "status", "method", "url", "requestId"},
 		}),
 	}
 }

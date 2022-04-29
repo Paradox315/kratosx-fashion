@@ -4,6 +4,7 @@ import (
 	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/xhttp"
+	"github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
 	"github.com/gofiber/fiber/v2"
 	v1 "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/conf"
@@ -13,8 +14,10 @@ import (
 
 // NewHTTPServer new a XHTTP server.
 func NewHTTPServer(c *conf.Server,
-	jwtSrv *mw.JWTService,
-	casbinSrv *mw.CasbinAuth,
+	jwtMw *mw.JWTService,
+	casbinMw *mw.CasbinAuth,
+	cache *mw.Cache,
+	limiter *mw.Limiter,
 	globalMw *mw.GlobalMiddleware,
 	publicSrv *service.PubService,
 	userSrv *service.UserService,
@@ -24,11 +27,24 @@ func NewHTTPServer(c *conf.Server,
 	var opts = []xhttp.ServerOption{
 		xhttp.Logger(log.With(logger, "server", "xhttp")),
 		xhttp.Middleware(
-			globalMw.Get()...,
+			globalMw.Install()...,
 		),
 		xhttp.FiberConfig(fiber.Config{
 			JSONDecoder: encoding.GetCodec("json").Unmarshal,
 			JSONEncoder: encoding.GetCodec("json").Marshal,
+			// Override default error handler
+			ErrorHandler: func(c *fiber.Ctx, err error) error {
+				// Default 500 statuscode
+				code := fiber.StatusInternalServerError
+
+				if e, ok := err.(*fiber.Error); ok {
+					// Override status code if fiber.Error type
+					code = e.Code
+				}
+
+				// Return statuscode with error message
+				return apistate.Error[any]().WithError(err).WithCode(code).Send(c)
+			},
 		}),
 	}
 	if c.Http.Network != "" {
@@ -46,7 +62,7 @@ func NewHTTPServer(c *conf.Server,
 			return c.SendString("Welcome to KratosX-Fashion!")
 		})
 	})
-	log.NewHelper(logger).Info("xhttp server middleware init", jwtSrv.Name(), casbinSrv.Name())
+	log.NewHelper(logger).Info("xhttp server middleware init", jwtMw.Name(), casbinMw.Name(), cache.Name(), limiter.Name())
 	{
 		v1.RegisterPubXHTTPServer(srv, publicSrv)
 		v1.RegisterUserXHTTPServer(srv, userSrv)

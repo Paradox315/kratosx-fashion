@@ -32,6 +32,7 @@ require (
 	gorm.io/driver/mysql v1.3.2
 	gorm.io/gen v0.2.43
 	gorm.io/gorm v1.23.2
+	marwan.io/singleflight v0.0.1
 	moul.io/zapgorm2 v1.1.3
 )
 
@@ -111,7 +112,7 @@ require (
 	gorm.io/plugin/dbresolver v1.1.0 // indirect
 )
 
-replace github.com/go-kratos/kratos/v2 => github.com/Paradox315/kratos/v2 v2.3.5
+replace github.com/go-kratos/kratos/v2 => github.com/Paradox315/kratos/v2 v2.3.6
 
 replace github.com/go-kratos/kratos/contrib/registry/consul/v2 => github.com/Paradox315/kratos/contrib/registry/consul/v2 v2.0.0-20220216150651-8573d06d9606
 

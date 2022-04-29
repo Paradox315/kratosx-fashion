@@ -9,6 +9,7 @@ import (
 )
 
 var outPath = flag.String("output", "./internal/data/linq", "output path")
+var dsn = flag.String("dsn", "root:123456@(127.0.0.1:3306)/violet_test?charset=utf8mb4&parseTime=True&loc=Local", "dsn")
 
 //go:generate
 //go:generate go run generate.go -output=./internal/data/linq
@@ -31,7 +32,7 @@ func main() {
 	})
 	// reuse the database connection in Project or create a connection here
 	// if you want to use GenerateModel/GenerateModelAs, UseDB is necessary or it will panic
-	db, _ := gorm.Open(mysql.Open("root:123456@(127.0.0.1:3306)/violet?charset=utf8mb4&parseTime=True&loc=Local"))
+	db, _ := gorm.Open(mysql.Open(*dsn))
 	g.UseDB(db)
 
 	// apply basic crud api on structs or table models which is specified by table name with function

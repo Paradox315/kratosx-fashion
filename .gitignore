@@ -41,3 +41,4 @@ log/
 *.swagger.json
 *.gen.go
 gen.go
+wire_gen.go

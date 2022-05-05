@@ -31,15 +31,17 @@ var (
 )
 
 type JWTService struct {
-	jwtRepo biz.JwtRepo
-	once    sync.Once
-	log     *log.Helper
+	jwtRepo  biz.JwtRepo
+	userRepo biz.UserRepo
+	once     sync.Once
+	log      *log.Helper
 }
 
-func NewJwtService(jwtRepo biz.JwtRepo, logger log.Logger) *JWTService {
+func NewJwtService(jwtRepo biz.JwtRepo, userRepo biz.UserRepo, logger log.Logger) *JWTService {
 	j := &JWTService{
-		jwtRepo: jwtRepo,
-		log:     log.NewHelper(logger),
+		jwtRepo:  jwtRepo,
+		userRepo: userRepo,
+		log:      log.NewHelper(logger),
 	}
 	j.once.Do(func() {
 		kmw.RegisterMiddleware(j)
@@ -61,6 +63,9 @@ func (j *JWTService) MiddlewareFunc() fiber.Handler {
 			claims, err := j.jwtRepo.ParseToken(ctx, jwtToken)
 			if err != nil {
 				return err
+			}
+			if !j.userRepo.Verify(ctx, claims.UID) {
+				return errors.Unauthorized(jwtReason, "invalid user")
 			}
 			c.Locals("uid", claims.UID)
 			c.Locals("username", claims.Username)

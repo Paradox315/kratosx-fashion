@@ -2,16 +2,19 @@ package biz
 
 import (
 	"context"
-	"github.com/go-kratos/kratos/v2/encoding"
-	"github.com/go-kratos/kratos/v2/log"
-	"github.com/pkg/errors"
-	"github.com/samber/lo"
-	"github.com/spf13/cast"
-	pb "kratosx-fashion/api/system/v1"
-	"kratosx-fashion/app/system/internal/data/model"
-	"kratosx-fashion/pkg/math"
 	"strconv"
 	"strings"
+
+	"kratosx-fashion/app/system/internal/data/model"
+	"kratosx-fashion/pkg/math"
+
+	"github.com/go-kratos/kratos/v2/encoding"
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/samber/lo"
+	"github.com/spf13/cast"
+
+	api "kratosx-fashion/api/system/v1"
+	pb "kratosx-fashion/api/system/v1"
 )
 
 var codec = encoding.GetCodec("json")
@@ -34,7 +37,7 @@ func NewResourceUsecase(menuRepo ResourceMenuRepo, routeRepo ResourceRouterRepo,
 	}
 }
 
-func longestCommonPrefix(rs []model.Router, group string) (prefix string) {
+func longestCommonPrefix(rs []*model.Router, group string) (prefix string) {
 	if len(rs) == 0 {
 		return ""
 	}
@@ -53,17 +56,16 @@ func longestCommonPrefix(rs []model.Router, group string) (prefix string) {
 	return "*"
 }
 
-func (r *ResourceUsecase) buildRouters(ctx context.Context, rpos []model.Router) (routers []RouterGroup) {
-	routerMap := make(map[string][]model.Router)
-	for _, rpo := range rpos {
-		routerMap[rpo.Group] = append(routerMap[rpo.Group], rpo)
-	}
+func (r *ResourceUsecase) buildRouters(ctx context.Context, rpos []*model.Router) (routers []*RouterGroup) {
+	routerMap := lo.GroupBy(rpos, func(rpo *model.Router) string {
+		return rpo.Group
+	})
 	for group, children := range routerMap {
-		routers = append(routers, RouterGroup{
+		routers = append(routers, &RouterGroup{
 			Path:     longestCommonPrefix(children, group),
 			Name:     group,
 			Children: children,
-			Method: func(routers []model.Router) string {
+			Method: func(routers []*model.Router) string {
 				var methods []string
 				visited := make(map[string]bool)
 				for _, route := range routers {
@@ -79,163 +81,162 @@ func (r *ResourceUsecase) buildRouters(ctx context.Context, rpos []model.Router)
 	}
 	return
 }
-func (r *ResourceUsecase) buildMenuPO(ctx context.Context, menu *pb.MenuRequest) (mpo *model.ResourceMenu, err error) {
+func (r *ResourceUsecase) buildMenuPO(ctx context.Context, menu *pb.MenuRequest) (mpo *model.ResourceMenu) {
 	mpo = &model.ResourceMenu{
-		Name:      menu.Name,
-		Path:      menu.Path,
-		Component: menu.Component,
+		Name:        menu.Name,
+		Path:        menu.Path,
+		Component:   menu.Component,
+		Description: menu.Description,
+		ParentID:    uint(menu.ParentId),
+		Locale:      menu.Meta.Locale,
+		RequireAuth: model.AuthType(lo.Ternary(menu.Meta.RequireAuth, model.RequireAuth, model.NotRequireAuth)),
+		Icon:        menu.Meta.Icon,
+		Order:       menu.Meta.Order,
+		HideInMenu:  model.HideType(lo.Ternary(menu.Meta.HideInMenu, model.HideInMenu, model.ShowInMenu)),
+		NoAffix:     model.AffixType(lo.Ternary(menu.Meta.NoAffix, model.NoAffix, model.Affix)),
+		IgnoreCache: model.CacheType(lo.Ternary(menu.Meta.IgnoreCache, model.IgnoreCache, model.Cache)),
 	}
-	mpo.ID = cast.ToUint(menu.Id)
-	mpo.ParentID = cast.ToUint(menu.ParentId)
-	mpo.Locale = menu.Meta.Locale
-	mpo.Icon = menu.Meta.Icon
-	mpo.Order = menu.Meta.Order
-	if menu.Meta.HideInMenu {
-		mpo.HideInMenu = 1
-	}
-	if menu.Meta.IgnoreCache {
-		mpo.IgnoreCache = 1
-	}
-	if menu.Meta.RequireAuth {
-		mpo.RequireAuth = 1
-	}
-	if menu.Meta.NoAffix {
-		mpo.NoAffix = 1
-	}
-	if len(menu.Actions) == 0 {
-		return
-	}
+	mpo.ID = uint(menu.Id)
 	var acts []*model.ResourceAction
-	for _, act := range menu.Actions {
+	for _, action := range menu.Actions {
 		acts = append(acts, &model.ResourceAction{
-			Name: act.Name,
-			Code: act.Code,
+			Name: action.Name,
+			Code: action.Code,
 		})
 	}
-	bytes, err := codec.Marshal(acts)
-	if err != nil {
-		return
-	}
-	mpo.Actions = string(bytes)
+	mpo.SetActions(acts)
 	return
 }
 
-func (r *ResourceUsecase) buildTree(ctx context.Context, mpos []*model.ResourceMenu) (menus []Menu, err error) {
+func (r *ResourceUsecase) buildTree(ctx context.Context, mpos []*model.ResourceMenu) (menus []*Menu, err error) {
 	for _, mpo := range mpos {
-		var menu Menu
+		var menu *Menu
 		menu, err = r.buildMenuDO(ctx, mpo)
 		if err != nil {
 			return
 		}
 		menus = append(menus, menu)
 	}
-	menuMap := lo.GroupBy(menus, func(menu Menu) string {
-		return cast.ToString(menu.ParentId)
+	menuMap := lo.GroupBy(menus, func(menu *Menu) uint {
+		return menu.ParentId
 	})
-	menus = menuMap["0"]
+	menus = menuMap[0]
 	for i := 0; i < len(menus); i++ {
-		r.buildMenuChild(ctx, &menus[i], menuMap)
+		r.buildMenuChild(ctx, menus[i], menuMap)
 	}
 	return
 }
 
-func (r *ResourceUsecase) buildMenuChild(ctx context.Context, menu *Menu, menuMap map[string][]Menu) {
+func (r *ResourceUsecase) buildMenuChild(ctx context.Context, menu *Menu, menuMap map[uint][]*Menu) {
 	menu.Children = menuMap[menu.Id]
 	for _, child := range menu.Children {
-		r.buildMenuChild(ctx, &child, menuMap)
+		r.buildMenuChild(ctx, child, menuMap)
 	}
 	return
 }
 
-func (r *ResourceUsecase) buildMenuDO(ctx context.Context, mpo *model.ResourceMenu) (menu Menu, err error) {
-	menu = Menu{
-		Id:        cast.ToString(mpo.ID),
-		ParentId:  cast.ToString(mpo.ParentID),
-		Path:      mpo.Path,
-		Name:      mpo.Name,
-		Component: mpo.Component,
-		CreatedAt: mpo.CreatedAt.Format(timeFormat),
-		UpdatedAt: mpo.UpdatedAt.Format(timeFormat),
-		Actions:   nil,
+func (r *ResourceUsecase) buildMenuDO(ctx context.Context, mpo *model.ResourceMenu) (menu *Menu, err error) {
+	menu = &Menu{
+		Id:          mpo.ID,
+		ParentId:    mpo.ParentID,
+		Path:        mpo.Path,
+		Name:        mpo.Name,
+		Description: mpo.Description,
+		Component:   mpo.Component,
+		CreatedAt:   mpo.CreatedAt.Format(timeFormat),
+		UpdatedAt:   mpo.UpdatedAt.Format(timeFormat),
 	}
-	rrs, err := r.roleResourceRepo.SelectByResourceID(ctx, strconv.FormatUint(uint64(mpo.ID), 10))
+	rrs, err := r.roleResourceRepo.SelectByResourceID(ctx, strconv.FormatUint(uint64(mpo.ID), 10), model.ResourceTypeMenu)
 	if err != nil {
-		err = errors.Wrap(err, "failed to select role resource")
-		r.log.WithContext(ctx).Error(err)
+		r.log.WithContext(ctx).Errorf("select role resource by resource id error: %v", err)
+		err = api.ErrorMenuFetchFail("获取菜单权限失败")
 		return
 	}
-	var roles []string
+	var roles []uint64
 	for _, rr := range rrs {
-		roles = append(roles, cast.ToString(rr.RoleID))
+		roles = append(roles, uint64(rr.RoleID))
 	}
 	menu.Meta = &MenuMeta{
 		Roles:       roles,
-		RequireAuth: mpo.RequireAuth == 1,
+		RequireAuth: mpo.RequireAuth == model.RequireAuth,
 		Icon:        mpo.Icon,
 		Locale:      mpo.Locale,
 		Order:       mpo.Order,
-		HideInMenu:  mpo.HideInMenu == 1,
-		NoAffix:     mpo.NoAffix == 1,
-		IgnoreCache: mpo.IgnoreCache == 1,
+		HideInMenu:  mpo.HideInMenu == model.HideInMenu,
+		NoAffix:     mpo.NoAffix == model.NoAffix,
+		IgnoreCache: mpo.IgnoreCache == model.IgnoreCache,
 	}
-	if len(mpo.Actions) == 0 {
-		return
+	for _, action := range mpo.GetActions() {
+		menu.Actions = append(menu.Actions, &MenuAction{
+			Name: action.Name,
+			Code: action.Code,
+		})
 	}
-	var acts []MenuAction
-	if err = codec.Unmarshal([]byte(mpo.Actions), &acts); err != nil {
-		return
-	}
-	menu.Actions = acts
 	return
 }
 
-func (r *ResourceUsecase) SaveMenu(ctx context.Context, menu *pb.MenuRequest) (id string, err error) {
-	mpo, err := r.buildMenuPO(ctx, menu)
-	if err != nil {
+func (r *ResourceUsecase) SaveMenu(ctx context.Context, menu *pb.MenuRequest) (id uint, err error) {
+	mpo := r.buildMenuPO(ctx, menu)
+	if err = r.menuRepo.Insert(ctx, mpo); err != nil {
+		r.log.WithContext(ctx).Errorf("save menu failed: %v", err)
+		err = api.ErrorMenuAddFail("添加菜单失败")
 		return
 	}
-	err = r.menuRepo.Insert(ctx, mpo)
-	id = cast.ToString(mpo.ID)
-	return
+	return mpo.ID, nil
 }
 
-func (r *ResourceUsecase) EditMenu(ctx context.Context, menu *pb.MenuRequest) (id string, err error) {
-	mpo, err := r.buildMenuPO(ctx, menu)
-	if err != nil {
+func (r *ResourceUsecase) EditMenu(ctx context.Context, menu *pb.MenuRequest) (err error) {
+	mpo := r.buildMenuPO(ctx, menu)
+	if err = r.menuRepo.Update(ctx, mpo); err != nil {
+		r.log.WithContext(ctx).Errorf("edit menu failed: %v", err)
+		err = api.ErrorMenuUpdateFail("编辑菜单失败")
 		return
 	}
-	err = r.menuRepo.Update(ctx, mpo)
-	id = cast.ToString(mpo.ID)
 	return
 }
 
 func (r *ResourceUsecase) RemoveMenu(ctx context.Context, ids []uint) (err error) {
-	return r.menuRepo.DeleteByIDs(ctx, ids)
+	if err = r.menuRepo.DeleteByIDs(ctx, ids); err != nil {
+		r.log.WithContext(ctx).Errorf("remove menu failed: %v", err)
+		err = api.ErrorMenuDeleteFail("删除菜单失败")
+		return
+	}
+	return
 }
 
-func (r *ResourceUsecase) MenuTree(ctx context.Context) (menus []Menu, err error) {
+func (r *ResourceUsecase) MenuTree(ctx context.Context) (menus []*Menu, err error) {
 	mpos, err := r.menuRepo.SelectAll(ctx)
 	if err != nil {
 		return
 	}
-	return r.buildTree(ctx, mpos)
+	tree, err := r.buildTree(ctx, mpos)
+	if err != nil {
+		r.log.WithContext(ctx).Errorf("build menu tree failed: %v", err)
+		err = api.ErrorMenuFetchFail("菜单树构建失败")
+		return
+	}
+	return tree, nil
 }
 
-func (r *ResourceUsecase) RoleMenuTree(ctx context.Context, rid uint) (menus []Menu, err error) {
-	rMenus, err := r.roleResourceRepo.SelectByRoleID(ctx, uint64(rid), model.ResourceTypeMenu)
+func (r *ResourceUsecase) RoleMenuList(ctx context.Context, rid uint) (menus []*Menu, err error) {
+	rrs, err := r.roleResourceRepo.SelectByRoleID(ctx, rid, model.ResourceTypeMenu)
 	if err != nil {
+		r.log.WithContext(ctx).Errorf("get role resource failed: %v", err)
+		err = api.ErrorRoleFetchFail("获取角色资源失败")
 		return
 	}
 	var mids []uint
-	for _, menu := range rMenus {
+	for _, menu := range rrs {
 		mids = append(mids, cast.ToUint(menu.ResourceID))
 	}
 	mpos, err := r.menuRepo.SelectByIDs(ctx, mids)
 	if err != nil {
+		r.log.WithContext(ctx).Errorf("get menu by ids failed: %v", err)
+		err = api.ErrorMenuFetchFail("获取菜单失败")
 		return
 	}
 	for _, mpo := range mpos {
-		var menu Menu
+		var menu *Menu
 		menu, err = r.buildMenuDO(ctx, mpo)
 		if err != nil {
 			return
@@ -245,13 +246,17 @@ func (r *ResourceUsecase) RoleMenuTree(ctx context.Context, rid uint) (menus []M
 	return
 }
 
-func (r *ResourceUsecase) MenuPage(ctx context.Context, limit, offset int) (list []Menu, total uint32, err error) {
+func (r *ResourceUsecase) MenuPage(ctx context.Context, limit, offset int) (list []*Menu, total uint32, err error) {
 	mpos, err := r.menuRepo.SelectAll(ctx)
 	if err != nil {
+		r.log.WithContext(ctx).Errorf("get menu page failed: %v", err)
+		err = api.ErrorMenuFetchFail("获取菜单失败")
 		return
 	}
 	list, err = r.buildTree(ctx, mpos)
 	if err != nil {
+		r.log.WithContext(ctx).Errorf("build menu tree failed: %v", err)
+		err = api.ErrorMenuFetchFail("菜单树构建失败")
 		return
 	}
 	if offset > len(list)-1 {
@@ -263,34 +268,49 @@ func (r *ResourceUsecase) MenuPage(ctx context.Context, limit, offset int) (list
 	return
 }
 
-func (r *ResourceUsecase) RouterTree(ctx context.Context) (groups []RouterGroup, err error) {
+func (r *ResourceUsecase) RouterTree(ctx context.Context) (groups []*RouterGroup, err error) {
 	allRoutes, err := r.routeRepo.SelectAll(ctx)
 	if err != nil {
-		err = errors.Wrap(err, "ResourceUsecase.RouterTree")
-		r.log.WithContext(ctx).Error(err)
+		r.log.WithContext(ctx).Errorf("get all routes failed: %v", err)
+		err = api.ErrorRouterFetchFail("获取路由失败")
 		return
 	}
 	groups = r.buildRouters(ctx, allRoutes)
 	return
 }
 
-func (r *ResourceUsecase) RoleRouterTree(ctx context.Context, rids ...string) (routers []model.Router, err error) {
-	roleRouters, err := r.routeRepo.SelectByRoleIDs(ctx, rids)
+func (r *ResourceUsecase) RoleRouterList(ctx context.Context, rid string) (routers []*model.Router, err error) {
+	roleRouters, err := r.routeRepo.SelectByRoleID(ctx, rid)
 	if err != nil {
+		r.log.WithContext(ctx).Errorf("get role routers failed: %v", err)
+		err = api.ErrorRouterFetchFail("获取角色路由失败")
 		return
 	}
 	for _, rr := range roleRouters {
-		routers = append(routers, model.Router{
+		routers = append(routers, &model.Router{
 			Method: rr.Method,
 			Path:   rr.Path,
 		})
 	}
 	return
 }
-
-func (r *ResourceUsecase) RouterPage(ctx context.Context, limit, offset int) (list []RouterGroup, total uint32, err error) {
+func (r *ResourceUsecase) RoleActionList(ctx context.Context, rid uint) (actions []string, err error) {
+	roleActions, err := r.roleResourceRepo.SelectByRoleID(ctx, rid, model.ResourceTypeAction)
+	if err != nil {
+		r.log.WithContext(ctx).Errorf("get role actions failed: %v", err)
+		err = api.ErrorActionFetchFail("获取角色动作失败")
+		return
+	}
+	for _, ra := range roleActions {
+		actions = append(actions, ra.ResourceID)
+	}
+	return
+}
+func (r *ResourceUsecase) RouterPage(ctx context.Context, limit, offset int) (list []*RouterGroup, total uint32, err error) {
 	routers, err := r.routeRepo.SelectAll(ctx)
 	if err != nil {
+		r.log.WithContext(ctx).Errorf("get all routers failed: %v", err)
+		err = api.ErrorRouterFetchFail("获取路由失败")
 		return
 	}
 	list = r.buildRouters(ctx, routers)

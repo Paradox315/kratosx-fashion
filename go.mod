@@ -18,11 +18,11 @@ require (
 	github.com/ip2location/ip2location-go v8.3.0+incompatible
 	github.com/jassue/go-storage v1.0.1
 	github.com/jinzhu/copier v0.3.5
+	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/mileusna/useragent v1.0.2
 	github.com/mojocn/base64Captcha v1.3.5
-	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/samber/lo v1.15.0
+	github.com/samber/lo v1.20.0
 	github.com/spf13/cast v1.4.1
 	go.uber.org/zap v1.21.0
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
@@ -76,8 +76,10 @@ require (
 	github.com/jackc/pgx/v4 v4.15.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
+	github.com/jonboulle/clockwork v0.3.0 // indirect
 	github.com/klauspost/compress v1.15.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
+	github.com/lestrrat-go/strftime v1.0.6 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -88,6 +90,8 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.35.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opentelemetry.io/otel v1.3.0 // indirect
 	go.opentelemetry.io/otel/trace v1.3.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
@@ -103,7 +107,6 @@ require (
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
 	golang.org/x/tools v0.1.10 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	gorm.io/datatypes v1.0.6 // indirect
 	gorm.io/driver/postgres v1.3.1 // indirect
@@ -112,7 +115,7 @@ require (
 	gorm.io/plugin/dbresolver v1.1.0 // indirect
 )
 
-replace github.com/go-kratos/kratos/v2 => github.com/Paradox315/kratos/v2 v2.3.6
+replace github.com/go-kratos/kratos/v2 => github.com/Paradox315/kratos/v2 v2.4.3
 
 replace github.com/go-kratos/kratos/contrib/registry/consul/v2 => github.com/Paradox315/kratos/contrib/registry/consul/v2 v2.0.0-20220216150651-8573d06d9606
 

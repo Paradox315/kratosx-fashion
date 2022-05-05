@@ -4,9 +4,7 @@ import (
 	kmw "github.com/go-kratos/kratos/v2/middleware"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
-	"github.com/gofiber/fiber/v2/utils"
 	"sync"
-	"time"
 )
 
 var _ kmw.FiberMiddleware = (*Cache)(nil)
@@ -24,20 +22,13 @@ func NewCache() *Cache {
 }
 
 func (c *Cache) MiddlewareFunc() fiber.Handler {
-	return cache.New(cache.Config{
-		Next: func(c *fiber.Ctx) bool {
-			return c.Query("refresh") == "true"
-		},
-		Expiration:   1 * time.Minute,
-		CacheHeader:  "X-Cache",
-		CacheControl: true,
-		KeyGenerator: func(c *fiber.Ctx) string {
-			return utils.CopyString(c.Path())
-		},
-		ExpirationGenerator:  nil,
-		StoreResponseHeaders: false,
-		Storage:              nil,
-	})
+	cacheHandler := cache.New()
+	return func(ctx *fiber.Ctx) error {
+		if ctx.Query("refresh") == "true" {
+			return ctx.Next()
+		}
+		return cacheHandler(ctx)
+	}
 }
 
 func (c *Cache) Name() string {

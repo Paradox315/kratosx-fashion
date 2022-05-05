@@ -6,6 +6,7 @@ import (
 	"github.com/mojocn/base64Captcha"
 	"github.com/pkg/errors"
 	"kratosx-fashion/app/system/internal/biz"
+	"os"
 )
 
 type CaptchaRepo struct {
@@ -35,5 +36,8 @@ func (c CaptchaRepo) Create(ctx context.Context) (captcha biz.Captcha, err error
 }
 
 func (c CaptchaRepo) Verify(ctx context.Context, captcha biz.Captcha) bool {
+	if os.Getenv("env") == "dev" {
+		return true
+	}
 	return c.store.Verify(captcha.CaptchaId, captcha.Captcha, true)
 }

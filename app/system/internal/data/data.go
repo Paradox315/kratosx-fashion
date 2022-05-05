@@ -104,7 +104,7 @@ func NewDB(c *conf.Data, logger log.Logger) *gorm.DB {
 	sqlDb.SetMaxOpenConns(int(c.Database.MaxOpenConns))
 	if c.Database.AutoMigrate {
 		if err = db.AutoMigrate(
-			&model.LoginLog{},
+			&model.UserLog{},
 			&model.User{},
 			&model.UserRole{},
 			&model.Role{},

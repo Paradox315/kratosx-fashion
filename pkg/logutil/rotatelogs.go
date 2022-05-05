@@ -1,22 +1,24 @@
 package logutil
 
 import (
-	"github.com/natefinch/lumberjack"
-	"go.uber.org/zap/zapcore"
 	"os"
+	"path"
+	"time"
+
+	"go.uber.org/zap/zapcore"
+
+	zapRotateLogs "github.com/lestrrat-go/file-rotatelogs"
 )
 
-func GetWriteSyncer(file string, logInConsole bool) zapcore.WriteSyncer {
-	lumberJackLogger := &lumberjack.Logger{
-		Filename:   file, // 日志文件的位置
-		MaxSize:    10,   // 在进行切割之前，日志文件的最大大小（以MB为单位）
-		MaxBackups: 200,  // 保留旧文件的最大个数
-		MaxAge:     30,   // 保留旧文件的最大天数
-		Compress:   true, // 是否压缩/归档旧文件
-	}
+func GetWriteSyncer(dir string, logInConsole bool) (zapcore.WriteSyncer, error) {
+	fileWriter, err := zapRotateLogs.New(
+		path.Join(dir, "%Y-%m-%d.log"),
+		zapRotateLogs.WithMaxAge(7*24*time.Hour),
+		zapRotateLogs.WithRotationTime(24*time.Hour),
+	)
 
 	if logInConsole {
-		return zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(lumberJackLogger))
+		return zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(fileWriter)), err
 	}
-	return zapcore.AddSync(lumberJackLogger)
+	return zapcore.AddSync(fileWriter), err
 }

@@ -47,7 +47,7 @@ func (u *userRoleRepo) SelectAll(ctx context.Context) ([]*model.UserRole, error)
 	return urs, nil
 }
 
-func (u *userRoleRepo) SelectAllByUserID(ctx context.Context, uid uint64) ([]*model.UserRole, error) {
+func (u *userRoleRepo) SelectAllByUserID(ctx context.Context, uid uint) ([]*model.UserRole, error) {
 	ur := u.baseRepo.UserRole
 	list, err := ur.WithContext(ctx).Where(ur.UserID.Eq(uid)).Find()
 	if err != nil {
@@ -78,23 +78,14 @@ func (u *userRoleRepo) Update(ctx context.Context, userRole *model.UserRole) err
 	return nil
 }
 
-func (u *userRoleRepo) UpdateByUserID(ctx context.Context, uid uint64, urs []*model.UserRole) error {
+func (u *userRoleRepo) UpdateByUserID(ctx context.Context, uid uint, urs []*model.UserRole) error {
 	return u.dao.DB.Transaction(func(tx *gorm.DB) error {
 		tx.Model(&model.UserRole{}).Where("user_id = ?", uid).Delete(&model.UserRole{})
 		return tx.Create(&urs).Error
 	})
 }
-func (u *userRoleRepo) Delete(ctx context.Context, id uint) error {
-	ur := u.baseRepo.UserRole
-	if _, err := ur.WithContext(ctx).Where(ur.ID.Eq(id)).Delete(); err != nil {
-		err = errors.Wrap(err, "user_role.Delete")
-		u.log.WithContext(ctx).Error(err)
-		return err
-	}
-	return nil
-}
 
-func (u *userRoleRepo) DeleteByUserIDs(ctx context.Context, uids []uint64) error {
+func (u *userRoleRepo) DeleteByUserIDs(ctx context.Context, uids []uint) error {
 	ur := u.baseRepo.UserRole
 	if _, err := ur.WithContext(ctx).Where(ur.UserID.In(uids...)).Delete(); err != nil {
 		err = errors.Wrap(err, "user_role.DeleteByUserIDs")
@@ -104,7 +95,7 @@ func (u *userRoleRepo) DeleteByUserIDs(ctx context.Context, uids []uint64) error
 	return nil
 }
 
-func (u *userRoleRepo) DeleteByRoleIDs(ctx context.Context, rids []uint64) error {
+func (u *userRoleRepo) DeleteByRoleIDs(ctx context.Context, rids []uint) error {
 	ur := u.baseRepo.UserRole
 	if _, err := ur.WithContext(ctx).Where(ur.RoleID.In(rids...)).Delete(); err != nil {
 		err = errors.Wrap(err, "user_role.DeleteByRoleIDs")

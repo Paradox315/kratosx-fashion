@@ -37,10 +37,10 @@ func NewLogger(conf *conf.Logger) log.Logger {
 	})
 
 	cores := []zapcore.Core{
-		getEncoderCore(conf, fmt.Sprintf("./%s/server_debug.log", conf.Dir), debugPriority),
-		getEncoderCore(conf, fmt.Sprintf("./%s/server_info.log", conf.Dir), infoPriority),
-		getEncoderCore(conf, fmt.Sprintf("./%s/server_warn.log", conf.Dir), warnPriority),
-		getEncoderCore(conf, fmt.Sprintf("./%s/server_error.log", conf.Dir), errorPriority),
+		getEncoderCore(conf, fmt.Sprintf("./%s/debug", conf.Dir), debugPriority),
+		getEncoderCore(conf, fmt.Sprintf("./%s/info", conf.Dir), infoPriority),
+		getEncoderCore(conf, fmt.Sprintf("./%s/warn", conf.Dir), warnPriority),
+		getEncoderCore(conf, fmt.Sprintf("./%s/error", conf.Dir), errorPriority),
 	}
 	id, _ := os.Hostname()
 	switch conf.Level {
@@ -121,7 +121,10 @@ func getEncoder(conf *conf.Logger) zapcore.Encoder {
 
 // getEncoderCore 获取Encoder的zapcore.Core
 func getEncoderCore(conf *conf.Logger, fileName string, level zapcore.LevelEnabler) (core zapcore.Core) {
-	writer := logutil.GetWriteSyncer(fileName, conf.LogInConsole) // 使用file-rotatelogs进行日志分割
+	writer, err := logutil.GetWriteSyncer(fileName, conf.LogInConsole) // 使用file-rotatelogs进行日志分割
+	if err != nil {
+		panic(err)
+	}
 	return zapcore.NewCore(getEncoder(conf), writer, level)
 }
 

@@ -15,9 +15,9 @@ var ProviderSet = wire.NewSet(
 )
 
 type JwtUser interface {
-	GetUid() string
+	GetUid() uint
 	GetUsername() string
-	GetRoleIDs() []string
+	GetRoleIDs() []uint
 	GetNickname() string
 }
 
@@ -33,31 +33,29 @@ type UserRepo interface {
 	SelectByEmail(context.Context, string) (*model.User, error)
 	SelectPasswordByUID(context.Context, uint) (*model.User, error)
 	SelectPage(context.Context, int, int, *SQLOption) ([]*model.User, int64, error)
+	SelectTokens(context.Context, uint) ([]string, error)
 	Insert(context.Context, *model.User) error
 	Update(context.Context, *model.User) error
-	UpdateStatus(context.Context, uint, model.UserStatus) error
 	DeleteByIDs(context.Context, []uint) error
-	ExistByUsername(context.Context, string) (int64, error)
-	ExistByEmail(context.Context, string) (int64, error)
-	ExistByMobile(context.Context, string) (int64, error)
+	Verify(context.Context, uint) bool
 }
 
 type UserRoleRepo interface {
-	SelectAllByUserID(context.Context, uint64) ([]*model.UserRole, error)
+	SelectAllByUserID(context.Context, uint) ([]*model.UserRole, error)
 	Insert(context.Context, ...*model.UserRole) error
-	UpdateByUserID(context.Context, uint64, []*model.UserRole) error
-	DeleteByUserIDs(context.Context, []uint64) error
-	DeleteByRoleIDs(context.Context, []uint64) error
+	UpdateByUserID(context.Context, uint, []*model.UserRole) error
+	DeleteByUserIDs(context.Context, []uint) error
+	DeleteByRoleIDs(context.Context, []uint) error
 }
 
-type LoginLogRepo interface {
-	Select(context.Context, uint) (*model.LoginLog, error)
-	SelectLocation(context.Context, string) (Location, error)
-	SelectAgent(context.Context, string) (Agent, error)
-	SelectPageByUserID(context.Context, uint64, int, int) ([]*model.LoginLog, int64, error)
-	Insert(context.Context, *model.LoginLog) error
+type UserLogRepo interface {
+	Select(context.Context, uint) (*model.UserLog, error)
+	SelectLocation(context.Context, string) (*Location, error)
+	SelectAgent(context.Context, string) (*Agent, error)
+	SelectPageByUID(context.Context, uint, int, int) ([]*model.UserLog, int64, error)
+	Insert(context.Context, *model.UserLog) error
 	Delete(context.Context, uint) error
-	DeleteByUserIDs(context.Context, []uint64) error
+	DeleteByUserIDs(context.Context, []uint) error
 }
 
 type RoleRepo interface {
@@ -71,13 +69,11 @@ type RoleRepo interface {
 
 type RoleResourceRepo interface {
 	Select(context.Context, uint) (*model.RoleResource, error)
-	SelectByRoleID(context.Context, uint64, ...model.ResourceType) ([]*model.RoleResource, error)
+	SelectByRoleID(context.Context, uint, ...model.ResourceType) ([]*model.RoleResource, error)
 	SelectByResourceID(context.Context, string, ...model.ResourceType) ([]*model.RoleResource, error)
 	Insert(context.Context, ...*model.RoleResource) error
-	Update(context.Context, *model.RoleResource) error
-	UpdateByRoleID(context.Context, uint64, []*model.RoleResource) error
-	Delete(context.Context, uint) error
-	DeleteByRoleIDs(context.Context, []uint64) error
+	UpdateByRoleID(context.Context, uint, []*model.RoleResource) error
+	DeleteByRoleIDs(context.Context, []uint) error
 	DeleteByResourceIDs(context.Context, []string, model.ResourceType) error
 }
 
@@ -91,10 +87,10 @@ type ResourceMenuRepo interface {
 }
 
 type ResourceRouterRepo interface {
-	SelectAll(context.Context) ([]model.Router, error)
-	SelectByRoleIDs(context.Context, []string) ([]model.ResourceRouter, error)
-	Update(context.Context, []model.ResourceRouter) error
-	ClearByRoleIDs(context.Context, []string) error
+	SelectAll(context.Context) ([]*model.Router, error)
+	SelectByRoleID(context.Context, string) ([]*model.ResourceRouter, error)
+	Update(context.Context, []*model.ResourceRouter) error
+	ClearByRoleIDs(context.Context, ...string) error
 }
 
 type CaptchaRepo interface {

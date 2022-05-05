@@ -14,7 +14,7 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 )
 
-type LoginLogRepo struct {
+type UserLogRepo struct {
 	dao      *data.Data
 	log      *log.Helper
 	ipdb     *iploc.DB
@@ -40,24 +40,24 @@ func isPublicIP(IP net.IP) bool {
 	return false
 }
 
-func NewLoginLogRepo(data *data.Data, logger log.Logger, ipdb *iploc.DB) biz.LoginLogRepo {
-	return &LoginLogRepo{
+func NewLoginLogRepo(data *data.Data, logger log.Logger, ipdb *iploc.DB) biz.UserLogRepo {
+	return &UserLogRepo{
 		dao:      data,
-		log:      log.NewHelper(log.With(logger, "repo", "login_log")),
+		log:      log.NewHelper(log.With(logger, "repo", "user_log")),
 		ipdb:     ipdb,
 		baseRepo: linq.Use(data.DB),
 	}
 }
 
-func (l *LoginLogRepo) SelectLocation(ctx context.Context, ip string) (loc biz.Location, err error) {
+func (l *UserLogRepo) SelectLocation(ctx context.Context, ip string) (loc *biz.Location, err error) {
 	if len(ip) == 0 || ip == "127.0.0.1" || ip == "localhost" || ip == "::1" || !isPublicIP(net.ParseIP(ip)) {
-		loc = biz.Location{
+		loc = &biz.Location{
 			Country: "本地",
 			Region:  "本地",
 			City:    "本地",
 			Position: map[string]float32{
-				"lat": 0,
-				"lng": 0,
+				"lat": 0.1,
+				"lng": 0.1,
 			},
 		}
 		return
@@ -68,7 +68,7 @@ func (l *LoginLogRepo) SelectLocation(ctx context.Context, ip string) (loc biz.L
 		l.log.Error("ip2location get_all error", err)
 		return
 	}
-	loc = biz.Location{
+	loc = &biz.Location{
 		Country: result.Country_short,
 		Region:  result.Region,
 		City:    result.City,
@@ -80,27 +80,27 @@ func (l *LoginLogRepo) SelectLocation(ctx context.Context, ip string) (loc biz.L
 	return
 }
 
-func (l *LoginLogRepo) SelectAgent(ctx context.Context, agentStr string) (agent biz.Agent, err error) {
+func (l *UserLogRepo) SelectAgent(ctx context.Context, agentStr string) (agent *biz.Agent, err error) {
 	result := ua.Parse(agentStr)
-	agent = biz.Agent{
+	agent = &biz.Agent{
 		Name:   result.Name,
 		OS:     result.OS + result.OSVersion,
 		Device: result.Device,
 	}
 	if result.Desktop {
-		agent.DeviceType = model.DeviceType_PC
+		agent.DeviceType = model.DevicetypePc
 	} else if result.Mobile {
-		agent.DeviceType = model.DeviceType_Mobile
+		agent.DeviceType = model.DevicetypeMobile
 	} else if result.Tablet {
-		agent.DeviceType = model.DeviceType_Pad
+		agent.DeviceType = model.DevicetypePad
 	} else if result.Bot {
-		agent.DeviceType = model.DeviceType_Bot
+		agent.DeviceType = model.DevicetypeBot
 	}
 	return
 }
 
-func (l *LoginLogRepo) Select(ctx context.Context, id uint) (loginLog *model.LoginLog, err error) {
-	lr := l.baseRepo.LoginLog
+func (l *UserLogRepo) Select(ctx context.Context, id uint) (loginLog *model.UserLog, err error) {
+	lr := l.baseRepo.UserLog
 	loginLog, err = lr.WithContext(ctx).Where(lr.ID.Eq(id)).First()
 	if err != nil {
 		err = errors.Wrap(err, "baseRepo.LoginLog.Select")
@@ -110,14 +110,14 @@ func (l *LoginLogRepo) Select(ctx context.Context, id uint) (loginLog *model.Log
 	return
 }
 
-func (l *LoginLogRepo) SelectPageByUserID(ctx context.Context, id uint64, limit, offset int) (logs []*model.LoginLog, total int64, err error) {
-	lr := l.baseRepo.LoginLog
-	logs, err = lr.WithContext(ctx).Where(lr.UserID.Eq(id)).Limit(limit).Offset(offset).Order(lr.CreatedAt.Desc()).Find()
+func (l *UserLogRepo) SelectPageByUID(ctx context.Context, id uint, limit, offset int) (logs []*model.UserLog, total int64, err error) {
+	lr := l.baseRepo.UserLog
+	logs, err = lr.WithContext(ctx).Where(lr.UID.Eq(id)).Limit(limit).Offset(offset).Order(lr.UpdatedAt.Desc()).Find()
 	if err != nil {
 		err = errors.Wrap(err, "baseRepo.LoginLog.SelectPageByUserID")
 		l.log.WithContext(ctx).Error("pagination.Find error", err)
 	}
-	total, err = lr.WithContext(ctx).Where(lr.UserID.Eq(id)).Count()
+	total, err = lr.WithContext(ctx).Where(lr.UID.Eq(id)).Count()
 	if err != nil {
 		err = errors.Wrap(err, "baseRepo.LoginLog.SelectPageByUserID")
 		l.log.WithContext(ctx).Error("pagination.Count error", err)
@@ -126,8 +126,8 @@ func (l *LoginLogRepo) SelectPageByUserID(ctx context.Context, id uint64, limit,
 	return
 }
 
-func (l *LoginLogRepo) Insert(ctx context.Context, loginLog *model.LoginLog) error {
-	lr := l.baseRepo.LoginLog
+func (l *UserLogRepo) Insert(ctx context.Context, loginLog *model.UserLog) error {
+	lr := l.baseRepo.UserLog
 	err := lr.WithContext(ctx).Create(loginLog)
 	if err != nil {
 		err = errors.Wrap(err, "baseRepo.LoginLog.Insert")
@@ -137,8 +137,8 @@ func (l *LoginLogRepo) Insert(ctx context.Context, loginLog *model.LoginLog) err
 	return nil
 }
 
-func (l *LoginLogRepo) Delete(ctx context.Context, id uint) error {
-	lr := l.baseRepo.LoginLog
+func (l *UserLogRepo) Delete(ctx context.Context, id uint) error {
+	lr := l.baseRepo.UserLog
 	_, err := lr.WithContext(ctx).Where(lr.ID.Eq(id)).Delete()
 	if err != nil {
 		err = errors.Wrap(err, "baseRepo.LoginLog.Delete")
@@ -148,20 +148,9 @@ func (l *LoginLogRepo) Delete(ctx context.Context, id uint) error {
 	return nil
 }
 
-func (l *LoginLogRepo) DeleteByUserID(ctx context.Context, uid uint64) error {
-	lr := l.baseRepo.LoginLog
-	_, err := lr.WithContext(ctx).Where(lr.UserID.Eq(uid)).Delete()
-	if err != nil {
-		err = errors.Wrap(err, "baseRepo.LoginLog.DeleteByUserID")
-		l.log.WithContext(ctx).Error("login_log delete error", err)
-		return err
-	}
-	return nil
-}
-
-func (l *LoginLogRepo) DeleteByUserIDs(ctx context.Context, uids []uint64) error {
-	lr := l.baseRepo.LoginLog
-	_, err := lr.WithContext(ctx).Where(lr.UserID.In(uids...)).Delete()
+func (l *UserLogRepo) DeleteByUserIDs(ctx context.Context, uids []uint) error {
+	lr := l.baseRepo.UserLog
+	_, err := lr.WithContext(ctx).Where(lr.UID.In(uids...)).Delete()
 	if err != nil {
 		err = errors.Wrap(err, "baseRepo.LoginLog.DeleteByUserIDs")
 		l.log.WithContext(ctx).Error("login_log delete error", err)

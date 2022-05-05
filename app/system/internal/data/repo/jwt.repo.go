@@ -29,6 +29,12 @@ const (
 
 	// jwtBlacklistKey holds the key used to store the JWT Token in the redis.
 	jwtBlacklistKey = "jwt:blacklist:%s"
+
+	// userRefreshTokenKey holds the key used to store the refresh token in the redis.
+	userRefreshTokenKey = "user:refresh_token:%d"
+
+	// userAccessTokenKey holds the key used to store the access token in the redis.
+	userAccessTokenKey = "user:access_token:%d"
 )
 
 var (
@@ -90,6 +96,11 @@ func (j *JwtRepo) Create(ctx context.Context, user biz.JwtUser) (*biz.Token, err
 	if err != nil {
 		err = errors.Wrap(err, "jwt.SignedString")
 		j.log.WithContext(ctx).Error("Failed to sign token: %s", err.Error())
+		return nil, err
+	}
+	if err = j.dao.RDB.MSet(ctx, fmt.Sprintf(userAccessTokenKey, user.GetUid()), accessTokenStr, fmt.Sprintf(userRefreshTokenKey, user.GetUid()), refreshTokenStr).Err(); err != nil {
+		err = errors.Wrap(err, "j.dao.RDB.MSet")
+		j.log.WithContext(ctx).Error("Failed to set token: %s", err.Error())
 		return nil, err
 	}
 	return &biz.Token{

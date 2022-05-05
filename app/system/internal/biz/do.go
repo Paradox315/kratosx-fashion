@@ -14,11 +14,6 @@ type Captcha struct {
 	CaptchaId string `json:"captcha_id"`
 }
 
-type UserSession struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 type Location struct {
 	Country  string             `json:"country"`
 	Region   string             `json:"region"`
@@ -46,23 +41,36 @@ type Token struct {
 	TokenType    string `json:"token_type"`
 	ExpiresAt    int64  `json:"expires_at"`
 }
-
-type User struct {
-	Id        string     `json:"id"`
-	Username  string     `json:"username"`
-	Avatar    string     `json:"avatar"`
-	Email     string     `json:"email"`
-	Mobile    string     `json:"mobile"`
-	Nickname  string     `json:"nickname"`
-	Gender    string     `json:"gender"`
-	Status    uint32     `json:"status"`
-	Creator   string     `json:"creator"`
-	CreatedAt string     `json:"created_at"`
-	UpdatedAt string     `json:"updated_at"`
-	Roles     []UserRole `json:"roles"`
+type UploadInfo struct {
+	File *multipart.FileHeader `form:"file"`
 }
 
-func (u User) GetUid() string {
+type SQLOption struct {
+	Where string        `json:"query"`
+	Order string        `json:"order"`
+	Args  []interface{} `json:"args"`
+}
+type User struct {
+	Id          uint   `json:"id"`
+	Username    string `json:"username"`
+	Avatar      string `json:"avatar"`
+	Email       string `json:"email"`
+	Mobile      string `json:"mobile"`
+	Nickname    string `json:"nickname"`
+	Gender      string `json:"gender"`
+	Status      bool   `json:"status"`
+	Creator     string `json:"creator"`
+	Address     string `json:"address"`
+	Country     string `json:"country"`
+	City        string `json:"city"`
+	Description string `json:"description"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
+
+	Roles []UserRole `json:"roles"`
+}
+
+func (u User) GetUid() uint {
 	return u.Id
 }
 
@@ -70,7 +78,7 @@ func (u User) GetUsername() string {
 	return u.Username
 }
 
-func (u User) GetRoleIDs() (rids []string) {
+func (u User) GetRoleIDs() (rids []uint) {
 	for _, role := range u.Roles {
 		rids = append(rids, role.Id)
 	}
@@ -82,49 +90,45 @@ func (u User) GetNickname() string {
 }
 
 type UserRole struct {
-	Id   string `json:"id"`
+	Id   uint   `json:"id"`
 	Name string `json:"name"`
 }
 
-type UploadInfo struct {
-	File *multipart.FileHeader `form:"file"`
-}
-
-type SQLOption struct {
-	Where string        `json:"query"`
-	Order string        `json:"order"`
-	Args  []interface{} `json:"args"`
+type UserSession struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type RouterGroup struct {
-	Path     string         `json:"path"`
-	Name     string         `json:"name"`
-	Method   string         `json:"method"`
-	Children []model.Router `json:"children"`
+	Path     string          `json:"path"`
+	Name     string          `json:"name"`
+	Method   string          `json:"method"`
+	Children []*model.Router `json:"children"`
 }
 
 type Menu struct {
-	Id        string       `json:"id"`
-	ParentId  string       `json:"parent_id"`
-	Path      string       `json:"path"`
-	Name      string       `json:"name"`
-	Component string       `json:"component"`
-	Meta      *MenuMeta    `json:"meta"`
-	Children  []Menu       `json:"children"`
-	CreatedAt string       `json:"created_at"`
-	UpdatedAt string       `json:"updated_at"`
-	Actions   []MenuAction `json:"actions"`
+	Id          uint          `json:"id"`
+	ParentId    uint          `json:"parentId"`
+	Path        string        `json:"path"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Component   string        `json:"component"`
+	Meta        *MenuMeta     `json:"meta"`
+	Children    []*Menu       `json:"children"`
+	CreatedAt   string        `json:"createdAt"`
+	UpdatedAt   string        `json:"updatedAt"`
+	Actions     []*MenuAction `json:"actions"`
 }
 
 type MenuMeta struct {
-	Roles       []string `json:"roles"`
-	RequireAuth bool     `json:"require_auth"`
+	Roles       []uint64 `json:"roles"`
+	RequireAuth bool     `json:"requireAuth"`
 	Icon        string   `json:"icon"`
 	Locale      string   `json:"locale"`
 	Order       uint32   `json:"order"`
-	HideInMenu  bool     `json:"hide_in_menu"`
-	NoAffix     bool     `json:"no_affix"`
-	IgnoreCache bool     `json:"ignore_cache"`
+	HideInMenu  bool     `json:"hideInMenu"`
+	NoAffix     bool     `json:"noAffix"`
+	IgnoreCache bool     `json:"ignoreCache"`
 }
 
 type MenuAction struct {

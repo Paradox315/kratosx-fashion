@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cast"
 	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/biz"
-	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/ctxutil"
 	"kratosx-fashion/pkg/option"
 	"kratosx-fashion/pkg/pagination"
@@ -49,35 +48,28 @@ func (s *UserService) CreateUser(ctx context.Context, req *pb.UserRequest) (*pb.
 		return nil, err
 	}
 	return &pb.IDReply{
-		Id: id,
+		Id: uint64(id),
 	}, nil
 }
-func (s *UserService) UpdateUser(ctx context.Context, req *pb.UserRequest) (*pb.IDReply, error) {
-	id, err := s.uc.Edit(ctx, req)
+func (s *UserService) UpdateUser(ctx context.Context, req *pb.UserRequest) (*pb.EmptyReply, error) {
+	if err := s.uc.Edit(ctx, req); err != nil {
+		return nil, err
+	}
+	return &pb.EmptyReply{}, nil
+}
+func (s *UserService) UpdatePassword(ctx context.Context, req *pb.PasswordRequest) (*pb.EmptyReply, error) {
+	err := s.uc.EditPassword(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.IDReply{
-		Id: id,
-	}, nil
+	return &pb.EmptyReply{}, nil
 }
-func (s *UserService) UpdatePassword(ctx context.Context, req *pb.PasswordRequest) (*pb.IDReply, error) {
-	err := s.uc.EditPassword(ctx, req.OldPassword, req.NewPassword, req.ConfirmPassword, cast.ToUint(req.Id))
+func (s *UserService) ResetPassword(ctx context.Context, req *pb.IDRequest) (*pb.EmptyReply, error) {
+	err := s.uc.ResetPassword(ctx, cast.ToUint(req.Id))
 	if err != nil {
 		return nil, err
 	}
-	return &pb.IDReply{
-		Id: req.Id,
-	}, nil
-}
-func (s *UserService) UpdateUserStatus(ctx context.Context, req *pb.StatusRequest) (*pb.IDReply, error) {
-	err := s.uc.EditStatus(ctx, cast.ToUint(req.Id), model.UserStatus(req.Status))
-	if err != nil {
-		return nil, err
-	}
-	return &pb.IDReply{
-		Id: req.Id,
-	}, nil
+	return &pb.EmptyReply{}, nil
 }
 func (s *UserService) DeleteUser(ctx context.Context, req *pb.IDsRequest) (*pb.EmptyReply, error) {
 	if err := s.uc.Remove(ctx, xcast.ToUintSlice[string](strings.Split(req.Ids, ","))); err != nil {
@@ -97,7 +89,7 @@ func (s *UserService) GetUser(ctx context.Context, req *pb.IDRequest) (*pb.UserR
 	return reply, nil
 }
 func (s *UserService) ListUser(ctx context.Context, req *pb.ListSearchRequest) (list *pb.ListUserReply, err error) {
-	limit, offset := pagination.Parse(req.PageNum, req.PageSize)
+	limit, offset := pagination.Parse(req.Current, req.PageSize)
 	var opt *biz.SQLOption
 	if len(req.Query) > 0 {
 		where, order, args := option.Parse(req.Query...)
@@ -107,22 +99,10 @@ func (s *UserService) ListUser(ctx context.Context, req *pb.ListSearchRequest) (
 			Args:  args,
 		}
 	}
-	users, total, err := s.uc.Search(ctx, limit, offset, opt)
-	if err != nil {
-		return
-	}
-	list = &pb.ListUserReply{
-		Total: uint32(total),
-	}
-	for _, user := range users {
-		uReply := &pb.UserReply{}
-		_ = copier.Copy(&uReply, &user)
-		list.List = append(list.List, uReply)
-	}
-	return
+	return s.uc.Search(ctx, limit, offset, opt)
 }
-func (s *UserService) ListLoginLog(ctx context.Context, req *pb.ListRequest) (list *pb.ListLoginLogReply, err error) {
-	limit, offset := pagination.Parse(req.PageNum, req.PageSize)
+func (s *UserService) ListUserLog(ctx context.Context, req *pb.ListRequest) (list *pb.ListUserLogReply, err error) {
+	limit, offset := pagination.Parse(req.Current, req.PageSize)
 	uid := ctxutil.GetUid(ctx)
-	return s.uc.LogPage(ctx, cast.ToUint64(uid), limit, offset)
+	return s.uc.LogPage(ctx, uid, limit, offset)
 }

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-
 	"kratosx-fashion/app/system/internal/biz"
 
 	"github.com/go-kratos/kratos/v2/errors"
@@ -27,7 +26,6 @@ func NewPubService(uc *biz.PublicUsecase, logger log.Logger) *PubService {
 		log: log.NewHelper(log.With(logger, "service", "public")),
 	}
 }
-
 func (s *PubService) Generate(ctx context.Context, req *pb.EmptyRequest) (*pb.CaptchaReply, error) {
 	c, err := s.uc.Generate(ctx)
 	if err != nil {
@@ -38,8 +36,7 @@ func (s *PubService) Generate(ctx context.Context, req *pb.EmptyRequest) (*pb.Ca
 		PicPath:   c.Captcha,
 	}, nil
 }
-
-func (s *PubService) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterReply, error) {
+func (s *PubService) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.EmptyReply, error) {
 	r := biz.RegisterInfo{
 		Email:    req.Email,
 		Mobile:   req.Mobile,
@@ -50,14 +47,11 @@ func (s *PubService) Register(ctx context.Context, req *pb.RegisterRequest) (*pb
 		Captcha:   req.Captcha,
 		CaptchaId: req.CaptchaId,
 	}
-	uid, username, err := s.uc.Register(ctx, r, c)
+	err := s.uc.Register(ctx, r, c)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.RegisterReply{
-		UserId:   uid,
-		Username: username,
-	}, nil
+	return &pb.EmptyReply{}, nil
 }
 func (s *PubService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginReply, error) {
 	u := biz.UserSession{
@@ -92,11 +86,7 @@ func (s *PubService) RefreshToken(ctx context.Context, req *pb.RefreshRequest) (
 	}, nil
 }
 func (s *PubService) Logout(ctx context.Context, req *pb.EmptyRequest) (*pb.EmptyReply, error) {
-	c, ok := transport.FromFiberContext(ctx)
-	if !ok {
-		return nil, errors.InternalServer("CONTEXT PARSE", "find context error")
-	}
-	err := s.uc.Logout(ctx, c.Locals("token").(string))
+	err := s.uc.Logout(ctx)
 	if err != nil {
 		return nil, err
 	}

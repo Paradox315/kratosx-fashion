@@ -2,217 +2,169 @@ package biz
 
 import (
 	"context"
-	"github.com/go-kratos/kratos/v2/encoding"
-	kerrors "github.com/go-kratos/kratos/v2/errors"
-	"github.com/go-kratos/kratos/v2/transport"
-	"github.com/pkg/errors"
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-redis/redis/v8"
+	"github.com/samber/lo"
 	"github.com/spf13/cast"
+	api "kratosx-fashion/api/system/v1"
+	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/ctxutil"
 	"kratosx-fashion/pkg/cypher"
-	"kratosx-fashion/pkg/xcast"
-	"strconv"
-
-	"github.com/go-kratos/kratos/v2/log"
-	"github.com/jinzhu/copier"
-	api "kratosx-fashion/api/system/v1"
-	pb "kratosx-fashion/api/system/v1"
+	"kratosx-fashion/pkg/xsync"
+	"time"
 )
 
 type UserUsecase struct {
 	jwtRepo      JwtRepo
 	userRepo     UserRepo
+	logRepo      UserLogRepo
 	userRoleRepo UserRoleRepo
-	logRepo      LoginLogRepo
 	roleRepo     RoleRepo
 	tx           Transaction
 	log          *log.Helper
+	rdb          *redis.Client
 }
 
-func NewUserUsecase(jwtRepo JwtRepo, userRepo UserRepo, userRoleRepo UserRoleRepo, roleRepo RoleRepo, logRepo LoginLogRepo, tx Transaction, logger log.Logger) *UserUsecase {
+func NewUserUsecase(jwtRepo JwtRepo, userRepo UserRepo, logRepo UserLogRepo, userRoleRepo UserRoleRepo, roleRepo RoleRepo, rdb *redis.Client, tx Transaction, logger log.Logger) *UserUsecase {
 	return &UserUsecase{
 		jwtRepo:      jwtRepo,
 		userRepo:     userRepo,
+		logRepo:      logRepo,
 		userRoleRepo: userRoleRepo,
 		roleRepo:     roleRepo,
-		logRepo:      logRepo,
 		tx:           tx,
 		log:          log.NewHelper(log.With(logger, "biz", "user")),
+		rdb:          rdb,
 	}
-}
-func (u *UserUsecase) buildLog(ctx context.Context, lpo *model.LoginLog) (log *pb.LoginLog, err error) {
-	log = &pb.LoginLog{
-		Id:         cast.ToString(lpo.ID),
-		Ip:         lpo.Ip,
-		Time:       lpo.CreatedAt.Format(timeFormat),
-		Agent:      lpo.Agent,
-		Os:         lpo.OS,
-		Device:     lpo.Device,
-		DeviceType: uint32(lpo.DeviceType),
-		LoginType:  uint32(lpo.LoginType),
-	}
-	var loc Location
-	if err = encoding.GetCodec("json").Unmarshal([]byte(lpo.Location), &loc); err != nil {
-		return
-	}
-	log.Country = loc.Country
-	log.Region = loc.Region
-	log.City = loc.City
-	log.Position = &pb.LoginLog_Position{
-		Lat: loc.Position["lat"],
-		Lng: loc.Position["lng"],
-	}
-	return
 }
 
-func (u *UserUsecase) buildUserDo(ctx context.Context, upo *model.User) (user User, err error) {
-	_ = copier.Copy(&user, &upo)
-	urs, err := u.userRoleRepo.SelectAllByUserID(ctx, uint64(upo.ID))
+func (u *UserUsecase) buildUserDto(ctx context.Context, upo *model.User) (user *pb.UserReply, err error) {
+	urs, err := u.userRoleRepo.SelectAllByUserID(ctx, upo.ID)
 	if err != nil {
-		err = errors.Wrap(err, "userUsecase.buildUserDto.SelectAllByUserID")
-		u.log.WithContext(ctx).Error(err)
+		u.log.WithContext(ctx).Errorf("select user role error %s", err.Error())
+		err = api.ErrorUserFetchFail("获取用户角色失败")
 		return
 	}
 	var rids []uint
 	for _, ur := range urs {
-		rids = append(rids, uint(ur.RoleID))
+		rids = append(rids, ur.RoleID)
 	}
 	roles, err := u.roleRepo.SelectByIDs(ctx, rids)
 	if err != nil {
-		err = errors.Wrap(err, "userUsecase.buildUserDto.SelectByIDs")
-		u.log.WithContext(ctx).Error(err)
 		return
 	}
+	user = &pb.UserReply{
+		Id:        uint64(upo.ID),
+		Username:  upo.Username,
+		Email:     upo.Email,
+		Mobile:    upo.Mobile,
+		Age:       uint32(upo.Age),
+		Avatar:    upo.Avatar,
+		Nickname:  upo.Nickname,
+		Gender:    upo.Gender.String(),
+		Creator:   upo.Creator,
+		Status:    upo.Status == model.UserStatusNormal,
+		CreatedAt: upo.CreatedAt.Format(timeFormat),
+		UpdatedAt: upo.UpdatedAt.Format(timeFormat),
+	}
+	extras := upo.GetExtras()
+	if extras != nil {
+		user.Address = extras.Address
+		user.Country = extras.Country
+		user.City = extras.City
+		user.Birthday = extras.Birthday
+		user.Description = extras.Description
+	}
 	for _, role := range roles {
-		user.Roles = append(user.Roles, UserRole{
-			Id:   strconv.FormatUint(uint64(role.ID), 10),
+		user.Roles = append(user.Roles, &pb.UserRole{
+			Id:   uint64(role.ID),
 			Name: role.Name,
 		})
 	}
-	user.Id = cast.ToString(upo.ID)
-	user.CreatedAt = upo.CreatedAt.Format(timeFormat)
-	user.UpdatedAt = upo.UpdatedAt.Format(timeFormat)
-	user.Gender = upo.Gender.String()
 	return
 }
 
-func (u *UserUsecase) validateUser(ctx context.Context, user *pb.UserRequest) (err error) {
-	var cnt int64
-	if len(user.Username) > 0 {
-		cnt, err = u.userRepo.ExistByUsername(ctx, user.Username)
-		if err != nil {
-			return
-		}
-		if len(user.Id) > 0 && cnt > 1 {
-			err = api.ErrorUserAlreadyExists("用户名已存在")
-			return
-		}
-		if len(user.Id) == 0 && cnt > 0 {
-			err = api.ErrorUserAlreadyExists("用户名已存在")
-			return
-		}
+func (u *UserUsecase) buildUserPo(ctx context.Context, user *pb.UserRequest) (upo *model.User) {
+	upo = &model.User{
+		Username: user.Username,
+		Password: cypher.BcryptMake("123456"),
+		Email:    user.Email,
+		Mobile:   user.Mobile,
+		Age:      uint8(user.Age),
+		Avatar:   user.Avatar,
+		Nickname: user.Nickname,
+		Gender:   model.GenderStatus(user.Gender),
+		Creator:  ctxutil.GetUsername(ctx),
+		Status:   lo.If(user.Status, model.UserStatusNormal).Else(model.UserStatusForbid),
 	}
-
-	if len(user.Email) > 0 {
-		cnt, err = u.userRepo.ExistByEmail(ctx, user.Email)
-		if err != nil {
-			return
-		}
-		if len(user.Id) > 0 && cnt > 1 {
-			err = api.ErrorUserAlreadyExists("邮箱已存在")
-			return
-		}
-		if len(user.Id) == 0 && cnt > 0 {
-			err = api.ErrorEmailAlreadyExists("邮箱已存在")
-			return
-		}
-	}
-
-	if len(user.Mobile) > 0 {
-		cnt, err = u.userRepo.ExistByMobile(ctx, user.Mobile)
-		if err != nil {
-			return
-		}
-		if len(user.Id) > 0 && cnt > 1 {
-			err = api.ErrorUserAlreadyExists("手机号已存在")
-			return
-		}
-		if len(user.Id) == 0 && cnt > 0 {
-			err = api.ErrorMobileAlreadyExists("手机号已存在")
-			return
-		}
-	}
+	upo.ID = uint(user.Id)
+	upo.SetExtras(&model.UserExtra{
+		Address:     user.Address,
+		Country:     user.Country,
+		City:        user.City,
+		Birthday:    user.Birthday,
+		Description: user.Description,
+	})
 	return
 }
 
-func (u *UserUsecase) Save(ctx context.Context, user *pb.UserRequest) (id string, err error) {
-	upo := &model.User{}
-	if err = u.validateUser(ctx, user); err != nil {
-		return
-	}
-	upo.Creator = ctxutil.GetUsername(ctx)
-	_ = copier.Copy(&upo, &user)
-	upo.Password = cypher.BcryptMake(user.Password)
+func (u *UserUsecase) Save(ctx context.Context, user *pb.UserRequest) (id uint, err error) {
+	upo := u.buildUserPo(ctx, user)
 	if err = u.userRepo.Insert(ctx, upo); err != nil {
+		u.log.WithContext(ctx).Errorf("save user role failed: %s", err.Error())
+		err = api.ErrorUserAddFail("添加用户失败")
 		return
 	}
-	uid := upo.ID
-	id = cast.ToString(uid)
 	var urs []*model.UserRole
-	for _, ridstr := range user.Roles {
-		rid := cast.ToUint64(ridstr)
-		if uid == 0 || rid == 0 {
+	for _, ridStr := range user.Roles {
+		rid := cast.ToUint(ridStr)
+		if upo.ID == 0 || rid == 0 {
 			continue
 		}
 		urs = append(urs, &model.UserRole{
-			UserID: uint64(uid),
+			UserID: upo.ID,
 			RoleID: rid,
 		})
 	}
 	if len(urs) > 0 {
 		err = u.userRoleRepo.Insert(ctx, urs...)
 		if err != nil {
-			err = errors.Wrap(err, "userUsecase.Save.Insert")
-			u.log.WithContext(ctx).Error(err)
+			u.log.WithContext(ctx).Errorf("save user role failed: %s", err.Error())
+			err = api.ErrorUserAddFail("添加用户角色关系失败")
 			return
 		}
 	}
-
-	return
+	return upo.ID, nil
 }
 
-func (u *UserUsecase) Edit(ctx context.Context, user *pb.UserRequest) (id string, err error) {
-	id = user.Id
-	uid := cast.ToUint64(user.Id)
+func (u *UserUsecase) Edit(ctx context.Context, user *pb.UserRequest) (err error) {
 	var urs []*model.UserRole
-	for _, ridstr := range user.Roles {
-		rid := cast.ToUint64(ridstr)
-		if uid == 0 || rid == 0 {
+	for _, rid := range user.Roles {
+		if user.Id == 0 || rid == 0 {
 			continue
 		}
 		urs = append(urs, &model.UserRole{
-			UserID: uid,
-			RoleID: rid,
+			UserID: uint(user.Id),
+			RoleID: uint(rid),
 		})
 	}
-	upo := &model.User{}
-	if err = u.validateUser(ctx, user); err != nil {
-		return
-	}
-	_ = copier.Copy(&upo, &user)
-	upo.ID = uint(uid)
+	upo := u.buildUserPo(ctx, user)
 	upo.Password = ""
 	err = u.tx.ExecTx(ctx, func(ctx context.Context) error {
 		if len(urs) > 0 {
-			err = u.userRoleRepo.UpdateByUserID(ctx, uid, urs)
+			err = u.userRoleRepo.UpdateByUserID(ctx, uint(user.Id), urs)
 			if err != nil {
-				err = errors.Wrap(err, "useUsecase.Edit.UpdateByUserID")
-				u.log.WithContext(ctx).Error(err)
 				return err
 			}
 		}
 		return u.userRepo.Update(ctx, upo)
 	})
+	if err != nil {
+		u.log.WithContext(ctx).Errorf("edit user failed: %s", err.Error())
+		err = api.ErrorUserUpdateFail("修改用户失败")
+		return
+	}
 	return
 }
 
@@ -220,83 +172,158 @@ func (u *UserUsecase) Remove(ctx context.Context, uids []uint) (err error) {
 	if len(uids) == 0 {
 		return
 	}
-	return u.tx.ExecTx(ctx, func(ctx context.Context) error {
-		err = u.userRoleRepo.DeleteByUserIDs(ctx, xcast.ToUint64Slice(uids))
+	err = u.tx.ExecTx(ctx, func(ctx context.Context) error {
+		err = u.userRoleRepo.DeleteByUserIDs(ctx, uids)
 		if err != nil {
 			return err
 		}
 		return u.userRepo.DeleteByIDs(ctx, uids)
 	})
-}
-
-func (u *UserUsecase) Get(ctx context.Context, uid uint) (user User, err error) {
-	upo, err := u.userRepo.Select(ctx, uid)
 	if err != nil {
-		err = errors.Wrap(err, "userUsecase.Get.Select")
-		u.log.WithContext(ctx).Error(err)
+		u.log.WithContext(ctx).Errorf("remove user failed: %s", err.Error())
+		err = api.ErrorUserDeleteFail("删除用户失败")
 		return
-	}
-	return u.buildUserDo(ctx, upo)
-}
-
-func (u *UserUsecase) Search(ctx context.Context, limit, offset int, opt *SQLOption) (list []User, total int64, err error) {
-	users, total, err := u.userRepo.SelectPage(ctx, limit, offset, opt)
-	if err != nil {
-		return
-	}
-	for _, upo := range users {
-		var user User
-		user, err = u.buildUserDo(ctx, upo)
-		if err != nil {
-			return
-		}
-		list = append(list, user)
 	}
 	return
 }
 
-func (u *UserUsecase) EditStatus(ctx context.Context, uid uint, status model.UserStatus) error {
-	return u.userRepo.UpdateStatus(ctx, uid, status)
-}
-
-func (u *UserUsecase) EditPassword(ctx context.Context, oldpwd, newpwd, confirmPwd string, uid uint) error {
-	user, err := u.userRepo.SelectPasswordByUID(ctx, uid)
+func (u *UserUsecase) Get(ctx context.Context, uid uint) (user *pb.UserReply, err error) {
+	upo, err := u.userRepo.Select(ctx, uid)
 	if err != nil {
-		err = errors.Wrap(err, "userUsecase.EditPassword.Select")
-		u.log.WithContext(ctx).Error(err)
-		return err
-	}
-	if !cypher.BcryptCheck(oldpwd, user.Password) {
-		return api.ErrorPasswordInvalid("密码错误")
-	}
-	if newpwd != confirmPwd {
-		return api.ErrorPasswordNotMatch("密码不匹配")
-	}
-	user.Password = cypher.BcryptMake(newpwd)
-
-	if err = u.userRepo.Update(ctx, user); err != nil {
-		return err
-	}
-	c, ok := transport.FromFiberContext(ctx)
-	if !ok {
-		return kerrors.InternalServer("CONTEXT PARSE", "find context error")
-	}
-	return u.jwtRepo.JoinInBlackList(ctx, c.Locals("token").(string))
-}
-
-func (u *UserUsecase) LogPage(ctx context.Context, uid uint64, limit, offset int) (list *pb.ListLoginLogReply, err error) {
-	logs, total, err := u.logRepo.SelectPageByUserID(ctx, uid, limit, offset)
-	if err != nil {
+		u.log.WithContext(ctx).Errorf("get user failed: %s", err.Error())
+		err = api.ErrorUserFetchFail("用户不存在")
 		return
 	}
-	list = &pb.ListLoginLogReply{}
-	for _, l := range logs {
-		var logDto *pb.LoginLog
-		logDto, err = u.buildLog(ctx, l)
+	return u.buildUserDto(ctx, upo)
+}
+
+func (u *UserUsecase) Search(ctx context.Context, limit, offset int, opt *SQLOption) (list *pb.ListUserReply, err error) {
+	users, total, err := u.userRepo.SelectPage(ctx, limit, offset, opt)
+	if err != nil {
+		u.log.WithContext(ctx).Errorf("search user failed %s", err.Error())
+		err = api.ErrorUserFetchFail("获取用户列表失败")
+		return
+	}
+	list = &pb.ListUserReply{}
+	for _, upo := range users {
+		var user *pb.UserReply
+		user, err = u.buildUserDto(ctx, upo)
 		if err != nil {
 			return
 		}
-		list.List = append(list.List, logDto)
+		list.List = append(list.List, user)
+	}
+	list.Total = uint32(total)
+	return
+}
+
+func (u *UserUsecase) EditPassword(ctx context.Context, pwdReq *pb.PasswordRequest) error {
+	user, err := u.userRepo.SelectPasswordByUID(ctx, uint(pwdReq.Id))
+	if err != nil {
+		return err
+	}
+	if !cypher.BcryptCheck(pwdReq.OldPassword, user.Password) {
+		return api.ErrorPasswordInvalid("密码错误")
+	}
+	if pwdReq.ConfirmPassword != pwdReq.NewPassword {
+		return api.ErrorPasswordNotMatch("密码不匹配")
+	}
+	user.Password = cypher.BcryptMake(pwdReq.NewPassword)
+	lock := xsync.Lock("edit_password_lock", int64(time.Second*2), u.rdb)
+	if lock.Get() {
+		defer lock.Release()
+		if err = u.userRepo.Update(ctx, user); err != nil {
+			u.log.WithContext(ctx).Errorf("edit password failed: %s", err.Error())
+			err = api.ErrorUpdatePasswordFail("修改密码失败")
+			return err
+		}
+		var tokens []string
+		tokens, err = u.userRepo.SelectTokens(ctx, uint(pwdReq.Id))
+		if err != nil {
+			u.log.WithContext(ctx).Errorf("edit password failed: %s", err.Error())
+			err = api.ErrorUpdatePasswordFail("修改密码失败")
+			return err
+		}
+		for _, token := range tokens {
+			if err = u.jwtRepo.JoinInBlackList(ctx, token); err != nil {
+				u.log.WithContext(ctx).Errorf("edit password failed: %s", err.Error())
+				err = api.ErrorUpdatePasswordFail("修改密码失败")
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (u *UserUsecase) ResetPassword(ctx context.Context, id uint) error {
+	user, err := u.userRepo.SelectPasswordByUID(ctx, id)
+	if err != nil {
+		return err
+	}
+	user.Password = cypher.BcryptMake("123456")
+	lock := xsync.Lock("reset_password_lock", int64(time.Second*2), u.rdb)
+	if lock.Get() {
+		defer lock.Release()
+		if err = u.userRepo.Update(ctx, user); err != nil {
+			u.log.WithContext(ctx).Errorf("reset password failed: %s", err.Error())
+			err = api.ErrorUserUpdateFail("重置密码失败")
+			return err
+		}
+		var tokens []string
+		tokens, err = u.userRepo.SelectTokens(ctx, id)
+		if err != nil {
+			u.log.WithContext(ctx).Errorf("reset password failed: %s", err.Error())
+			err = api.ErrorResetPasswordFail("重置密码失败")
+			return err
+		}
+		for _, token := range tokens {
+			if err = u.jwtRepo.JoinInBlackList(ctx, token); err != nil {
+				u.log.WithContext(ctx).Errorf("reset password failed: %s", err.Error())
+				err = api.ErrorResetPasswordFail("重置密码失败")
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (u *UserUsecase) LogPage(ctx context.Context, uid uint, limit, offset int) (list *pb.ListUserLogReply, err error) {
+	logs, total, err := u.logRepo.SelectPageByUID(ctx, uid, limit, offset)
+	if err != nil {
+		u.log.WithContext(ctx).Errorf("search user log failed %s", err.Error())
+		err = api.ErrorLogFetchFail("获取用户日志列表失败")
+		return
+	}
+	list = &pb.ListUserLogReply{}
+	for _, l := range logs {
+		list.List = append(list.List, &pb.UserLog{
+			Id:      uint64(l.ID),
+			Ip:      l.Ip,
+			Method:  l.Method,
+			Path:    l.Path,
+			Status:  l.Status,
+			Country: l.Country,
+			Region:  l.Region,
+			City:    l.City,
+			Position: func() *pb.Position {
+				pos := l.GetPosition()
+				if pos == nil {
+					return nil
+				}
+				return &pb.Position{
+					Lat: pos["lat"],
+					Lng: pos["lng"],
+				}
+			}(),
+			Time:       l.CreatedAt.Format(timeFormat),
+			UserAgent:  l.UserAgent,
+			Client:     l.Client,
+			Os:         l.OS,
+			Device:     l.Device,
+			DeviceType: l.DeviceType.String(),
+			Type:       l.Type,
+		})
 	}
 	list.Total = uint32(total)
 	return

@@ -32,19 +32,15 @@ func (s *RoleService) CreateRole(ctx context.Context, req *pb.RoleRequest) (*pb.
 		return nil, err
 	}
 	return &pb.IDReply{
-		Id: id,
+		Id: uint64(id),
 	}, nil
 }
-func (s *RoleService) UpdateRole(ctx context.Context, req *pb.RoleRequest) (*pb.IDReply, error) {
-	id, err := s.uc.Edit(ctx, req)
-	if err != nil {
+func (s *RoleService) UpdateRole(ctx context.Context, req *pb.RoleRequest) (*pb.EmptyReply, error) {
+	if err := s.uc.Edit(ctx, req); err != nil {
 		return nil, err
 	}
-	return &pb.IDReply{
-		Id: id,
-	}, nil
+	return &pb.EmptyReply{}, nil
 }
-
 func (s *RoleService) DeleteRole(ctx context.Context, req *pb.IDsRequest) (*pb.EmptyReply, error) {
 	ids := strings.Split(req.Ids, ",")
 	err := s.uc.Remove(ctx, xcast.ToUintSlice(ids))
@@ -57,6 +53,6 @@ func (s *RoleService) GetRole(ctx context.Context, req *pb.IDRequest) (*pb.RoleR
 	return s.uc.Get(ctx, cast.ToUint(req.Id))
 }
 func (s *RoleService) ListRole(ctx context.Context, req *pb.ListRequest) (*pb.ListRoleReply, error) {
-	limit, offset := pagination.Parse(req.PageNum, req.PageSize)
+	limit, offset := pagination.Parse(req.Current, req.PageSize)
 	return s.uc.Page(ctx, limit, offset)
 }

@@ -5,6 +5,7 @@ import "github.com/google/wire"
 var ProviderSet = wire.NewSet(
 	NewJwtService,
 	NewCasbinAuth,
+	NewLoggerHook,
 	NewCache,
 	NewLimiter,
 	NewGlobalMiddleware,

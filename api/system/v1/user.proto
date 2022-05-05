@@ -11,7 +11,6 @@ option java_package = "api.system.v1";
 
 // 用户服务
 // @Auth
-// @Cache
 // @Limit
 service User {
 	rpc CreateUser (UserRequest) returns (IDReply){
@@ -21,23 +20,17 @@ service User {
 		};
 	}
 
-	rpc UpdateUser (UserRequest) returns (IDReply){
+	rpc UpdateUser (UserRequest) returns (EmptyReply){
 		option (google.api.http) = {
 			put: "/"
 			body: "*"
 		};
 	}
 
-	rpc UpdatePassword (PasswordRequest) returns (IDReply){
+	// @Logger
+	rpc UpdatePassword (PasswordRequest) returns (EmptyReply){
 		option (google.api.http) = {
 			put: "/password"
-			body: "*"
-		};
-	}
-
-	rpc UpdateUserStatus(StatusRequest) returns (IDReply){
-		option (google.api.http) = {
-			put: "/status"
 			body: "*"
 		};
 	}
@@ -54,6 +47,13 @@ service User {
 		};
 	}
 
+	// @Logger
+	rpc ResetPassword (IDRequest) returns (EmptyReply){
+		option (google.api.http) = {
+			put: "/reset-password/{id}"
+		};
+	}
+
 	rpc InitUserInfo (EmptyRequest) returns (UserState){
 		option (google.api.http) = {
 			get: "/init/info"
@@ -67,9 +67,9 @@ service User {
 		};
 	}
 
-	rpc ListLoginLog(ListRequest) returns (ListLoginLogReply){
+	rpc ListUserLog(ListRequest) returns (ListUserLogReply){
 		option (google.api.http) = {
-			get: "/log/list/{page_num}/{page_size}"
+			get: "/log/list/{current}/{pageSize}"
 		};
 	}
 }

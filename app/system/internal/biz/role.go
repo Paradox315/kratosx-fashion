@@ -2,12 +2,14 @@ package biz
 
 import (
 	"context"
+
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/pkg/errors"
 	"github.com/spf13/cast"
-	pb "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/xcast"
+
+	api "kratosx-fashion/api/system/v1"
+	pb "kratosx-fashion/api/system/v1"
 )
 
 type RoleUsecase struct {
@@ -30,9 +32,9 @@ func NewRoleUsecase(roleRepo RoleRepo, roleUserRepo UserRoleRepo, roleRouterRepo
 	}
 }
 
-func (r *RoleUsecase) buildRoleReply(ctx context.Context, rpo *model.Role) (role *pb.RoleReply, err error) {
+func (r *RoleUsecase) buildRoleDto(ctx context.Context, rpo *model.Role) (role *pb.RoleReply) {
 	role = &pb.RoleReply{
-		Id:          cast.ToString(rpo.ID),
+		Id:          uint64(rpo.ID),
 		Name:        rpo.Name,
 		Description: rpo.Description,
 		CreatedAt:   rpo.CreatedAt.Format(timeFormat),
@@ -41,17 +43,17 @@ func (r *RoleUsecase) buildRoleReply(ctx context.Context, rpo *model.Role) (role
 	return
 }
 
-func (r *RoleUsecase) buildResources(ctx context.Context, role *pb.RoleRequest) (menus []*model.RoleResource, routes []model.ResourceRouter) {
-	for _, rm := range role.RoleResources {
+func (r *RoleUsecase) buildResources(ctx context.Context, role *pb.RoleRequest) (menus []*model.RoleResource, routes []*model.ResourceRouter) {
+	for _, rm := range role.Resources {
 		menus = append(menus, &model.RoleResource{
-			RoleID:     cast.ToUint64(role.Id),
+			RoleID:     uint(role.Id),
 			ResourceID: rm.ResourceId,
 			Type:       model.ResourceType(rm.ResourceType),
 		})
 	}
-	for _, rr := range role.RoleRouters {
-		routes = append(routes, model.ResourceRouter{
-			RoleID: role.Id,
+	for _, rr := range role.Routers {
+		routes = append(routes, &model.ResourceRouter{
+			RoleID: cast.ToString(role.Id),
 			Path:   rr.Path,
 			Method: rr.Method,
 		})
@@ -59,42 +61,45 @@ func (r *RoleUsecase) buildResources(ctx context.Context, role *pb.RoleRequest) 
 	return
 }
 
-func (r *RoleUsecase) Save(ctx context.Context, role *pb.RoleRequest) (id string, err error) {
+func (r *RoleUsecase) Save(ctx context.Context, role *pb.RoleRequest) (id uint, err error) {
 	rpo := &model.Role{
 		Name:        role.Name,
 		Description: role.Description,
 	}
 	if err = r.roleRepo.Insert(ctx, rpo); err != nil {
+		r.log.WithContext(ctx).Errorf("role.Insert err: %v", err)
+		err = api.ErrorRoleAddFail("角色添加失败")
 		return
 	}
-	id = cast.ToString(rpo.ID)
-	role.Id = id
-	resources, rRoutes := r.buildResources(ctx, role)
+	role.Id = uint64(rpo.ID)
+	resources, routes := r.buildResources(ctx, role)
 	if len(resources) > 0 {
 		if err = r.roleResourceRepo.Insert(ctx, resources...); err != nil {
+			r.log.WithContext(ctx).Errorf("resource.Insert err: %v", err)
+			err = api.ErrorRoleAddFail("角色资源添加失败")
 			return
 		}
 	}
-	if len(rRoutes) > 0 {
-		if err = r.roleRouterRepo.Update(ctx, rRoutes); err != nil {
+	if len(routes) > 0 {
+		if err = r.roleRouterRepo.Update(ctx, routes); err != nil {
+			r.log.WithContext(ctx).Errorf("router.Update err: %v", err)
+			err = api.ErrorRoleAddFail("角色路由添加失败")
 			return
 		}
 	}
 	return
 }
 
-func (r *RoleUsecase) Edit(ctx context.Context, role *pb.RoleRequest) (id string, err error) {
-	id = role.Id
+func (r *RoleUsecase) Edit(ctx context.Context, role *pb.RoleRequest) (err error) {
 	rpo := &model.Role{
 		Name:        role.Name,
 		Description: role.Description,
 	}
-	rpo.ID = cast.ToUint(role.Id)
+	rpo.ID = uint(role.Id)
 	resources, rRoutes := r.buildResources(ctx, role)
-
-	err = r.tx.ExecTx(ctx, func(ctx context.Context) error {
+	if err = r.tx.ExecTx(ctx, func(ctx context.Context) error {
 		if len(resources) > 0 {
-			if err = r.roleResourceRepo.UpdateByRoleID(ctx, uint64(rpo.ID), resources); err != nil {
+			if err = r.roleResourceRepo.UpdateByRoleID(ctx, rpo.ID, resources); err != nil {
 				return err
 			}
 		}
@@ -104,49 +109,55 @@ func (r *RoleUsecase) Edit(ctx context.Context, role *pb.RoleRequest) (id string
 			}
 		}
 		return r.roleRepo.Update(ctx, rpo)
-	})
+	}); err != nil {
+		r.log.WithContext(ctx).Errorf("edit role error %s", err.Error())
+		err = api.ErrorRoleUpdateFail("编辑角色失败")
+		return
+	}
 	return
 }
 
 func (r *RoleUsecase) Remove(ctx context.Context, ids []uint) (err error) {
-	return r.tx.ExecTx(ctx, func(ctx context.Context) error {
+	if err = r.tx.ExecTx(ctx, func(ctx context.Context) error {
 		if err = r.roleRepo.DeleteByIDs(ctx, ids); err != nil {
 			return err
 		}
-		if err = r.roleResourceRepo.DeleteByRoleIDs(ctx, xcast.ToUint64Slice(ids)); err != nil {
+		if err = r.roleResourceRepo.DeleteByRoleIDs(ctx, ids); err != nil {
 			return err
 		}
-		if err = r.roleRouterRepo.ClearByRoleIDs(ctx, xcast.ToStringSlice(ids)); err != nil {
+		if err = r.roleRouterRepo.ClearByRoleIDs(ctx, xcast.ToStringSlice(ids)...); err != nil {
 			return err
 		}
-		return r.roleUserRepo.DeleteByRoleIDs(ctx, xcast.ToUint64Slice(ids))
-	})
+		return r.roleUserRepo.DeleteByRoleIDs(ctx, ids)
+	}); err != nil {
+		r.log.WithContext(ctx).Errorf("role.remove %s", err.Error())
+		err = api.ErrorRoleDeleteFail("删除角色失败")
+	}
+	return
 }
 
 func (r *RoleUsecase) Get(ctx context.Context, id uint) (role *pb.RoleReply, err error) {
 	role = &pb.RoleReply{}
 	rpo, err := r.roleRepo.Select(ctx, id)
 	if err != nil {
-		err = errors.Wrap(err, "roleUseCase.Get.Select")
-		r.log.WithContext(ctx).Error(err)
+		r.log.WithContext(ctx).Errorf("get role by id %d failed: %v", id, err)
+		err = api.ErrorRoleFetchFail("角色获取失败")
 		return
 	}
-	return r.buildRoleReply(ctx, rpo)
+	role = r.buildRoleDto(ctx, rpo)
+	return
 }
 
 func (r *RoleUsecase) Page(ctx context.Context, limit, offset int) (list *pb.ListRoleReply, err error) {
 	list = &pb.ListRoleReply{}
 	roles, total, err := r.roleRepo.SelectPage(ctx, limit, offset)
 	if err != nil {
+		r.log.WithContext(ctx).Errorf("roleUseCase.Page.SelectPage: %s", err.Error())
+		err = api.ErrorRoleFetchFail("获取角色列表失败")
 		return
 	}
 	for _, role := range roles {
-		var rr *pb.RoleReply
-		rr, err = r.buildRoleReply(ctx, role)
-		if err != nil {
-			return
-		}
-		list.List = append(list.List, rr)
+		list.List = append(list.List, r.buildRoleDto(ctx, role))
 	}
 	list.Total = uint32(total)
 	return

@@ -11,7 +11,6 @@ option java_package = "api.system.v1";
 
 // 菜单服务
 // @Auth
-// @Cache
 // @Limit
 service Resource {
   rpc CreateMenu (MenuRequest) returns (IDReply){
@@ -21,7 +20,7 @@ service Resource {
     };
   }
 
-  rpc UpdateMenu (MenuRequest) returns (IDReply){
+  rpc UpdateMenu (MenuRequest) returns (EmptyReply){
     option (google.api.http) = {
       put: "/menu"
       body: "*"
@@ -40,7 +39,7 @@ service Resource {
     };
   }
 
-  rpc GetMenuTreeByRole (IDRequest) returns (MenuReply){
+  rpc GetMenuByRole (IDRequest) returns (MenuReply){
     option (google.api.http) = {
       get: "/menu/role/{id}"
     };
@@ -48,17 +47,18 @@ service Resource {
 
   rpc ListMenu (ListRequest) returns (ListMenuReply){
     option (google.api.http) = {
-      get: "/menu/list/{page_num}/{page_size}"
+      get: "/menu/list/{current}/{pageSize}"
     };
   }
 
+  // @Cache
   rpc GetRouteTree(EmptyRequest) returns (RouterReply){
     option (google.api.http) = {
       get: "/router"
     };
   }
 
-  rpc GetRouteTreeByRole (IDRequest) returns (RouterReply){
+  rpc GetRouteByRole (IDRequest) returns (RouterReply){
     option (google.api.http) = {
       get: "/router/role/{id}"
     };
@@ -66,7 +66,13 @@ service Resource {
 
   rpc ListRoute (ListRequest) returns (ListRouterReply){
     option (google.api.http) = {
-      get: "/router/list/{page_num}/{page_size}"
+      get: "/router/list/{current}/{pageSize}"
+    };
+  }
+
+  rpc GetActionByRole (IDRequest) returns (ListMenuActionReply){
+    option (google.api.http) = {
+      get: "/action/role/{id}"
     };
   }
 }

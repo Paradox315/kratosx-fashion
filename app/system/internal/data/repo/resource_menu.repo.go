@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/pkg/errors"
 	"kratosx-fashion/app/system/internal/biz"
@@ -16,8 +15,6 @@ import (
 const (
 	menuAll = "menu:all"
 )
-
-var codec = encoding.GetCodec("json")
 
 type ResourceMenuRepo struct {
 	dao      *data.Data
@@ -58,7 +55,7 @@ func (r *ResourceMenuRepo) SelectByIDs(ctx context.Context, ids []uint) ([]*mode
 }
 
 func (r *ResourceMenuRepo) SelectAll(ctx context.Context) ([]*model.ResourceMenu, error) {
-	result, err, _ := r.sf.Do("resource_menu:all", func() (menus []*model.ResourceMenu, err error) {
+	result, err, _ := r.sf.Do(menuAll, func() (menus []*model.ResourceMenu, err error) {
 		bytes, err := r.dao.RDB.WithContext(ctx).Get(ctx, menuAll).Bytes()
 		if err == nil {
 			_ = codec.Unmarshal(bytes, &menus)

@@ -36,7 +36,7 @@ func (r *RoleResourceRepo) Select(ctx context.Context, id uint) (*model.RoleReso
 	return rrs, nil
 }
 
-func (r *RoleResourceRepo) SelectByRoleID(ctx context.Context, rid uint64, resourceType ...model.ResourceType) (list []*model.RoleResource, err error) {
+func (r *RoleResourceRepo) SelectByRoleID(ctx context.Context, rid uint, resourceType ...model.ResourceType) (list []*model.RoleResource, err error) {
 	rr := r.baseRepo.RoleResource
 	if len(resourceType) == 0 {
 		list, err = rr.WithContext(ctx).Where(rr.RoleID.Eq(rid)).Find()
@@ -81,17 +81,7 @@ func (r *RoleResourceRepo) Update(ctx context.Context, resource *model.RoleResou
 	return nil
 }
 
-func (r *RoleResourceRepo) Delete(ctx context.Context, id uint) error {
-	rr := r.baseRepo.RoleResource
-	if _, err := rr.WithContext(ctx).Where(rr.ID.Eq(id)).Delete(); err != nil {
-		err = errors.Wrap(err, "role_resource.repo.Delete")
-		r.log.WithContext(ctx).Error(err)
-		return err
-	}
-	return nil
-}
-
-func (r *RoleResourceRepo) DeleteByRoleIDs(ctx context.Context, rids []uint64) error {
+func (r *RoleResourceRepo) DeleteByRoleIDs(ctx context.Context, rids []uint) error {
 	rr := r.baseRepo.RoleResource
 	if _, err := rr.WithContext(ctx).Where(rr.RoleID.In(rids...)).Delete(); err != nil {
 		err = errors.Wrap(err, "role_resource.repo.DeleteByRoleIDs")
@@ -111,7 +101,7 @@ func (r *RoleResourceRepo) DeleteByResourceIDs(ctx context.Context, resIDs []str
 	return nil
 }
 
-func (r *RoleResourceRepo) UpdateByRoleID(ctx context.Context, rid uint64, rrs []*model.RoleResource) error {
+func (r *RoleResourceRepo) UpdateByRoleID(ctx context.Context, rid uint, rrs []*model.RoleResource) error {
 	return r.dao.DB.Transaction(func(tx *gorm.DB) error {
 		tx.Model(&model.RoleResource{}).Where("role_id = ?", rid).Delete(&model.RoleResource{})
 		return tx.Create(&rrs).Error

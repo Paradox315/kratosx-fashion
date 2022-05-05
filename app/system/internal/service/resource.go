@@ -32,17 +32,14 @@ func (s *ResourceService) CreateMenu(ctx context.Context, req *pb.MenuRequest) (
 		return nil, err
 	}
 	return &pb.IDReply{
-		Id: id,
+		Id: uint64(id),
 	}, nil
 }
-func (s *ResourceService) UpdateMenu(ctx context.Context, req *pb.MenuRequest) (*pb.IDReply, error) {
-	id, err := s.uc.EditMenu(ctx, req)
-	if err != nil {
+func (s *ResourceService) UpdateMenu(ctx context.Context, req *pb.MenuRequest) (*pb.EmptyReply, error) {
+	if err := s.uc.EditMenu(ctx, req); err != nil {
 		return nil, err
 	}
-	return &pb.IDReply{
-		Id: id,
-	}, nil
+	return &pb.EmptyReply{}, nil
 }
 func (s *ResourceService) DeleteMenu(ctx context.Context, req *pb.IDsRequest) (*pb.EmptyReply, error) {
 	ids := strings.Split(req.Ids, ",")
@@ -60,12 +57,12 @@ func (s *ResourceService) GetMenuTree(ctx context.Context, req *pb.EmptyRequest)
 	for _, menu := range tree {
 		menuResp := &pb.Menu{}
 		_ = copier.Copy(&menuResp, &menu)
-		resp.Tree = append(resp.Tree, menuResp)
+		resp.List = append(resp.List, menuResp)
 	}
 	return resp, nil
 }
-func (s *ResourceService) GetMenuTreeByRole(ctx context.Context, req *pb.IDRequest) (*pb.MenuReply, error) {
-	tree, err := s.uc.RoleMenuTree(ctx, cast.ToUint(req.Id))
+func (s *ResourceService) GetMenuByRole(ctx context.Context, req *pb.IDRequest) (*pb.MenuReply, error) {
+	tree, err := s.uc.RoleMenuList(ctx, cast.ToUint(req.Id))
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +70,7 @@ func (s *ResourceService) GetMenuTreeByRole(ctx context.Context, req *pb.IDReque
 	for _, menu := range tree {
 		menuResp := &pb.Menu{}
 		_ = copier.Copy(&menuResp, &menu)
-		resp.Tree = append(resp.Tree, menuResp)
+		resp.List = append(resp.List, menuResp)
 	}
 	return resp, nil
 }
@@ -90,8 +87,8 @@ func (s *ResourceService) GetRouteTree(ctx context.Context, req *pb.EmptyRequest
 	}
 	return resp, nil
 }
-func (s *ResourceService) GetRouteTreeByRole(ctx context.Context, req *pb.IDRequest) (*pb.RouterReply, error) {
-	tree, err := s.uc.RoleRouterTree(ctx, req.Id)
+func (s *ResourceService) GetRouteByRole(ctx context.Context, req *pb.IDRequest) (*pb.RouterReply, error) {
+	tree, err := s.uc.RoleRouterList(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +101,7 @@ func (s *ResourceService) GetRouteTreeByRole(ctx context.Context, req *pb.IDRequ
 	return resp, nil
 }
 func (s *ResourceService) ListMenu(ctx context.Context, req *pb.ListRequest) (*pb.ListMenuReply, error) {
-	limit, offset := pagination.Parse(req.PageNum, req.PageSize)
+	limit, offset := pagination.Parse(req.Current, req.PageSize)
 	menus, total, err := s.uc.MenuPage(ctx, limit, offset)
 	if err != nil {
 		return nil, err
@@ -119,7 +116,7 @@ func (s *ResourceService) ListMenu(ctx context.Context, req *pb.ListRequest) (*p
 	return resp, nil
 }
 func (s *ResourceService) ListRoute(ctx context.Context, req *pb.ListRequest) (*pb.ListRouterReply, error) {
-	limit, offset := pagination.Parse(req.PageNum, req.PageSize)
+	limit, offset := pagination.Parse(req.Current, req.PageSize)
 	routes, total, err := s.uc.RouterPage(ctx, limit, offset)
 	if err != nil {
 		return nil, err
@@ -130,6 +127,17 @@ func (s *ResourceService) ListRoute(ctx context.Context, req *pb.ListRequest) (*
 		routeResp := &pb.RouterGroup{}
 		_ = copier.Copy(&routeResp, &route)
 		resp.List = append(resp.List, routeResp)
+	}
+	return resp, nil
+}
+func (s *ResourceService) GetActionByRole(ctx context.Context, req *pb.IDRequest) (*pb.ListMenuActionReply, error) {
+	actions, err := s.uc.RoleActionList(ctx, cast.ToUint(req.Id))
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListMenuActionReply{}
+	for _, action := range actions {
+		resp.List = append(resp.List, action)
 	}
 	return resp, nil
 }

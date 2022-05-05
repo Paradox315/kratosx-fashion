@@ -17,13 +17,14 @@ service Pub {
 		};
 	}
 
-	rpc Register(RegisterRequest) returns (RegisterReply){
+	rpc Register(RegisterRequest) returns (EmptyReply){
 		option (google.api.http) = {
 			post: "/register"
 			body: "*"
 		};
 	}
 
+	// @Logger
 	rpc Login(LoginRequest) returns (LoginReply){
 		option (google.api.http) = {
 			post: "/login"
@@ -31,18 +32,19 @@ service Pub {
 		};
 	}
 
+	// @Logger
 	rpc RefreshToken(RefreshRequest) returns (RefreshReply){
 		option (google.api.http) = {
-			post: "/refresh_token"
+			post: "/refresh-token"
 			body: "*"
 		};
 	}
 
 	// @Auth
+	// @Logger
 	rpc Logout(EmptyRequest) returns (EmptyReply){
 		option (google.api.http) = {
-			post: "/logout"
-			body: ""
+			put: "/logout"
 		};
 	}
 

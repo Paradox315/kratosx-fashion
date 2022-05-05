@@ -18,6 +18,7 @@ func NewHTTPServer(c *conf.Server,
 	casbinMw *mw.CasbinAuth,
 	cache *mw.Cache,
 	limiter *mw.Limiter,
+	logHook *mw.Logger,
 	globalMw *mw.GlobalMiddleware,
 	publicSrv *service.PubService,
 	userSrv *service.UserService,
@@ -62,7 +63,13 @@ func NewHTTPServer(c *conf.Server,
 			return c.SendString("Welcome to KratosX-Fashion!")
 		})
 	})
-	log.NewHelper(logger).Info("xhttp server middleware init", jwtMw.Name(), casbinMw.Name(), cache.Name(), limiter.Name())
+	log.NewHelper(logger).Infof("xhttp server middleware init: %s,%s,%s,%s,%s",
+		jwtMw.Name(),
+		casbinMw.Name(),
+		cache.Name(),
+		limiter.Name(),
+		logHook.Name(),
+	)
 	{
 		v1.RegisterPubXHTTPServer(srv, publicSrv)
 		v1.RegisterUserXHTTPServer(srv, userSrv)

@@ -2,90 +2,55 @@ package biz
 
 import (
 	"context"
+	kerrors "github.com/go-kratos/kratos/v2/errors"
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
+	"github.com/jassue/go-storage/storage"
 	"github.com/pkg/errors"
+	"github.com/spf13/cast"
+	api "kratosx-fashion/api/system/v1"
 	"kratosx-fashion/app/system/internal/data/model"
 	"kratosx-fashion/pkg/ctxutil"
 	"kratosx-fashion/pkg/cypher"
 	"kratosx-fashion/pkg/xsync"
 	"os"
 	"path"
-	"strconv"
-
-	"github.com/go-kratos/kratos/v2/encoding"
-	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/transport"
-	"github.com/google/uuid"
-	"github.com/jassue/go-storage/storage"
-	"github.com/jinzhu/copier"
-	"github.com/spf13/cast"
-
-	kerrors "github.com/go-kratos/kratos/v2/errors"
-	api "kratosx-fashion/api/system/v1"
+	"time"
 )
 
 type PublicUsecase struct {
 	userRepo     UserRepo
 	userRoleRepo UserRoleRepo
-	logRepo      LoginLogRepo
 	captchaRepo  CaptchaRepo
 	jwtRepo      JwtRepo
 	disk         storage.Storage
 	log          *log.Helper
-	lock         xsync.XMutex
+	rdb          *redis.Client
 }
 
-func NewPublicUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, logRepo LoginLogRepo, captchaRepo CaptchaRepo, jwtRepo JwtRepo, disk storage.Storage, rdb *redis.Client, logger log.Logger) *PublicUsecase {
+func NewPublicUsecase(userRepo UserRepo, userRoleRepo UserRoleRepo, captchaRepo CaptchaRepo, jwtRepo JwtRepo, disk storage.Storage, rdb *redis.Client, logger log.Logger) *PublicUsecase {
 	return &PublicUsecase{
 		userRepo:     userRepo,
 		userRoleRepo: userRoleRepo,
-		logRepo:      logRepo,
 		captchaRepo:  captchaRepo,
 		jwtRepo:      jwtRepo,
 		disk:         disk,
 		log:          log.NewHelper(log.With(logger, "biz", "public")),
-		lock:         xsync.Lock("refresh_token_lock", 60, rdb),
+		rdb:          rdb,
 	}
 }
-func (p *PublicUsecase) buildLog(ctx context.Context, uid uint64, typ model.LoginType) (log *model.LoginLog, err error) {
-	fc, ok := transport.FromFiberContext(ctx)
-	if !ok {
-		err = kerrors.InternalServer("CONTEXT PARSE", "find context error")
-		return
-	}
-	agent, err := p.logRepo.SelectAgent(ctx, fc.Get("User-Agent"))
-	if err != nil {
-		err = errors.Wrap(err, "PublicUsecase.Login.SelectAgent")
-		p.log.WithContext(ctx).Error(err)
-		return
-	}
 
-	loc, err := p.logRepo.SelectLocation(ctx, fc.IP())
-	if err != nil {
-		err = errors.Wrap(err, "PublicUsecase.Login.SelectLocation")
-		p.log.WithContext(ctx).Error(err)
-		return
+func (p *PublicUsecase) buildJwtUser(ctx context.Context, upo *model.User) (user User, err error) {
+	user = User{
+		Id:       upo.ID,
+		Username: upo.Username,
+		Email:    upo.Email,
+		Mobile:   upo.Mobile,
+		Nickname: upo.Nickname,
+		Roles:    nil,
 	}
-
-	bytes, err := encoding.GetCodec("json").Marshal(&loc)
-	if err != nil {
-		return
-	}
-	log = &model.LoginLog{
-		UserID:     uid,
-		Ip:         fc.IP(),
-		Location:   string(bytes),
-		LoginType:  typ,
-		Agent:      agent.Name,
-		OS:         agent.OS,
-		Device:     agent.Device,
-		DeviceType: agent.DeviceType,
-	}
-	return
-}
-func (p *PublicUsecase) buildUserDo(ctx context.Context, upo *model.User) (user User, err error) {
-	_ = copier.Copy(&user, &upo)
-	urs, err := p.userRoleRepo.SelectAllByUserID(ctx, uint64(upo.ID))
+	urs, err := p.userRoleRepo.SelectAllByUserID(ctx, upo.ID)
 	if err != nil {
 		err = errors.Wrap(err, "PublicUsecase.buildUserDto.SelectAllByUserID")
 		p.log.WithContext(ctx).Error(err)
@@ -93,78 +58,38 @@ func (p *PublicUsecase) buildUserDo(ctx context.Context, upo *model.User) (user 
 	}
 	var rids []uint
 	for _, ur := range urs {
-		rids = append(rids, uint(ur.RoleID))
+		rids = append(rids, ur.RoleID)
 	}
 	for _, rid := range rids {
-		user.Roles = append(user.Roles, UserRole{Id: strconv.FormatUint(uint64(rid), 10)})
+		user.Roles = append(user.Roles, UserRole{Id: rid})
 	}
-	user.Id = cast.ToString(upo.ID)
-	user.CreatedAt = upo.CreatedAt.Format(timeFormat)
-	user.UpdatedAt = upo.UpdatedAt.Format(timeFormat)
-	user.Gender = upo.Gender.String()
 	return
 }
-func (p *PublicUsecase) Register(ctx context.Context, regInfo RegisterInfo, c Captcha) (uid string, username string, err error) {
+func (p *PublicUsecase) Register(ctx context.Context, regInfo RegisterInfo, c Captcha) (err error) {
 	if os.Getenv("env") != "dev" {
 		if !p.captchaRepo.Verify(ctx, c) {
 			err = api.ErrorCaptchaInvalid("验证码错误")
 			return
 		}
 	}
-	var (
-		user model.User
-		cnt  int64
-	)
-	if len(regInfo.Username) > 0 {
-		cnt, err = p.userRepo.ExistByUsername(ctx, regInfo.Username)
-		if err != nil {
-			return
-		}
-		if cnt > 0 {
-			err = api.ErrorUserAlreadyExists("用户名已存在")
-			return
-		}
-	}
-
-	if len(regInfo.Email) > 0 {
-		cnt, err = p.userRepo.ExistByEmail(ctx, regInfo.Email)
-		if err != nil {
-			return
-		}
-		if cnt > 0 {
-			err = api.ErrorEmailAlreadyExists("邮箱已存在")
-			return
-		}
-	}
-
-	if len(regInfo.Mobile) > 0 {
-		cnt, err = p.userRepo.ExistByMobile(ctx, regInfo.Mobile)
-		if err != nil {
-			return
-		}
-		if cnt > 0 {
-			err = api.ErrorMobileAlreadyExists("手机号已存在")
-			return
-		}
-	}
-
-	if err = copier.Copy(&user, &regInfo); err != nil {
-		return
+	user := &model.User{
+		Username: regInfo.Username,
+		Email:    regInfo.Email,
+		Mobile:   regInfo.Mobile,
+		Password: regInfo.Password,
 	}
 	user.Password = cypher.BcryptMake(regInfo.Password)
-	err = p.userRepo.Insert(ctx, &user)
-	p.log.WithContext(ctx).Error(err)
-	username = user.Username
-	uid = cast.ToString(user.ID)
+	if err = p.userRepo.Insert(ctx, user); err != nil {
+		p.log.WithContext(ctx).Error(err)
+		err = kerrors.BadRequest("REGISTER_FAILED", "注册失败,请检查用户名是否已存在")
+	}
 	return
 }
 
 func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c Captcha) (token *Token, err error) {
-	if os.Getenv("env") != "dev" {
-		if !p.captchaRepo.Verify(ctx, c) {
-			err = api.ErrorCaptchaInvalid("验证码错误")
-			return
-		}
+	if !p.captchaRepo.Verify(ctx, c) {
+		err = api.ErrorCaptchaInvalid("验证码错误")
+		return
 	}
 	upo, err := p.userRepo.SelectByUsername(ctx, loginSession.Username)
 	if err != nil || !cypher.BcryptCheck(loginSession.Password, upo.Password) {
@@ -175,23 +100,19 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 		err = api.ErrorUserInvalid("用户已被禁用")
 		return
 	}
-	user, err := p.buildUserDo(ctx, upo)
+	user, err := p.buildJwtUser(ctx, upo)
 	if err != nil {
 		return
 	}
 	token, err = p.jwtRepo.Create(ctx, user)
 	if err != nil {
 		p.log.WithContext(ctx).Error(err)
+		err = api.ErrorTokenGenerateFail("生成token失败")
 		return
 	}
-	loginLog, err := p.buildLog(ctx, uint64(upo.ID), model.LoginType_Login)
-	if err != nil {
+	if err = ctxutil.SetUid(ctx, user.Id); err != nil {
 		return
 	}
-	if err = p.logRepo.Insert(ctx, loginLog); err != nil {
-		return
-	}
-
 	return
 }
 
@@ -200,23 +121,30 @@ func (p *PublicUsecase) Refresh(ctx context.Context, refreshToken string) (token
 	if err != nil {
 		return
 	}
+	lock := xsync.Lock("refresh_lock", int64(time.Second*2), p.rdb)
 	// 生成新的token
-	if p.lock.Get() {
+	if lock.Get() {
+		defer lock.Release()
 		var upo *model.User
 		upo, err = p.userRepo.Select(ctx, cast.ToUint(claims.UID))
 		if err != nil {
-			p.lock.Release()
 			return
 		}
 		var user User
-		user, err = p.buildUserDo(ctx, upo)
+		user, err = p.buildJwtUser(ctx, upo)
 		if err != nil {
-			p.lock.Release()
 			return
 		}
-		token, _ = p.jwtRepo.Create(ctx, user)
+		token, err = p.jwtRepo.Create(ctx, user)
+		if err != nil {
+			return
+		}
 		// 将refreshToken注销
-		_ = p.jwtRepo.JoinInBlackList(ctx, refreshToken)
+		if err = p.jwtRepo.JoinInBlackList(ctx, refreshToken); err != nil {
+			return
+		}
+		// 保存上下文
+		err = ctxutil.SetUid(ctx, user.Id)
 	}
 	return
 }
@@ -225,16 +153,22 @@ func (p *PublicUsecase) Generate(ctx context.Context) (c Captcha, err error) {
 	return p.captchaRepo.Create(ctx)
 }
 
-func (p *PublicUsecase) Logout(ctx context.Context, token string) (err error) {
-	uid := ctxutil.GetUid(ctx)
-	loginLog, err := p.buildLog(ctx, cast.ToUint64(uid), model.LoginType_Logout)
-	if err != nil {
-		return
+func (p *PublicUsecase) Logout(ctx context.Context) (err error) {
+	lock := xsync.Lock("logout_lock", int64(time.Second*2), p.rdb)
+	if lock.Get() {
+		defer lock.Release()
+		var tokens []string
+		tokens, err = p.userRepo.SelectTokens(ctx, ctxutil.GetUid(ctx))
+		if err != nil {
+			return
+		}
+		for _, token := range tokens {
+			if err = p.jwtRepo.JoinInBlackList(ctx, token); err != nil {
+				return
+			}
+		}
 	}
-	if err = p.logRepo.Insert(ctx, loginLog); err != nil {
-		return
-	}
-	return p.jwtRepo.JoinInBlackList(ctx, token)
+	return
 }
 
 func (p *PublicUsecase) Upload(ctx context.Context, params UploadInfo) (url string, err error) {
@@ -245,11 +179,12 @@ func (p *PublicUsecase) Upload(ctx context.Context, params UploadInfo) (url stri
 		return
 	}
 	fileSuffix := path.Ext(params.File.Filename)
-	fid, _ := uuid.NewUUID()
+	fid, _ := uuid.NewRandom()
 	key := fid.String() + fileSuffix
 	err = p.disk.Put(key, file, params.File.Size)
 	if err != nil {
 		p.log.WithContext(ctx).Error(err)
+		err = api.ErrorFileUploadFail("文件上传失败")
 		return
 	}
 	url = p.disk.Url(key)

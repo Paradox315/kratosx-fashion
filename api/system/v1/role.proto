@@ -11,7 +11,6 @@ option java_package = "api.system.v1";
 
 // 角色服务
 // @Auth
-// @Cache
 // @Limit
 service Role {
 	rpc CreateRole (RoleRequest) returns (IDReply){
@@ -21,7 +20,7 @@ service Role {
 		};
 	}
 
-	rpc UpdateRole (RoleRequest) returns (IDReply){
+	rpc UpdateRole (RoleRequest) returns (EmptyReply){
 		option (google.api.http) = {
 			put: "/"
 			body: "*"
@@ -42,7 +41,7 @@ service Role {
 
 	rpc ListRole (ListRequest) returns (ListRoleReply){
 		option (google.api.http) = {
-			get: "/list/{page_num}/{page_size}"
+			get: "/list/{current}/{pageSize}"
 		};
 	}
 }

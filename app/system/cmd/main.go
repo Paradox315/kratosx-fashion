@@ -4,7 +4,7 @@ import (
 	"flag"
 	"os"
 
-	"kratosx-fashion/app/system/internal/conf"
+	"kratosx-fashion/app/system/conf"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
@@ -17,9 +17,9 @@ import (
 // go build -ldflags "-X main.Version=x.y.z"
 var (
 	// Name is the name of the compiled software.
-	Name = "kratosx-fashion:system"
+	Name = "kratosx-fashion"
 	// Version is the version of the compiled software.
-	Version string
+	Version = "0.0.1"
 	// flagconf is the config flag.
 	flagconf string
 
@@ -62,17 +62,12 @@ func main() {
 		panic(err)
 	}
 
-	var rc conf.Registry
-	if err := c.Scan(&rc); err != nil {
-		panic(err)
-	}
-
 	var sc conf.Storage
 	if err := c.Scan(&sc); err != nil {
 		panic(err)
 	}
 
-	app, cleanup, err := initApp(bc.Server, &rc, &sc, bc.Data, bc.Jwt, bc.Logger)
+	app, cleanup, err := initApp(bc.Server, bc.Consul, bc.Algo, &sc, bc.Data, bc.Jwt, bc.Logger)
 	if err != nil {
 		panic(err)
 	}

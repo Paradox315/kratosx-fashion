@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package api.fashion.v1;
+
+import "api/fashion/v1/fashion.proto";
+import "google/api/annotations.proto";
+
+option go_package = "kratosx-fashion/api/fashion/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.fashion.v1";
+
+// 推荐接口
+service Recommend {
+  rpc GetPopular(ListRequest) returns (RecommendReply) {
+    option (google.api.http) = {
+      get: "/popular"
+    };
+  }
+  rpc GetLatest(ListRequest) returns (RecommendReply) {
+    option (google.api.http) = {
+      get: "/latest"
+    };
+  }
+  rpc GetClothesNeighbors(ListIDRequest) returns (RecommendReply) {
+    option (google.api.http) = {
+      get: "/neighbors/clothes"
+    };
+  }
+  // @Auth
+  rpc GetUserNeighbors(ListRequest) returns (RecommendReply) {
+    option (google.api.http) = {
+      get: "/neighbors/user"
+    };
+  }
+  // @Auth
+  rpc GetUserRecommend(ListRequest) returns (RecommendReply) {
+    option (google.api.http) = {
+      get: "/user"
+    };
+  }
+}

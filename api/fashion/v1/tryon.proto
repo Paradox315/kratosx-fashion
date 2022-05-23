@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package api.fashion.v1;
+
+import "api/fashion/v1/fashion.proto";
+import "google/api/annotations.proto";
+
+option go_package = "kratosx-fashion/api/fashion/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.fashion.v1";
+
+// 试穿接口
+// @Auth
+service TryOn{
+  rpc TryOnClothes(TryOnRequest) returns (TryOnReply){
+    option (google.api.http) = {
+      post: "/"
+      body: "*"
+    };
+  }
+}

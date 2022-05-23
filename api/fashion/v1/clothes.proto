@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package api.fashion.v1;
+
+import "api/fashion/v1/fashion.proto";
+import "google/api/annotations.proto";
+
+option go_package = "kratosx-fashion/api/fashion/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.fashion.v1";
+
+// 服装接口
+// @Auth
+service Clothes {
+  rpc GetClothes(IDRequest) returns (ClothesReply) {
+    option (google.api.http) = {
+      get: "/{id}"
+    };
+  }
+  rpc CreateClothes(ClothesRequest) returns (EmptyReply) {
+    option (google.api.http) = {
+      post: "/"
+      body: "*"
+    };
+  }
+  rpc UpdateClothes(ClothesRequest) returns (EmptyReply) {
+    option (google.api.http) = {
+      put: "/"
+      body: "*"
+    };
+  }
+  rpc DeleteClothes(IDRequest) returns (EmptyReply) {
+    option (google.api.http) = {
+      delete: "/{id}"
+    };
+  }
+}

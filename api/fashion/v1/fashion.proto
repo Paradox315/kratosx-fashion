@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package api.fashion.v1;
+
+option go_package = "kratosx-fashion/api/fashion/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.fashion.v1";
+
+message EmptyRequest{}
+
+message IDRequest {
+  string id = 1;
+}
+
+message ListRequest {
+  uint32 current = 1;
+  uint32 pageSize = 2;
+}
+
+message ListIDRequest {
+  uint32 current = 1;
+  uint32 pageSize = 2;
+  string id = 3;
+}
+
+message ClothesRequest{
+  string id = 1;
+  string type = 2;
+  string description = 3;
+  string image = 4;
+  string brand = 5;
+  string style = 6;
+  string region = 7;
+  float price = 8;
+  repeated string colors = 9;
+  repeated string labels = 10;
+}
+
+message TryOnRequest{
+  string img = 1;
+  string clothes = 2;
+  string clothes_id = 3;
+}
+
+message TryOnReply{
+  string result = 1;
+}
+
+message EmptyReply{
+}
+
+message ClothesReply{
+  string id = 1;
+  string type = 2;
+  string description = 3;
+  string image = 4;
+  string brand = 5;
+  string style = 6;
+  string region = 7;
+  string time = 8;
+  float price = 9;
+  repeated string colors = 10;
+}
+
+message RecommendReply{
+  repeated ClothesReply list = 1;
+  string type = 2;
+}

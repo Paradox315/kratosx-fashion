@@ -8,20 +8,23 @@ package main
 
 import (
 	"github.com/go-kratos/kratos/v2"
-	"kratosx-fashion/app/system/internal/biz"
-	"kratosx-fashion/app/system/internal/conf"
-	"kratosx-fashion/app/system/internal/data"
-	"kratosx-fashion/app/system/internal/data/infra"
-	"kratosx-fashion/app/system/internal/data/repo"
-	"kratosx-fashion/app/system/internal/middleware"
-	"kratosx-fashion/app/system/internal/server"
-	"kratosx-fashion/app/system/internal/service"
+	biz2 "kratosx-fashion/app/fashion/biz"
+	repo2 "kratosx-fashion/app/fashion/repo"
+	service2 "kratosx-fashion/app/fashion/service"
+	"kratosx-fashion/app/system/biz"
+	"kratosx-fashion/app/system/conf"
+	"kratosx-fashion/app/system/data"
+	"kratosx-fashion/app/system/data/infra"
+	"kratosx-fashion/app/system/data/repo"
+	"kratosx-fashion/app/system/middleware"
+	"kratosx-fashion/app/system/server"
+	"kratosx-fashion/app/system/service"
 )
 
 // Injectors from wire.go:
 
 // initApp init kratos application.
-func initApp(confServer *conf.Server, registry *conf.Registry, storage *conf.Storage, confData *conf.Data, jwt *conf.JWT, logger *conf.Logger) (*kratos.App, func(), error) {
+func initApp(confServer *conf.Server, consul *conf.Consul, algorithm *conf.Algorithm, storage *conf.Storage, confData *conf.Data, jwt *conf.JWT, logger *conf.Logger) (*kratos.App, func(), error) {
 	logLogger := infra.NewLogger(logger)
 	db := data.NewDB(confData, logLogger)
 	client := data.NewRedis(confData, logLogger)
@@ -56,8 +59,16 @@ func initApp(confServer *conf.Server, registry *conf.Registry, storage *conf.Sto
 	resourceMenuRepo := repo.NewResourceMenuRepo(dataData, logLogger)
 	resourceUsecase := biz.NewResourceUsecase(resourceMenuRepo, resourceRouterRepo, roleResourceRepo, transaction, logLogger)
 	resourceService := service.NewResourceService(resourceUsecase, logLogger)
-	xhttpServer := server.NewHTTPServer(confServer, jwtService, casbinAuth, cache, limiter, middlewareLogger, globalMiddleware, pubService, userService, roleService, resourceService, logLogger)
-	registrar := infra.NewRegistrar(registry)
+	clothesRepo := repo2.NewClothesRepo(algorithm, logLogger)
+	feedbackRepo := repo2.NewFeedbackRepo(algorithm, logLogger)
+	clothesUsecase := biz2.NewClothesUsecase(clothesRepo, feedbackRepo, logLogger)
+	clothesService := service2.NewClothesService(clothesUsecase, logLogger)
+	recommendRepo := repo2.NewRecommendRepo(algorithm, logLogger)
+	recommendUsecase := biz2.NewRecommendUsecase(recommendRepo, clothesRepo, logLogger)
+	recommendService := service2.NewRecommendService(recommendUsecase, logLogger)
+	tryOnService := service2.NewTryOnService(clothesUsecase, logLogger)
+	xhttpServer := server.NewHTTPServer(confServer, jwtService, casbinAuth, cache, limiter, middlewareLogger, globalMiddleware, pubService, userService, roleService, resourceService, clothesService, recommendService, tryOnService, logLogger)
+	registrar := infra.NewRegistrar(consul)
 	app := newApp(logLogger, xhttpServer, registrar)
 	return app, func() {
 		cleanup()

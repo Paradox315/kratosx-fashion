@@ -39,6 +39,12 @@ service Resource {
     };
   }
 
+  rpc GetMenuTreeByRole (IDRequest) returns (MenuReply){
+    option (google.api.http) = {
+      get: "/menu/tree/{id}"
+    };
+  }
+
   rpc GetMenuByRole (IDRequest) returns (MenuReply){
     option (google.api.http) = {
       get: "/menu/role/{id}"

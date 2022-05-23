@@ -41,7 +41,7 @@ message LoginRequest {
   string captchaId = 4;
 }
 message RefreshRequest {
-  string refresh_token = 1 ;
+  string refreshToken = 1 ;
 }
 message UserRequest {
   uint64 id = 1;
@@ -60,8 +60,9 @@ message UserRequest {
   string birthday = 12;
   uint32 gender = 13;
   uint32 age = 14;
-  bool status = 15 ;
-  repeated uint64 roles = 16;
+  uint32 status = 15 ;
+  repeated string figures = 16;
+  repeated uint64 roles = 17;
 }
 
 message IDRequest {
@@ -139,7 +140,8 @@ message UserReply {
   uint32 age = 15;
   string createdAt = 16;
   string updatedAt = 17;
-  repeated UserRole roles = 18;
+  repeated string figures = 18;
+  repeated UserRole roles = 19;
 }
 
 message UserState {
@@ -160,6 +162,8 @@ message UserState {
   uint32 age = 15;
   string registerDate = 17;
   repeated uint64 roles = 18;
+  repeated string figures = 19;
+  uint64 currentRole = 20;
 }
 
 message ListUserReply {
@@ -183,7 +187,7 @@ message UserLog {
   string os = 13;
   string device = 14;
   string deviceType = 15;
-  string Type = 16;
+  string type = 16;
 }
 
 message Position{

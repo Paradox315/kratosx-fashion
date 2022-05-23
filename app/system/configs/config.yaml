@@ -12,7 +12,7 @@ data:
     log_mode: debug
     max_idle_conns: 10
     max_open_conns: 100
-    auto_migrate: true
+    auto_migrate: false
   redis:
     addr: 127.0.0.1:6379
     read_timeout: 0.2s
@@ -22,7 +22,7 @@ data:
   casbin:
     source: ./resource/model.conf
 logger:
-  prefix: kratosx-fashion:system
+  prefix: kratosx-fashion
   level: info
   format: console
   dir: log
@@ -35,3 +35,10 @@ jwt:
   issuer: paradox
   ttl: 86400s
   refresh_ttl: 604800s
+consul:
+  address: 101.35.21.119:8500
+  scheme: http
+algo:
+  recommend_addr: 110.42.197.201:8087
+#  tryon_addr: region-11.autodl.com:14205
+  tryon_addr: 127.0.0.1:20000

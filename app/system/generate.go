@@ -12,6 +12,7 @@ var outPath = flag.String("output", "./data/linq", "output path")
 var dsn = flag.String("dsn", "root:123456@(127.0.0.1:3306)/violet_test?charset=utf8mb4&parseTime=True&loc=Local", "dsn")
 
 //go:generate
+//go:generate go run generate.go -output=./data/linq
 func main() {
 	// specify the output directory (default: "./query")
 	// ### if you want to query without context constrain, set mode gen.WithoutContext ###

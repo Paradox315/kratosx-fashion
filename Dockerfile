@@ -1,23 +1,23 @@
 FROM golang:1.18 AS builder
 
-COPY ../.. /src
+COPY . /src
 WORKDIR /src
 
-RUN cd app/system && GOPROXY=https://goproxy.cn CGO_ENABLED=0 make build
+RUN cd app/system &&  make build
 
-FROM debian:stable-slim
+FROM alpine
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-		ca-certificates  \
-        netbase \
-        && rm -rf /var/lib/apt/lists/ \
-        && apt-get autoremove -y && apt-get autoclean -y
+COPY --from=builder /src/app/system/bin /app
 
-COPY --from=builder /src/bin /app
+RUN echo -e  "http://mirrors.aliyun.com/alpine/v3.4/main\nhttp://mirrors.aliyun.com/alpine/v3.4/community" >  /etc/apk/repositories \
+&& apk update && apk add tzdata \
+&& cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+&& echo "Shanghai/Asia" > /etc/timezone \
+&& apk del tzdata
 
 WORKDIR /app
 
 EXPOSE 8000
 EXPOSE 9000
 
-CMD ["./server"]
+CMD ["./cmd","-conf","/app/configs"]

@@ -23,7 +23,6 @@ const (
 )
 
 type ClothesRepo struct {
-	httpCli *fiber.Agent
 	grpcCli v1.TryOnClient
 	log     *log.Helper
 	target  string
@@ -66,17 +65,17 @@ func NewClothesRepo(algo *conf.Algorithm, logger log.Logger) biz.ClothesRepo {
 }
 
 func (c *ClothesRepo) Insert(ctx context.Context, clothes *model.Clothes) (err error) {
-	c.httpCli = fiber.AcquireAgent()
-	req := c.httpCli.Request()
+	cli := fiber.AcquireAgent()
+	req := cli.Request()
 	req.SetRequestURI(c.target + InsertAPI)
 	req.Header.SetMethod(fiber.MethodPost)
-	c.httpCli.JSON(clothes)
-	if err = c.httpCli.Parse(); err != nil {
+	cli.JSON(clothes)
+	if err = cli.Parse(); err != nil {
 		err = errors.Wrap(err, "clothesRepo.Insert")
 		c.log.WithContext(ctx).Error(err)
 		return
 	}
-	code, _, errs := c.httpCli.Bytes()
+	code, _, errs := cli.Bytes()
 	if len(errs) != 0 || code != fiber.StatusOK {
 		c.log.WithContext(ctx).Error(errs)
 		return errors.New("http response error")
@@ -85,16 +84,16 @@ func (c *ClothesRepo) Insert(ctx context.Context, clothes *model.Clothes) (err e
 }
 
 func (c *ClothesRepo) Select(ctx context.Context, id string) (clothes *model.Clothes, err error) {
-	c.httpCli = fiber.AcquireAgent()
-	req := c.httpCli.Request()
+	cli := fiber.AcquireAgent()
+	req := cli.Request()
 	req.SetRequestURI(fmt.Sprintf(c.target+SelectAPI, id))
 	req.Header.SetMethod(fiber.MethodGet)
-	if err = c.httpCli.Parse(); err != nil {
+	if err = cli.Parse(); err != nil {
 		err = errors.Wrap(err, "clothesRepo.Select")
 		c.log.WithContext(ctx).Error(err)
 		return
 	}
-	code, bytes, errs := c.httpCli.Bytes()
+	code, bytes, errs := cli.Bytes()
 	if len(errs) != 0 || code != fiber.StatusOK {
 		c.log.WithContext(ctx).Error(errs)
 		err = errors.New("http response error")
@@ -140,17 +139,17 @@ func (c *ClothesRepo) SelectByIDs(ctx context.Context, ids []string) (items []*m
 }
 
 func (c *ClothesRepo) Update(ctx context.Context, clothes *model.Clothes) (err error) {
-	c.httpCli = fiber.AcquireAgent()
-	req := c.httpCli.Request()
+	cli := fiber.AcquireAgent()
+	req := cli.Request()
 	req.SetRequestURI(fmt.Sprintf(c.target+UpdateAPI, clothes.ItemId))
 	req.Header.SetMethod(fiber.MethodPatch)
-	c.httpCli.JSON(clothes)
-	if err = c.httpCli.Parse(); err != nil {
+	cli.JSON(clothes)
+	if err = cli.Parse(); err != nil {
 		err = errors.Wrap(err, "clothesRepo.Update")
 		c.log.WithContext(ctx).Error(err)
 		return
 	}
-	code, _, errs := c.httpCli.Bytes()
+	code, _, errs := cli.Bytes()
 	if len(errs) != 0 || code != fiber.StatusOK {
 		c.log.WithContext(ctx).Error(errs)
 		return errors.New("http response error")
@@ -159,16 +158,16 @@ func (c *ClothesRepo) Update(ctx context.Context, clothes *model.Clothes) (err e
 }
 
 func (c *ClothesRepo) Delete(ctx context.Context, id string) (err error) {
-	c.httpCli = fiber.AcquireAgent()
-	req := c.httpCli.Request()
+	cli := fiber.AcquireAgent()
+	req := cli.Request()
 	req.SetRequestURI(fmt.Sprintf(c.target+DeleteAPI, id))
 	req.Header.SetMethod(fiber.MethodDelete)
-	if err = c.httpCli.Parse(); err != nil {
+	if err = cli.Parse(); err != nil {
 		err = errors.Wrap(err, "clothesRepo.Delete")
 		c.log.WithContext(ctx).Error(err)
 		return
 	}
-	code, _, errs := c.httpCli.Bytes()
+	code, _, errs := cli.Bytes()
 	if len(errs) != 0 || code != fiber.StatusOK {
 		c.log.WithContext(ctx).Error(errs)
 		return errors.New("http response error")

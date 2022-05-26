@@ -76,7 +76,22 @@ func (u *ClothesUsecase) Get(ctx context.Context, id string) (clothes *pb.Clothe
 	if err != nil {
 		return
 	}
-	return u.buildClothesDto(ctx, cpo)
+	clothes, err = u.buildClothesDto(ctx, cpo)
+	if err != nil {
+		return nil, err
+	}
+	if len(id) == 0 {
+		return
+	}
+	if err = u.feedbackRepo.Insert(ctx, &model.Feedback{
+		FeedbackType: "view",
+		UserId:       cast.ToString(ctxutil.GetUid(ctx)),
+		ItemId:       id,
+		Timestamp:    time.Now().Format(time.RFC3339),
+	}); err != nil {
+		u.log.WithContext(ctx).Error(err)
+	}
+	return
 }
 
 func (u *ClothesUsecase) Save(ctx context.Context, clothes *pb.ClothesRequest) (err error) {
@@ -102,6 +117,9 @@ func (u *ClothesUsecase) Delete(ctx context.Context, id string) (err error) {
 func (u *ClothesUsecase) TryOn(ctx context.Context, req *pb.TryOnRequest) (resp *pb.TryOnReply, err error) {
 	resp, err = u.clothesRepo.TryOn(ctx, req)
 	if err != nil {
+		return
+	}
+	if len(req.ClothesId) == 0 {
 		return
 	}
 	if err = u.feedbackRepo.Insert(ctx, &model.Feedback{

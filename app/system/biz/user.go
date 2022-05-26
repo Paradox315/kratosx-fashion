@@ -106,6 +106,7 @@ func (u *UserUsecase) buildUserPo(ctx context.Context, user *pb.UserRequest) (up
 		City:        user.City,
 		Birthday:    user.Birthday,
 		Description: user.Description,
+		Figures:     user.Figures,
 	})
 	return
 }
@@ -225,6 +226,7 @@ func (u *UserUsecase) Init(ctx context.Context) (user *pb.UserState, err error) 
 		user.City = extras.City
 		user.Birthday = extras.Birthday
 		user.Description = extras.Description
+		user.Figures = extras.Figures
 	}
 	urs, err := u.userRoleRepo.SelectAllByUserID(ctx, uint(uid))
 	if err != nil {

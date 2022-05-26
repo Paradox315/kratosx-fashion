@@ -33,17 +33,17 @@ func NewRecommendRepo(algo *conf.Algorithm, logger log.Logger) biz.RecommendRepo
 }
 
 func (r *RecommendRepo) SelectUserNeighbors(ctx context.Context, uid string, limit, offset int) (items []string, err error) {
-	r.httpCli = fiber.AcquireAgent()
-	req := r.httpCli.Request()
+	cli := fiber.AcquireAgent()
+	req := cli.Request()
 	req.SetRequestURI(fmt.Sprintf(r.target+UserNeighbor, uid))
 	req.Header.SetMethod(fiber.MethodGet)
-	r.httpCli.QueryString(fmt.Sprintf("n=%d&offset=%d", limit, offset))
-	if err = r.httpCli.Parse(); err != nil {
+	cli.QueryString(fmt.Sprintf("n=%d&offset=%d", limit, offset))
+	if err = cli.Parse(); err != nil {
 		err = errors.Wrap(err, "repo.recommend.SelectUserNeighbors")
 		r.log.WithContext(ctx).Error(err)
 		return
 	}
-	code, bytes, errs := r.httpCli.Bytes()
+	code, bytes, errs := cli.Bytes()
 	if code != fiber.StatusOK || errs != nil {
 		r.log.WithContext(ctx).Error(errs)
 		err = errors.New("http response error")
@@ -56,17 +56,17 @@ func (r *RecommendRepo) SelectUserNeighbors(ctx context.Context, uid string, lim
 }
 
 func (r *RecommendRepo) SelectClothesNeighbors(ctx context.Context, id string, limit, offset int) (items []string, err error) {
-	r.httpCli = fiber.AcquireAgent()
-	req := r.httpCli.Request()
+	cli := fiber.AcquireAgent()
+	req := cli.Request()
 	req.SetRequestURI(fmt.Sprintf(r.target+ItemNeighbor, id))
 	req.Header.SetMethod(fiber.MethodGet)
-	r.httpCli.QueryString(fmt.Sprintf("n=%d&offset=%d", limit, offset))
-	if err = r.httpCli.Parse(); err != nil {
+	cli.QueryString(fmt.Sprintf("n=%d&offset=%d", limit, offset))
+	if err = cli.Parse(); err != nil {
 		err = errors.Wrap(err, "repo.recommend.SelectClothesNeighbors")
 		r.log.WithContext(ctx).Error(err)
 		return
 	}
-	code, bytes, errs := r.httpCli.Bytes()
+	code, bytes, errs := cli.Bytes()
 	if code != fiber.StatusOK || errs != nil {
 		r.log.WithContext(ctx).Error(errs)
 		err = errors.New("http response error")
@@ -79,17 +79,17 @@ func (r *RecommendRepo) SelectClothesNeighbors(ctx context.Context, id string, l
 }
 
 func (r *RecommendRepo) SelectPopular(ctx context.Context, limit, offset int) (items []model.Item, err error) {
-	r.httpCli = fiber.AcquireAgent()
-	req := r.httpCli.Request()
+	cli := fiber.AcquireAgent()
+	req := cli.Request()
 	req.SetRequestURI(r.target + Popular)
 	req.Header.SetMethod(fiber.MethodGet)
-	r.httpCli.QueryString(fmt.Sprintf("n=%d&offset=%d", limit, offset))
-	if err = r.httpCli.Parse(); err != nil {
+	cli.QueryString(fmt.Sprintf("n=%d&offset=%d", limit, offset))
+	if err = cli.Parse(); err != nil {
 		err = errors.Wrap(err, "repo.recommend.SelectPopular")
 		r.log.WithContext(ctx).Error(err)
 		return
 	}
-	code, bytes, errs := r.httpCli.Bytes()
+	code, bytes, errs := cli.Bytes()
 	if len(errs) != 0 || code != fiber.StatusOK {
 		r.log.WithContext(ctx).Error(errs)
 		err = errors.New("http response error")
@@ -102,17 +102,17 @@ func (r *RecommendRepo) SelectPopular(ctx context.Context, limit, offset int) (i
 }
 
 func (r *RecommendRepo) SelectLatest(ctx context.Context, limit, offset int) (items []model.Item, err error) {
-	r.httpCli = fiber.AcquireAgent()
-	req := r.httpCli.Request()
+	cli := fiber.AcquireAgent()
+	req := cli.Request()
 	req.SetRequestURI(r.target + Latest)
 	req.Header.SetMethod(fiber.MethodGet)
-	r.httpCli.QueryString(fmt.Sprintf("n=%d&offset=%d", limit, offset))
-	if err = r.httpCli.Parse(); err != nil {
+	cli.QueryString(fmt.Sprintf("n=%d&offset=%d", limit, offset))
+	if err = cli.Parse(); err != nil {
 		err = errors.Wrap(err, "repo.recommend.SelectLatest")
 		r.log.WithContext(ctx).Error(err)
 		return
 	}
-	code, bytes, errs := r.httpCli.Bytes()
+	code, bytes, errs := cli.Bytes()
 	if len(errs) != 0 || code != fiber.StatusOK {
 		r.log.WithContext(ctx).Error(errs)
 		err = errors.New("http response error")
@@ -125,17 +125,17 @@ func (r *RecommendRepo) SelectLatest(ctx context.Context, limit, offset int) (it
 }
 
 func (r *RecommendRepo) SelectUserRecommend(ctx context.Context, uid string, limit, offset int) (items []string, err error) {
-	r.httpCli = fiber.AcquireAgent()
-	req := r.httpCli.Request()
+	cli := fiber.AcquireAgent()
+	req := cli.Request()
 	req.SetRequestURI(fmt.Sprintf(r.target+UserRecommend, uid))
 	req.Header.SetMethod(fiber.MethodGet)
-	r.httpCli.QueryString(fmt.Sprintf("n=%d&offset=%d&write-back-type=read", limit, offset))
-	if err = r.httpCli.Parse(); err != nil {
+	cli.QueryString(fmt.Sprintf("n=%d&offset=%d&write-back-type=read", limit, offset))
+	if err = cli.Parse(); err != nil {
 		err = errors.Wrap(err, "repo.recommend.SelectUserRecommend")
 		r.log.WithContext(ctx).Error(err)
 		return
 	}
-	code, bytes, errs := r.httpCli.Bytes()
+	code, bytes, errs := cli.Bytes()
 	if code != fiber.StatusOK || errs != nil {
 		r.log.WithContext(ctx).Error(errs)
 		err = errors.New("http response error")

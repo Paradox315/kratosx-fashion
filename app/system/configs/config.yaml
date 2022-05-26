@@ -40,5 +40,4 @@ consul:
   scheme: http
 algo:
   recommend_addr: 110.42.197.201:8087
-#  tryon_addr: region-11.autodl.com:14205
-  tryon_addr: 127.0.0.1:20000
+  tryon_addr: region-11.autodl.com:14205

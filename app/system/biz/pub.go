@@ -123,6 +123,7 @@ func (p *PublicUsecase) Login(ctx context.Context, loginSession UserSession, c C
 func (p *PublicUsecase) Refresh(ctx context.Context, refreshToken string) (token *Token, err error) {
 	claims, err := p.jwtRepo.ParseToken(ctx, refreshToken)
 	if err != nil {
+		err = kerrors.InternalServer("REFRESH_FAILED", "刷新token失败")
 		return
 	}
 	lock := xsync.Lock("refresh_lock", int64(time.Second*2), p.rdb)

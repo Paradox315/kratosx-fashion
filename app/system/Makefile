@@ -82,7 +82,7 @@ service:
 .PHONY: build
 # build
 build:
-	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./...
+	mkdir -p bin/ && GOPROXY=https://goproxy.cn CGO_ENABLED=0 go build -ldflags "-X main.Version=$(VERSION)  -s -w" -o ./bin/ ./...
 
 .PHONY: generate
 # generate

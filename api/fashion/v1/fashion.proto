@@ -39,7 +39,7 @@ message ClothesRequest{
 message TryOnRequest{
   string img = 1;
   string clothes = 2;
-  string clothes_id = 3;
+  string clothesId = 3;
 }
 
 message TryOnReply{

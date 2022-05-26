@@ -52,6 +52,9 @@ func (u *RecommendUsecase) GetPopular(ctx context.Context, limit, offset int) (*
 	}
 	var ids []string
 	for _, item := range items {
+		if len(item.Id) == 0 {
+			continue
+		}
 		ids = append(ids, item.Id)
 	}
 	cpos, err := u.clothesRepo.SelectByIDs(ctx, ids)

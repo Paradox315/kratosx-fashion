@@ -7,7 +7,6 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/xhttp/apistate"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
-
 	"kratosx-fashion/app/system/conf"
 
 	fashion_v1 "kratosx-fashion/api/fashion/v1"
@@ -67,7 +66,7 @@ func NewHTTPServer(c *conf.Server,
 	}
 	srv := xhttp.NewServer(opts...)
 	srv.Route(func(r fiber.Router) {
-		r.Get("/", func(c *fiber.Ctx) error {
+		r.Get("/csrf", func(c *fiber.Ctx) error {
 			return c.SendString("Welcome to KratosX-Fashion!")
 		})
 		r.Get("/monitor", monitor.New())

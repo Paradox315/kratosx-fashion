@@ -48,7 +48,7 @@ func NewHTTPServer(c *conf.Server,
 				code := fiber.StatusInternalServerError
 
 				if e, ok := err.(*fiber.Error); ok {
-					// Override status code if fiber.Error typehh
+					// Override status code if fiber.Error type
 					code = e.Code
 				}
 

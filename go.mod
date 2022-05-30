@@ -99,7 +99,7 @@ require (
 	gorm.io/plugin/dbresolver v1.1.0 // indirect
 )
 
-replace github.com/go-kratos/kratos/v2 => github.com/Paradox315/kratos/v2 v2.4.6
+replace github.com/go-kratos/kratos/v2 => github.com/Paradox315/kratos/v2 v2.4.7
 
 replace github.com/go-kratos/kratos/contrib/registry/consul/v2 => github.com/Paradox315/kratos/contrib/registry/consul/v2 v2.0.0-20220216150651-8573d06d9606
 

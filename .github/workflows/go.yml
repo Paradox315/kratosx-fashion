@@ -57,8 +57,8 @@ jobs:
             key: ${{ secrets.REMOTE_SSH_KEY }} # Secrets中的配置：vps 上创建的ssh key的私钥内容
             port: 23
             script: |
-              - cd ${{ secrets.REMOTE_TARGET }} && docker build -t ${{ secrets.IMAGE_NAME }} .
-              - cd ${{ secrets.REMOTE_TARGET }}/deploy && docker-compose up -d
+             - pwd
+             - ls
 
       - name: Run Revive Action by pulling pre-built image
         uses: docker://morphy/revive-action:v2

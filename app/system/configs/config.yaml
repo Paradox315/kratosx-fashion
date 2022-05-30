@@ -8,13 +8,14 @@ server:
 data:
   database:
     driver: mysql
-    source: root:123456@tcp(127.0.0.1:3306)/violet_test?charset=utf8mb4&parseTime=True&loc=Local
+    source: ${DSN}
     log_mode: warn
     max_idle_conns: 10
     max_open_conns: 100
     auto_migrate: false
   redis:
-    addr: 127.0.0.1:6379
+    addr: ${REDIS_ADDR}
+    password: ${REDIS_PASSWORD}
     read_timeout: 0.2s
     write_timeout: 0.2s
   iplocation:

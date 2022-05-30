@@ -49,16 +49,5 @@ jobs:
           source: 'app/system/bin,deploy/,app/system/configs,Dockerfile'  # 编译出的二进制文件名
           target: ${{ secrets.REMOTE_TARGET }} # Secrets中的配置：scp 到 vps 上的的目录
 
-      - name: Docker Build
-        uses: appleboy/ssh-action@master
-        with:
-            host: ${{ secrets.REMOTE_HOST }}
-            username: ${{ secrets.REMOTE_USER }}
-            key: ${{ secrets.REMOTE_SSH_KEY }} # Secrets中的配置：vps 上创建的ssh key的私钥内容
-            port: 23
-            script: |
-             - pwd
-             - ls
-
       - name: Run Revive Action by pulling pre-built image
         uses: docker://morphy/revive-action:v2

@@ -46,7 +46,7 @@ jobs:
         run: docker login hkccr.ccs.tencentyun.com --username=${{ secrets.DOCKER_REPO_USERNAME }} --password=${{ secrets.DOCKER_REPO_PASSWORD }}
 
       - name: Docker Push
-        run: docker tag kratosx-fashion hkccr.ccs.tencentyun.com/mirror_repo/kratosx-fashion:latest && docker push hkccr.ccs.tencentyun.com/mirror_repo/kratosx:latest
+        run: docker tag kratosx-fashion hkccr.ccs.tencentyun.com/mirror_repo/kratosx-fashion:latest && docker push hkccr.ccs.tencentyun.com/mirror_repo/kratosx-fashion:latest
 
       - name: Run Revive Action by pulling pre-built image
         uses: docker://morphy/revive-action:v2

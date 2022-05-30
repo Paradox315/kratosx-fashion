@@ -10,7 +10,6 @@ import (
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/go-kratos/kratos/v2/transport/xhttp"
 )
 
@@ -30,7 +29,7 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "app/system/configs", "config path, eg: -conf config.yaml")
 }
 
-func newApp(logger log.Logger, hs *xhttp.Server, rr registry.Registrar) *kratos.App {
+func newApp(logger log.Logger, hs *xhttp.Server) *kratos.App {
 	return kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
@@ -40,7 +39,6 @@ func newApp(logger log.Logger, hs *xhttp.Server, rr registry.Registrar) *kratos.
 		kratos.Server(
 			hs,
 		),
-		kratos.Registrar(rr),
 	)
 }
 
@@ -67,7 +65,7 @@ func main() {
 		panic(err)
 	}
 
-	app, cleanup, err := initApp(bc.Server, bc.Consul, bc.Algo, &sc, bc.Data, bc.Jwt, bc.Logger)
+	app, cleanup, err := initApp(bc.Server, bc.Algo, &sc, bc.Data, bc.Jwt, bc.Logger)
 	if err != nil {
 		panic(err)
 	}

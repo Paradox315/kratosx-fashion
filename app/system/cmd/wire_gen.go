@@ -24,7 +24,7 @@ import (
 // Injectors from wire.go:
 
 // initApp init kratos application.
-func initApp(confServer *conf.Server, consul *conf.Consul, algorithm *conf.Algorithm, storage *conf.Storage, confData *conf.Data, jwt *conf.JWT, logger *conf.Logger) (*kratos.App, func(), error) {
+func initApp(confServer *conf.Server, algorithm *conf.Algorithm, storage *conf.Storage, confData *conf.Data, jwt *conf.JWT, logger *conf.Logger) (*kratos.App, func(), error) {
 	logLogger := infra.NewLogger(logger)
 	db := data.NewDB(confData, logLogger)
 	client := data.NewRedis(confData, logLogger)
@@ -68,8 +68,7 @@ func initApp(confServer *conf.Server, consul *conf.Consul, algorithm *conf.Algor
 	recommendService := service2.NewRecommendService(recommendUsecase, logLogger)
 	tryOnService := service2.NewTryOnService(clothesUsecase, logLogger)
 	xhttpServer := server.NewHTTPServer(confServer, jwtService, casbinAuth, cache, limiter, middlewareLogger, globalMiddleware, pubService, userService, roleService, resourceService, clothesService, recommendService, tryOnService, logLogger)
-	registrar := infra.NewRegistrar(consul)
-	app := newApp(logLogger, xhttpServer, registrar)
+	app := newApp(logLogger, xhttpServer)
 	return app, func() {
 		cleanup()
 	}, nil

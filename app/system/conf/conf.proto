@@ -10,8 +10,7 @@ message Bootstrap {
   Data data = 2;
   Logger logger = 3;
   JWT jwt = 4;
-  Consul consul = 5;
-  Algorithm algo = 6;
+  Algorithm algo = 5;
 }
 
 message Server {
@@ -75,11 +74,6 @@ message JWT {
   string issuer = 2;
   google.protobuf.Duration ttl = 3;
   google.protobuf.Duration refresh_ttl = 4;
-}
-
-message Consul {
-  string address = 1;
-  string scheme = 2;
 }
 
 message Algorithm{

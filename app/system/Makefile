@@ -84,6 +84,11 @@ service:
 build:
 	mkdir -p bin/ && GOPROXY=https://goproxy.cn CGO_ENABLED=0 go build -ldflags "-X main.Version=$(VERSION)  -s -w" -o ./bin/ ./...
 
+#docker
+.PHONY: docker
+docker:
+	cd ../../ && docker build -t kratosx-fashion .
+
 .PHONY: generate
 # generate
 generate:

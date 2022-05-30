@@ -4,7 +4,6 @@ require (
 	github.com/casbin/casbin/v2 v2.40.6
 	github.com/casbin/gorm-adapter/v3 v3.5.0
 	github.com/envoyproxy/protoc-gen-validate v0.1.0
-	github.com/go-kratos/kratos/contrib/registry/consul/v2 v2.0.0-20220215033000-471a2aab794b
 	github.com/go-kratos/kratos/v2 v2.2.0
 	github.com/go-redis/redis/extra/redisotel v0.3.0
 	github.com/go-redis/redis/v8 v8.11.4
@@ -14,7 +13,6 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
-	github.com/hashicorp/consul/api v1.12.0
 	github.com/ip2location/ip2location-go v8.3.0+incompatible
 	github.com/jassue/go-storage v1.0.1
 	github.com/jinzhu/copier v0.3.5
@@ -41,13 +39,11 @@ require (
 	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.1+incompatible // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/bytedance/sonic v1.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20211019084208-fb5309c8db06 // indirect
 	github.com/denisenkom/go-mssqldb v0.12.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/fatih/color v1.9.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-logr/logr v1.2.1 // indirect
 	github.com/go-logr/stdr v1.2.0 // indirect
@@ -59,12 +55,6 @@ require (
 	github.com/golang-sql/sqlexp v0.0.0-20170517235910-f1bb20e5a188 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
-	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
-	github.com/hashicorp/go-hclog v0.12.0 // indirect
-	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect
-	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
-	github.com/hashicorp/golang-lru v0.5.0 // indirect
-	github.com/hashicorp/serf v0.9.6 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.11.0 // indirect
@@ -80,10 +70,6 @@ require (
 	github.com/klauspost/compress v1.15.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/lestrrat-go/strftime v1.0.6 // indirect
-	github.com/mattn/go-colorable v0.1.6 // indirect
-	github.com/mattn/go-isatty v0.0.12 // indirect
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/qiniu/go-sdk/v7 v7.11.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -113,7 +99,7 @@ require (
 	gorm.io/plugin/dbresolver v1.1.0 // indirect
 )
 
-replace github.com/go-kratos/kratos/v2 => github.com/Paradox315/kratos/v2 v2.4.3
+replace github.com/go-kratos/kratos/v2 => github.com/Paradox315/kratos/v2 v2.4.6
 
 replace github.com/go-kratos/kratos/contrib/registry/consul/v2 => github.com/Paradox315/kratos/contrib/registry/consul/v2 v2.0.0-20220216150651-8573d06d9606
 

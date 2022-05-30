@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"kratosx-fashion/app/system/conf"
+	"os"
 
 	fashion_v1 "kratosx-fashion/api/fashion/v1"
 	sys_v1 "kratosx-fashion/api/system/v1"
@@ -40,13 +41,14 @@ func NewHTTPServer(c *conf.Server,
 		xhttp.FiberConfig(fiber.Config{
 			JSONDecoder: encoding.GetCodec("json").Unmarshal,
 			JSONEncoder: encoding.GetCodec("json").Marshal,
+			Prefork:     os.Getenv("env") == "prod",
 			// Override default error handler
 			ErrorHandler: func(c *fiber.Ctx, err error) error {
 				// Default 500 statuscode
 				code := fiber.StatusInternalServerError
 
 				if e, ok := err.(*fiber.Error); ok {
-					// Override status code if fiber.Error type
+					// Override status code if fiber.Error typehh
 					code = e.Code
 				}
 
@@ -69,7 +71,7 @@ func NewHTTPServer(c *conf.Server,
 		r.Get("/csrf", func(c *fiber.Ctx) error {
 			return c.SendString("Welcome to KratosX-Fashion!")
 		})
-		r.Get("/monitor", monitor.New())
+		r.Get("/monitor", monitor.New(monitor.Config{APIOnly: true}))
 	})
 	log.NewHelper(logger).Infof("xhttp server middleware init: %s,%s,%s,%s,%s",
 		jwtMw.Name(),

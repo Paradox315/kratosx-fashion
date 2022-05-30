@@ -9,7 +9,7 @@ data:
   database:
     driver: mysql
     source: root:123456@tcp(127.0.0.1:3306)/violet_test?charset=utf8mb4&parseTime=True&loc=Local
-    log_mode: debug
+    log_mode: warn
     max_idle_conns: 10
     max_open_conns: 100
     auto_migrate: false
@@ -35,9 +35,6 @@ jwt:
   issuer: paradox
   ttl: 86400s
   refresh_ttl: 604800s
-consul:
-  address: 101.35.21.119:8500
-  scheme: http
 algo:
   recommend_addr: 110.42.197.201:8087
   tryon_addr: region-11.autodl.com:14205

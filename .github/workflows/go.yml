@@ -58,7 +58,7 @@ jobs:
             port: 23
             script: |
               - cd ${{ secrets.REMOTE_TARGET }} && docker build -t ${{ secrets.IMAGE_NAME }} .
-              - cd deploy && docker-compose up -d
+              - cd ${{ secrets.REMOTE_TARGET }}/deploy && docker-compose up -d
 
       - name: Run Revive Action by pulling pre-built image
         uses: docker://morphy/revive-action:v2

@@ -43,8 +43,7 @@ jobs:
         run: cd app/system && make docker
 
       - name: Docker Push
-        run: docker login hkccr.ccs.tencentyun.com --username=${{ secrets.DOCKER_REPO_USERNAME }} --password=${{ secrets.DOCKER_REPO_PASSWORD }} &&
-             docker push hkccr.ccs.tencentyun.com/mirror_repo/${{ secrets.REMOTE_TARGET }}:latest
+        run: docker login hkccr.ccs.tencentyun.com --username=${{ secrets.DOCKER_REPO_USERNAME }} --password=${{ secrets.DOCKER_REPO_PASSWORD }} && docker push hkccr.ccs.tencentyun.com/mirror_repo/${{ secrets.REMOTE_TARGET }}:latest
 
       - name: Run Revive Action by pulling pre-built image
         uses: docker://morphy/revive-action:v2

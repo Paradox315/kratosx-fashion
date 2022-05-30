@@ -3,12 +3,13 @@ services:
   kratosx-fashion:
     container_name: kratosx-fashion
     image: kratosx-fashion
+    pid: host
     restart: unless-stopped
     ports:
       - 8000:8000
       - 9000:9000
     volumes:
-      - ../log:/app/log
+      - ~/log/fashion:/app/log
       - ../app/system/configs:/app/configs
       - ~/resource:/app/resource
     environment:

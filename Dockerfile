@@ -13,4 +13,4 @@ WORKDIR /app
 EXPOSE 8000
 EXPOSE 9000
 
-CMD ["./cmd","-conf","/app/configs"]
+CMD ["sh","-c","./cmd -conf configs"]

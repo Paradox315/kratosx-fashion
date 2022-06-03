@@ -195,6 +195,24 @@ message Position{
   float lng = 2;
 }
 
+message RuntimeReply{
+  string host = 1;
+  string os = 2;
+  string platform = 3;
+  string arch = 4;
+  string version = 5;
+  string compiler = 6;
+  uint32 cpus = 7;
+}
+
+message DiskReply{
+  string path = 1;
+  uint64 total = 2;
+  uint64 free = 3;
+  uint64 used = 4;
+  float usedPercent = 5;
+}
+
 message ListUserLogReply{
   repeated UserLog list = 1;
   uint32 total = 2;

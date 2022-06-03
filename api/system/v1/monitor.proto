@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package api.system.v1;
+
+import "api/system/v1/system.proto";
+import "google/api/annotations.proto";
+
+option go_package = "kratosx-fashion/api/system/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.system.v1";
+
+// 系统监控
+service Monitor{
+  // @Cache
+  rpc GetRuntimeInfo(EmptyRequest) returns (RuntimeReply) {
+    option (google.api.http) = {
+      get: "/runtime"
+    };
+  }
+  // @Cache
+  rpc GetDiskInfo(EmptyRequest) returns (DiskReply) {
+    option (google.api.http) = {
+      get: "/disk"
+    };
+  }
+}

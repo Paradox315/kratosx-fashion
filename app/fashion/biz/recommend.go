@@ -79,6 +79,9 @@ func (u *RecommendUsecase) GetLatest(ctx context.Context, limit, offset int) (*p
 	}
 	var ids []string
 	for _, item := range items {
+		if len(item.Id) == 0 {
+			continue
+		}
 		ids = append(ids, item.Id)
 	}
 	cpos, err := u.clothesRepo.SelectByIDs(ctx, ids)
@@ -103,6 +106,9 @@ func (u *RecommendUsecase) GetClothesNeighbors(ctx context.Context, id string, l
 	}
 	var ids []string
 	for _, item := range items {
+		if len(item) == 0 {
+			continue
+		}
 		ids = append(ids, item)
 	}
 	cpos, err := u.clothesRepo.SelectByIDs(ctx, ids)
@@ -129,6 +135,9 @@ func (u *RecommendUsecase) GetUserNeighbors(ctx context.Context, limit, offset i
 	}
 	var ids []string
 	for _, item := range items {
+		if len(item) == 0 {
+			continue
+		}
 		ids = append(ids, item)
 	}
 	cpos, err := u.clothesRepo.SelectByIDs(ctx, ids)
@@ -154,6 +163,9 @@ func (u *RecommendUsecase) GetUserRecommend(ctx context.Context, limit, offset i
 	}
 	var ids []string
 	for _, item := range items {
+		if len(item) == 0 {
+			continue
+		}
 		ids = append(ids, item)
 	}
 	cpos, err := u.clothesRepo.SelectByIDs(ctx, ids)

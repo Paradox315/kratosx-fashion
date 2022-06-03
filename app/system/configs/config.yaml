@@ -9,7 +9,7 @@ data:
   database:
     driver: mysql
     source: ${DSN}
-    log_mode: warn
+    log_mode: info
     max_idle_conns: 10
     max_open_conns: 100
     auto_migrate: false

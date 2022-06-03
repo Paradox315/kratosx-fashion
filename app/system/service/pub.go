@@ -9,15 +9,13 @@ import (
 	"github.com/go-kratos/kratos/v2/transport"
 
 	pb "kratosx-fashion/api/system/v1"
-	mw "kratosx-fashion/app/system/middleware"
 )
 
 type PubService struct {
 	pb.UnimplementedPubServer
 
-	uc     *biz.PublicUsecase
-	jwtSrv *mw.JWTService
-	log    *log.Helper
+	uc  *biz.PublicUsecase
+	log *log.Helper
 }
 
 func NewPubService(uc *biz.PublicUsecase, logger log.Logger) *PubService {

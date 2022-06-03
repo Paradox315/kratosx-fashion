@@ -42,6 +42,7 @@ func NewHTTPServer(c *conf.Server,
 			JSONDecoder: encoding.GetCodec("json").Unmarshal,
 			JSONEncoder: encoding.GetCodec("json").Marshal,
 			Prefork:     os.Getenv("env") == "prod",
+			ProxyHeader: os.Getenv("PROXY_HEADER"),
 			// Override default error handler
 			ErrorHandler: func(c *fiber.Ctx, err error) error {
 				// Default 500 statuscode

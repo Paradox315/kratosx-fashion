@@ -14,6 +14,6 @@ services:
       - ~/resource:/app/resource
     environment:
       - env=prod
-      - KRATOS_DSN=root:Huyaowen/2018@tcp(sh-cynosdbmysql-grp-ph0o3e0i.sql.tencentcdb.com:25599)/violet_prod?charset=utf8mb4&parseTime=True&loc=Local
-      - KRATOS_REDIS_ADDR=r-bp17dq3vndk0k0i8u1pd.redis.rds.aliyuncs.com:6379
-      - KRATOS_REDIS_PASSWORD=Huyaowen*2018
+      - KRATOS_DSN=root:Huyaowen/2018@tcp($MYSQL_ADDR)/violet_prod?charset=utf8mb4&parseTime=True&loc=Local
+      - KRATOS_REDIS_ADDR=$REDIS_ADDR:6379
+      - KRATOS_REDIS_PASSWORD=$REDIS_PASSWORD
